@@ -2,63 +2,62 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Personal Splash Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Splash Page with Parallax</title>
 <style>
   body {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
                  Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    overflow: hidden;
-    background: linear-gradient(135deg, #1e1e1e, #343434);
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
     color: #fff;
+    overflow-x: hidden;
+    background: linear-gradient(135deg, #fc466b, #3f5efb);
+    background-size: 400% 400%;
+    animation: bgShift 20s ease infinite;
   }
 
-  @keyframes gradientShift {
+  @keyframes bgShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
 
-  .container {
+  /* Hero section */
+  .hero {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     text-align: center;
-    max-width: 600px;
-    opacity: 0;
-    animation: fadeIn 2s forwards;
-  }
-
-  @keyframes fadeIn {
-    to { opacity: 1; }
+    z-index: 10;
   }
 
   h1 {
-    font-size: 3rem;
+    font-size: 4rem;
     margin: 0;
     letter-spacing: 0.05em;
-    animation: textFadeUp 2s ease forwards;
     opacity: 0;
+    animation: fadeSlide 1.5s forwards;
   }
 
   h2 {
     font-size: 1.2rem;
     font-weight: 300;
     margin-top: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
     opacity: 0;
-    animation: textFadeUp 2s 0.5s ease forwards;
+    animation: fadeSlide 1.5s 0.5s forwards;
   }
 
-  @keyframes textFadeUp {
+  @keyframes fadeSlide {
     0% {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(30px);
     }
     100% {
       opacity: 1;
@@ -68,42 +67,188 @@
 
   .links {
     display: flex;
-    justify-content: center;
+    flex-wrap: wrap;
     gap: 2rem;
-    margin-top: 2rem;
+    justify-content: center;
     opacity: 0;
-    animation: textFadeUp 2s 1s ease forwards;
+    animation: fadeSlide 1.5s 1s forwards;
   }
 
   .links a {
     color: #fff;
     text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: all 0.3s ease;
     font-size: 1rem;
     font-weight: 400;
     letter-spacing: 0.05em;
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s ease;
   }
 
   .links a:hover {
     border-bottom: 1px solid #fff;
   }
+
+  /* Parallax shapes */
+  .parallax-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* We'll create multiple layers of shapes */
+  .layer {
+    position: absolute;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+    transition: transform 0.05s ease-out;
+  }
+
+  .layer:hover {
+    transform: scale(1.1);
+  }
+
+  /* Example shapes */
+  .circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .square {
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    border-radius: 10%;
+  }
+
+  .triangle {
+    width: 0;
+    height: 0;
+    border-left: 60px solid transparent;
+    border-right: 60px solid transparent;
+    border-bottom: 100px solid #fff;
+  }
+
+  /* Just place them arbitrarily; JS will move them around */
+  .circle.layer1 { top: 20%; left: 10%; }
+  .square.layer1  { top: 70%; left: 80%; }
+  .triangle.layer1 { top: 50%; left: 45%; }
+
+  .circle.layer2 { top: 30%; left: 70%; }
+  .square.layer2  { top: 10%; left: 20%; }
+  .triangle.layer2 { top: 80%; left: 60%; }
+
+  /* Secondary content section */
+  .content {
+    padding: 100px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+    line-height: 1.6;
+  }
+
+  .content h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    h1 {
+      font-size: 2.5rem;
+    }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>Welcome</h1>
-  <h2>Discover, Create, and Connect</h2>
+
+<div class="hero">
+  <!-- Parallax Layers -->
+  <div class="parallax-layer layer1">
+    <div class="layer circle"></div>
+    <div class="layer square"></div>
+    <div class="layer triangle"></div>
+  </div>
+
+  <div class="parallax-layer layer2">
+    <div class="layer circle"></div>
+    <div class="layer square"></div>
+    <div class="layer triangle"></div>
+  </div>
+
+  <h1>Hello, I'm Kyzer</h1>
+  <h2>I make stuff.</h2>
   <div class="links">
-    <a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" rel="noopener noreferrer">
+    <a href="https://github.com/derkyzer" target="_blank" rel="noopener noreferrer">
       My GitHub
     </a>
+    <a href="./projects.html">Projects</a>
     <a href="./snake.html">Play Snake</a>
   </div>
 </div>
+
+<div class="content">
+  <h3>About My Work</h3>
+  <p>
+    Here's some placeholder text to give you a reason to scroll. As you move
+    through this page, notice how the shapes in the hero section respond
+    to your scroll and mouse movements, creating a subtle parallax effect.
+  </p>
+  <p>
+    The shapes are layered and move at different speeds, giving you
+    a sense of depth. Try hovering over them at the top of the page,
+    or scrolling up and down to see how they shift.
+  </p>
+  <p>
+    This page is built using only HTML, CSS, and JavaScript—no external
+    libraries—ensuring it's fast, responsive, and flexible.
+  </p>
+</div>
+
 <script>
-  // Minimal JS could handle any additional subtle interactions if desired.
-  // Currently unused, but here for completeness if you need minor enhancements.
+  // Parallax effect: 
+  // - We'll adjust the transform of each shape based on mouse position and scroll.
+  // - Multiple layers will move at different speeds.
+
+  const layers = document.querySelectorAll('.parallax-layer');
+
+  let mouseX = 0, mouseY = 0;
+  let scrollY = 0;
+  
+  // Speeds for layers
+  const layerSpeeds = [0.03, 0.06]; // Adjust speeds for each layer
+
+  // Capture mouse movement
+  document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) - 0.5; 
+    mouseY = (e.clientY / window.innerHeight) - 0.5;
+    updateParallax();
+  });
+
+  // Capture scroll
+  document.addEventListener('scroll', () => {
+    scrollY = window.scrollY;
+    updateParallax();
+  });
+
+  function updateParallax() {
+    layers.forEach((layer, index) => {
+      const shapes = layer.querySelectorAll('.layer');
+      shapes.forEach((shape, i) => {
+        // Each shape moves slightly differently
+        // Combine mouse position and scroll offset
+        const offsetX = mouseX * 100 * (index+1) * layerSpeeds[index];
+        const offsetY = (mouseY * 100 * (index+1) - scrollY * 0.1 * (index+1));
+        shape.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      });
+    });
+  }
+
+  // Initial call
+  updateParallax();
 </script>
 </body>
 </html>
