@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Splash Page with Parallax</title>
+<title>My Splash Page with Parallax and Mobile Support</title>
 <style>
   body {
     margin: 0;
@@ -88,7 +88,7 @@
     border-bottom: 1px solid #fff;
   }
 
-  /* Parallax shapes */
+  /* Parallax layers */
   .parallax-layer {
     position: absolute;
     top: 0; left: 0;
@@ -98,7 +98,6 @@
     overflow: visible;
   }
 
-  /* We'll create multiple layers of shapes */
   .layer {
     position: absolute;
     opacity: 0.6;
@@ -133,13 +132,13 @@
     border-bottom: 100px solid #fff;
   }
 
-  /* Just place them arbitrarily; JS will move them around */
+  /* Initial placement of shapes (they will move with JS) */
   .circle.layer1 { top: 20%; left: 10%; }
-  .square.layer1  { top: 70%; left: 80%; }
+  .square.layer1 { top: 70%; left: 80%; }
   .triangle.layer1 { top: 50%; left: 45%; }
 
   .circle.layer2 { top: 30%; left: 70%; }
-  .square.layer2  { top: 10%; left: 20%; }
+  .square.layer2 { top: 10%; left: 20%; }
   .triangle.layer2 { top: 80%; left: 60%; }
 
   /* Secondary content section */
@@ -179,8 +178,8 @@
     <div class="layer triangle"></div>
   </div>
 
-  <h1>Hello, I'm Kyzer</h1>
-  <h2>I make stuff.</h2>
+  <h1>Hello, I'm [Your Name]</h1>
+  <h2>Crafting modern, fast, and creative web experiences</h2>
   <div class="links">
     <a href="https://github.com/derkyzer" target="_blank" rel="noopener noreferrer">
       My GitHub
@@ -195,24 +194,15 @@
   <p>
     Here's some placeholder text to give you a reason to scroll. As you move
     through this page, notice how the shapes in the hero section respond
-    to your scroll and mouse movements, creating a subtle parallax effect.
+    to your scroll, device tilt, or touch movements, creating a subtle parallax effect.
   </p>
   <p>
-    The shapes are layered and move at different speeds, giving you
-    a sense of depth. Try hovering over them at the top of the page,
-    or scrolling up and down to see how they shift.
-  </p>
-  <p>
-    This page is built using only HTML, CSS, and JavaScript—no external
-    libraries—ensuring it's fast, responsive, and flexible.
+    On mobile, tilt your device (if prompted, allow motion permissions), or touch and drag
+    on the screen to move the shapes. On desktop, just move your mouse.
   </p>
 </div>
 
 <script>
-  // Parallax effect: 
-  // - We'll adjust the transform of each shape based on mouse position and scroll.
-  // - Multiple layers will move at different speeds.
-
   const layers = document.querySelectorAll('.parallax-layer');
 
   let mouseX = 0, mouseY = 0;
@@ -221,25 +211,43 @@
   // Speeds for layers
   const layerSpeeds = [0.03, 0.06]; // Adjust speeds for each layer
 
-  // Capture mouse movement
+  // Desktop mouse move
   document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth) - 0.5; 
     mouseY = (e.clientY / window.innerHeight) - 0.5;
     updateParallax();
   });
 
-  // Capture scroll
+  // Scroll
   document.addEventListener('scroll', () => {
     scrollY = window.scrollY;
     updateParallax();
   });
 
+  // Touch move (fallback on mobile if orientation is not available)
+  document.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    mouseX = (touch.clientX / window.innerWidth) - 0.5;
+    mouseY = (touch.clientY / window.innerHeight) - 0.5;
+    updateParallax();
+  });
+
+  // Device orientation (if available)
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', (e) => {
+      // gamma: left-right (-90 to 90)
+      // beta: front-back (-180 to 180)
+      // Normalize gamma/beta to a -0.5 to 0.5 range
+      mouseX = e.gamma / 180; // gamma/180 gives approx -0.5 to 0.5
+      mouseY = e.beta / 360;  // beta/360 gives approx -0.5 to 0.5
+      updateParallax();
+    }, true);
+  }
+
   function updateParallax() {
     layers.forEach((layer, index) => {
       const shapes = layer.querySelectorAll('.layer');
-      shapes.forEach((shape, i) => {
-        // Each shape moves slightly differently
-        // Combine mouse position and scroll offset
+      shapes.forEach((shape) => {
         const offsetX = mouseX * 100 * (index+1) * layerSpeeds[index];
         const offsetY = (mouseY * 100 * (index+1) - scrollY * 0.1 * (index+1));
         shape.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
