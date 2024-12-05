@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Splash Page with Parallax and Mobile Support</title>
+<title>My Enhanced Splash Page</title>
 <style>
   body {
     margin: 0;
@@ -15,6 +15,7 @@
     background: linear-gradient(135deg, #fc466b, #3f5efb);
     background-size: 400% 400%;
     animation: bgShift 20s ease infinite;
+    position: relative;
   }
 
   @keyframes bgShift {
@@ -102,11 +103,7 @@
     position: absolute;
     opacity: 0.6;
     mix-blend-mode: screen;
-    transition: transform 0.05s ease-out;
-  }
-
-  .layer:hover {
-    transform: scale(1.1);
+    transition: transform 0.1s ease-out, opacity 0.5s;
   }
 
   /* Example shapes */
@@ -132,7 +129,7 @@
     border-bottom: 100px solid #fff;
   }
 
-  /* Initial placement of shapes (they will move with JS) */
+  /* Initial placement of shapes */
   .circle.layer1 { top: 20%; left: 10%; }
   .square.layer1 { top: 70%; left: 80%; }
   .triangle.layer1 { top: 50%; left: 45%; }
@@ -141,18 +138,70 @@
   .square.layer2 { top: 10%; left: 20%; }
   .triangle.layer2 { top: 80%; left: 60%; }
 
-  /* Secondary content section */
+  /* Content sections */
   .content {
     padding: 100px 20px;
     max-width: 600px;
     margin: 0 auto;
     text-align: left;
     line-height: 1.6;
+    color: #fff;
   }
 
   .content h3 {
     font-size: 2rem;
     margin-bottom: 1rem;
+  }
+
+  /* Additional bottom section */
+  .bottom-section {
+    padding: 100px 20px;
+    max-width: 600px;
+    margin: 0 auto 200px auto;
+    text-align: left;
+    line-height: 1.6;
+    color: #fff;
+  }
+
+  .bottom-section h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Back to top button */
+  .back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.8);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    color: #000;
+    font-size: 1.5rem;
+    line-height: 50px;
+    text-align: center;
+    z-index: 1000;
+    transition: background 0.3s;
+  }
+
+  .back-to-top:hover {
+    background: rgba(255,255,255,1);
+  }
+
+  /* Navi Fairy */
+  .navi {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, #a1c4fd 70%, #6da2fb 100%);
+    box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb;
+    z-index: 999;
+    pointer-events: none;
+    transition: transform 0.2s ease-out;
   }
 
   @media (max-width: 600px) {
@@ -179,13 +228,13 @@
   </div>
 
   <h1>Hello, I'm Kyzer</h1>
-  <h2>Crafting experiences and exploring tech</h2>
+  <h2>Exploring ideas and crafting experiences</h2>
   <div class="links">
     <a href="https://github.com/derkyzer" target="_blank" rel="noopener noreferrer">
       My GitHub
     </a>
-    <a href="./projects.html">Projects</a>
     <a href="./snake.html">Play Snake</a>
+    <a href="./projects.html">Projects</a>
   </div>
 </div>
 
@@ -194,69 +243,117 @@
   <p>
     Here's some placeholder text to give you a reason to scroll. As you move
     through this page, notice how the shapes in the hero section respond
-    to your scroll, device tilt, or touch movements, creating a subtle parallax effect.
+    subtly to your scroll movements, and gradually fade away as you scroll down.
   </p>
   <p>
-    On mobile, tilt your device (if prompted, allow motion permissions), or touch and drag
-    on the screen to move the shapes. On desktop, just move your mouse.
+    The shapes add depth and interest without distracting from the content.
+    Keep scrolling to see more features and eventually a “Navi” styled fairy
+    that hovers near your viewport. There's also a convenient back-to-top
+    button in the bottom right corner.
   </p>
 </div>
 
+<div class="bottom-section">
+  <h3>More Content Below</h3>
+  <p>
+    This is another section at the bottom of the page. 
+    Add whatever information you'd like here.
+  </p>
+  <p>
+    Notice as you scroll back up, you can use the back-to-top button to 
+    smoothly return to the top. The fairy hovers around, giving the page
+    a whimsical feel.
+  </p>
+</div>
+
+<button class="back-to-top" id="backToTop">↑</button>
+
+<div class="navi" id="navi"></div>
+
 <script>
   const layers = document.querySelectorAll('.parallax-layer');
-
-  let mouseX = 0, mouseY = 0;
   let scrollY = 0;
+  let mouseX = 0, mouseY = 0;
   
   // Speeds for layers
-  const layerSpeeds = [0.03, 0.06]; // Adjust speeds for each layer
+  const layerSpeeds = [0.03, 0.06]; 
 
-  // Desktop mouse move
+  // Update parallax on scroll
+  document.addEventListener('scroll', () => {
+    scrollY = window.scrollY;
+    updateParallax();
+    fadeShapes();
+    updateNavi();
+  });
+
+  // Slight mouse effect on desktop (not dragging, just subtle offset)
   document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth) - 0.5; 
     mouseY = (e.clientY / window.innerHeight) - 0.5;
     updateParallax();
   });
 
-  // Scroll
-  document.addEventListener('scroll', () => {
-    scrollY = window.scrollY;
-    updateParallax();
-  });
-
-  // Touch move (fallback on mobile if orientation is not available)
-  document.addEventListener('touchmove', (e) => {
-    const touch = e.touches[0];
-    mouseX = (touch.clientX / window.innerWidth) - 0.5;
-    mouseY = (touch.clientY / window.innerHeight) - 0.5;
-    updateParallax();
-  });
-
-  // Device orientation (if available)
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', (e) => {
-      // gamma: left-right (-90 to 90)
-      // beta: front-back (-180 to 180)
-      // Normalize gamma/beta to a -0.5 to 0.5 range
-      mouseX = e.gamma / 180; // gamma/180 gives approx -0.5 to 0.5
-      mouseY = e.beta / 360;  // beta/360 gives approx -0.5 to 0.5
-      updateParallax();
-    }, true);
-  }
-
   function updateParallax() {
     layers.forEach((layer, index) => {
       const shapes = layer.querySelectorAll('.layer');
       shapes.forEach((shape) => {
         const offsetX = mouseX * 100 * (index+1) * layerSpeeds[index];
-        const offsetY = (mouseY * 100 * (index+1) - scrollY * 0.1 * (index+1));
+        const offsetY = (- scrollY * 0.1 * (index+1));
         shape.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
       });
     });
   }
 
-  // Initial call
+  function fadeShapes() {
+    // As we scroll down, fade out shapes
+    // Let's say by the time we scroll 400px, shapes are gone
+    const fadePoint = 400;
+    const opacity = Math.max(1 - (scrollY / fadePoint), 0);
+    layers.forEach(layer => {
+      const shapes = layer.querySelectorAll('.layer');
+      shapes.forEach(shape => {
+        shape.style.opacity = opacity;
+      });
+    });
+  }
+
+  // Back to top button
+  const backToTop = document.getElementById('backToTop');
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Navi Fairy
+  const navi = document.getElementById('navi');
+  let naviBaseY = 150; // Base y offset from top of viewport
+  let naviOffsetX = 50; // x offset from right or left side
+  // We'll let Navi float near the right center of viewport
+  // We'll animate navi using requestAnimationFrame
+
+  let lastScrollY = 0;
+  let naviTime = 0;
+
+  function updateNavi() {
+    naviTime += 0.01;
+    // Navi's position based on scroll and random bobbing
+    // Let's tie navi's Y to scroll plus a sin bob
+    const y = window.scrollY + naviBaseY + Math.sin(naviTime * 2) * 20;
+    const x = window.innerWidth - naviOffsetX - 50; // near right side
+    navi.style.transform = `translate(${x}px, ${y}px)`;
+  }
+
+  // Start the navi animation loop
+  function animateNavi() {
+    updateNavi();
+    requestAnimationFrame(animateNavi);
+  }
+  animateNavi();
+
+  // Initial calls
   updateParallax();
+  fadeShapes();
+  updateNavi();
 </script>
+
 </body>
 </html>
