@@ -6,61 +6,20 @@
         body {
             background-color: #222;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
             color: #fff;
             font-family: Arial, sans-serif;
+            overflow: hidden; /* Prevents scrolling on small screens */
         }
 
         canvas {
             background-color: #333;
             border: 1px solid #555;
             box-shadow: 0 0 10px #000;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            user-select: none;
-        }
-
-        .direction-row {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-
-        .direction-button, .start-button {
-            background-color: #444;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 4px;
-            padding: 10px 15px;
-            margin: 5px;
-            font-size: 20px;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-
-        .direction-button:active, .start-button:active {
-            background-color: #555;
-        }
-
-        .start-button {
-            margin-bottom: 20px;
-        }
-
-        .instructions {
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 16px;
+            touch-action: none; /* Prevents default gestures on touch */
         }
 
         @media (max-width: 600px) {
@@ -72,241 +31,279 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const context = canvas.getContext('2d');
 
-    <div class="controls">
-        <div class="instructions">
-            Use 'w', 'a', 's', 'd' keys or the buttons below to control the snake.<br>
-            Press space or use the Start button to start/restart.
-        </div>
-        <button class="start-button" id="startButton">Start / Restart</button>
-        <div class="direction-row">
-            <button class="direction-button" data-dir="up">↑</button>
-        </div>
-        <div class="direction-row">
-            <button class="direction-button" data-dir="left">←</button>
-            <button class="direction-button" data-dir="down">↓</button>
-            <button class="direction-button" data-dir="right">→</button>
-        </div>
-    </div>
+    // Game variables
+    const gridSize = 20;
+    const tileCountX = Math.floor(canvas.width / gridSize);
+    const tileCountY = Math.floor(canvas.height / gridSize);
 
-    <script>
-        // Get canvas and context
-        const canvas = document.getElementById('gameCanvas');
-        const context = canvas.getContext('2d');
+    let snake = [];
+    let direction = { x: 0, y: 0 };
+    let food = {};
+    let gameInterval;
+    let gameRunning = false;
+    let score = 0;
 
-        // Game variables
-        const gridSize = 20;
-        const tileCountX = canvas.width / gridSize;
-        const tileCountY = canvas.height / gridSize;
+    // For touch controls (drag/swipe)
+    let touchStartX = null;
+    let touchStartY = null;
 
-        let snake = [];
-        let direction = { x: 0, y: 0 };
-        let food = {};
-        let gameInterval;
-        let gameRunning = false;
-        let score = 0;
+    // Desktop controls
+    document.addEventListener('keydown', keyDown);
 
-        // Key controls
-        document.addEventListener('keydown', keyDown);
+    // Start/Restart on click/tap
+    canvas.addEventListener('mousedown', tryStartGame);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        // On-screen buttons
-        const startButton = document.getElementById('startButton');
-        startButton.addEventListener('click', () => {
-            if (!gameRunning) startGame();
-        });
+    function tryStartGame() {
+        if (!gameRunning) startGame();
+    }
 
-        document.querySelectorAll('.direction-button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (!gameRunning) return;
-                const dir = btn.getAttribute('data-dir');
-                changeDirectionFromButton(dir);
-            });
-        });
+    function startGame() {
+        gameRunning = true;
+        resetGame();
+    }
 
-        function keyDown(event) {
-            if (!gameRunning && event.key === ' ') {
-                startGame();
+    function resetGame() {
+        score = 0;
+        snake = [];
+        snake.push({ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) });
+
+        // Random initial direction
+        const directions = [
+            { x: 0, y: -1 }, // Up
+            { x: 0, y: 1 },  // Down
+            { x: -1, y: 0 }, // Left
+            { x: 1, y: 0 }   // Right
+        ];
+        direction = directions[Math.floor(Math.random() * directions.length)];
+
+        placeFood();
+
+        if (gameInterval) clearInterval(gameInterval);
+        gameInterval = setInterval(gameLoop, 100);
+    }
+
+    function keyDown(event) {
+        if (!gameRunning && event.key === ' ') {
+            startGame();
+            return;
+        }
+
+        if (!gameRunning) return;
+
+        switch (event.key) {
+            case 'w':
+                if (direction.y === 0) direction = { x: 0, y: -1 };
+                break;
+            case 's':
+                if (direction.y === 0) direction = { x: 0, y: 1 };
+                break;
+            case 'a':
+                if (direction.x === 0) direction = { x: -1, y: 0 };
+                break;
+            case 'd':
+                if (direction.x === 0) direction = { x: 1, y: 0 };
+                break;
+        }
+    }
+
+    function placeFood() {
+        food = {
+            x: Math.floor(Math.random() * tileCountX),
+            y: Math.floor(Math.random() * tileCountY)
+        };
+
+        // Make sure food is not on the snake
+        for (let segment of snake) {
+            if (segment.x === food.x && segment.y === food.y) {
+                placeFood();
                 return;
             }
-
-            if (!gameRunning) return;
-
-            switch (event.key) {
-                case 'w':
-                    if (direction.y === 0) direction = { x: 0, y: -1 };
-                    break;
-                case 's':
-                    if (direction.y === 0) direction = { x: 0, y: 1 };
-                    break;
-                case 'a':
-                    if (direction.x === 0) direction = { x: -1, y: 0 };
-                    break;
-                case 'd':
-                    if (direction.x === 0) direction = { x: 1, y: 0 };
-                    break;
-            }
         }
+    }
 
-        function changeDirectionFromButton(dir) {
-            switch (dir) {
-                case 'up':
-                    if (direction.y === 0) direction = { x: 0, y: -1 };
-                    break;
-                case 'down':
-                    if (direction.y === 0) direction = { x: 0, y: 1 };
-                    break;
-                case 'left':
-                    if (direction.x === 0) direction = { x: -1, y: 0 };
-                    break;
-                case 'right':
-                    if (direction.x === 0) direction = { x: 1, y: 0 };
-                    break;
-            }
-        }
-
-        function startGame() {
-            gameRunning = true;
-            resetGame();
-        }
-
-        function resetGame() {
-            score = 0;
-
-            snake = [];
-            snake.push({ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) });
-
-            // Random initial direction
-            const directions = [
-                { x: 0, y: -1 }, // Up
-                { x: 0, y: 1 },  // Down
-                { x: -1, y: 0 }, // Left
-                { x: 1, y: 0 }   // Right
-            ];
-            direction = directions[Math.floor(Math.random() * directions.length)];
-
-            placeFood();
-
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, 100);
-        }
-
-        function placeFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCountX),
-                y: Math.floor(Math.random() * tileCountY)
-            };
-
-            // Make sure food is not on the snake
-            for (let segment of snake) {
-                if (segment.x === food.x && segment.y === food.y) {
-                    placeFood();
-                    return;
-                }
-            }
-        }
-
-        function gameLoop() {
-            if (!gameRunning) {
-                clearInterval(gameInterval);
-                drawGame();
-                drawGameOver();
-                return;
-            }
-
-            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-
-            // Wrap around edges
-            if (head.x < 0) head.x = tileCountX - 1;
-            if (head.x >= tileCountX) head.x = 0;
-            if (head.y < 0) head.y = tileCountY - 1;
-            if (head.y >= tileCountY) head.y = 0;
-
-            // Check collision with self
-            for (let segment of snake) {
-                if (head.x === segment.x && head.y === segment.y) {
-                    // Game over
-                    gameRunning = false;
-                    break;
-                }
-            }
-
-            if (gameRunning) {
-                snake.unshift(head);
-
-                // Check if snake eats food
-                if (head.x === food.x && head.y === food.y) {
-                    placeFood();
-                    score += 10;
-                } else {
-                    snake.pop();
-                }
-            }
-
+    function gameLoop() {
+        if (!gameRunning) {
+            clearInterval(gameInterval);
             drawGame();
+            drawGameOver();
+            return;
+        }
 
-            if (!gameRunning) {
-                drawGameOver();
-                clearInterval(gameInterval);
+        const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+        // Wrap around edges
+        if (head.x < 0) head.x = tileCountX - 1;
+        if (head.x >= tileCountX) head.x = 0;
+        if (head.y < 0) head.y = tileCountY - 1;
+        if (head.y >= tileCountY) head.y = 0;
+
+        // Check collision with self
+        for (let segment of snake) {
+            if (head.x === segment.x && head.y === segment.y) {
+                // Game over
+                gameRunning = false;
+                break;
             }
         }
 
-        function drawGame() {
-            // Clear canvas
-            context.fillStyle = '#333';
-            context.fillRect(0, 0, canvas.width, canvas.height);
+        if (gameRunning) {
+            snake.unshift(head);
 
-            // Draw grid lines
-            context.strokeStyle = '#444';
-            context.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                context.beginPath();
-                context.moveTo(x, 0);
-                context.lineTo(x, canvas.height);
-                context.stroke();
+            // Check if snake eats food
+            if (head.x === food.x && head.y === food.y) {
+                placeFood();
+                score += 10;
+            } else {
+                snake.pop();
             }
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                context.beginPath();
-                context.moveTo(0, y);
-                context.lineTo(canvas.width, y);
-                context.stroke();
-            }
+        }
 
-            // Draw snake
-            for (let i = 0; i < snake.length; i++) {
-                context.fillStyle = i === 0 ? '#0f0' : '#0a0';
-                context.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
-            }
+        drawGame();
 
-            // Draw food
-            context.fillStyle = '#f00';
+        if (!gameRunning) {
+            drawGameOver();
+            clearInterval(gameInterval);
+        }
+    }
+
+    function drawGame() {
+        // Clear canvas
+        context.fillStyle = '#333';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw grid lines
+        context.strokeStyle = '#444';
+        context.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += gridSize) {
             context.beginPath();
-            context.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
-            context.fill();
-
-            // Draw score
-            context.fillStyle = '#fff';
-            context.font = '20px Arial';
-            context.fillText('Score: ' + score, canvas.width - 80, 20);
+            context.moveTo(x, 0);
+            context.lineTo(x, canvas.height);
+            context.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += gridSize) {
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(canvas.width, y);
+            context.stroke();
         }
 
-        function drawGameOver() {
-            context.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            context.fillStyle = '#fff';
-            context.font = '48px Arial';
-            context.textAlign = 'center';
-            context.fillText('Game Over', canvas.width / 2, canvas.height / 2);
-            context.font = '24px Arial';
-            context.fillText('Press SPACE or tap "Start/Restart"', canvas.width / 2, canvas.height / 2 + 40);
+        // Draw snake
+        for (let i = 0; i < snake.length; i++) {
+            context.fillStyle = i === 0 ? '#0f0' : '#0a0';
+            context.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
         }
 
-        // Initial instructions
+        // Draw food
+        context.fillStyle = '#f00';
+        context.beginPath();
+        context.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
+        context.fill();
+
+        // Draw score
+        context.fillStyle = '#fff';
+        context.font = '20px Arial';
+        context.fillText('Score: ' + score, canvas.width - 80, 20);
+    }
+
+    function drawGameOver() {
+        context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.fillStyle = '#fff';
+        context.font = '48px Arial';
+        context.textAlign = 'center';
+        context.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+        context.font = '24px Arial';
+        context.fillText('Tap to restart', canvas.width / 2, canvas.height / 2 + 40);
+    }
+
+    // Initial instructions
+    drawInitialMessage();
+
+    function drawInitialMessage() {
+        context.fillStyle = '#333';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // grid
+        context.strokeStyle = '#444';
+        context.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += gridSize) {
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, canvas.height);
+            context.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += gridSize) {
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(canvas.width, y);
+            context.stroke();
+        }
+
         context.fillStyle = '#fff';
         context.font = '24px Arial';
         context.textAlign = 'center';
-        context.fillText('Press SPACE or tap "Start/Restart" to begin', canvas.width / 2, canvas.height / 2);
-    </script>
+        context.fillText('Tap to start', canvas.width / 2, canvas.height / 2);
+        context.font = '16px Arial';
+        context.fillText('Drag (swipe) to change direction on mobile', canvas.width / 2, canvas.height / 2 + 30);
+        context.fillText('Use w,a,s,d keys on desktop', canvas.width / 2, canvas.height / 2 + 50);
+    }
+
+    // Touch handlers for swipe-based direction
+    function handleTouchStart(e) {
+        e.preventDefault();
+        if (!gameRunning) {
+            startGame();
+            return;
+        }
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+    }
+
+    function handleTouchMove(e) {
+        // Prevent scrolling
+        e.preventDefault();
+    }
+
+    function handleTouchEnd(e) {
+        if (!gameRunning) return;
+        // Determine direction based on swipe
+        // If there's no movement, don't change direction
+        if (touchStartX === null || touchStartY === null) return;
+
+        const touch = (e.changedTouches && e.changedTouches[0]) || null;
+        if (!touch) return;
+
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+
+        // Reset touch start positions
+        touchStartX = null;
+        touchStartY = null;
+
+        // If swipe is too small, ignore
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+
+        // Determine direction
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Horizontal swipe
+            if (dx > 0 && direction.x === 0) direction = { x: 1, y: 0 };
+            if (dx < 0 && direction.x === 0) direction = { x: -1, y: 0 };
+        } else {
+            // Vertical swipe
+            if (dy > 0 && direction.y === 0) direction = { x: 0, y: 1 };
+            if (dy < 0 && direction.y === 0) direction = { x: 0, y: -1 };
+        }
+    }
+</script>
 </body>
 </html>
