@@ -6,21 +6,89 @@
         body {
             background-color: #222;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
+            color: #fff;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
             background-color: #333;
             border: 1px solid #555;
             box-shadow: 0 0 10px #000;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        .direction-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .direction-button, .start-button {
+            background-color: #444;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 20px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .direction-button:active, .start-button:active {
+            background-color: #555;
+        }
+
+        .start-button {
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            canvas {
+                width: 100%;
+                height: auto;
+            }
         }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div class="controls">
+        <div class="instructions">
+            Use 'w', 'a', 's', 'd' keys or the buttons below to control the snake.<br>
+            Press space or use the Start button to start/restart.
+        </div>
+        <button class="start-button" id="startButton">Start / Restart</button>
+        <div class="direction-row">
+            <button class="direction-button" data-dir="up">↑</button>
+        </div>
+        <div class="direction-row">
+            <button class="direction-button" data-dir="left">←</button>
+            <button class="direction-button" data-dir="down">↓</button>
+            <button class="direction-button" data-dir="right">→</button>
+        </div>
+    </div>
 
     <script>
         // Get canvas and context
@@ -39,7 +107,22 @@
         let gameRunning = false;
         let score = 0;
 
+        // Key controls
         document.addEventListener('keydown', keyDown);
+
+        // On-screen buttons
+        const startButton = document.getElementById('startButton');
+        startButton.addEventListener('click', () => {
+            if (!gameRunning) startGame();
+        });
+
+        document.querySelectorAll('.direction-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!gameRunning) return;
+                const dir = btn.getAttribute('data-dir');
+                changeDirectionFromButton(dir);
+            });
+        });
 
         function keyDown(event) {
             if (!gameRunning && event.key === ' ') {
@@ -51,24 +134,33 @@
 
             switch (event.key) {
                 case 'w':
-                    if (direction.y === 0) {
-                        direction = { x: 0, y: -1 };
-                    }
+                    if (direction.y === 0) direction = { x: 0, y: -1 };
                     break;
                 case 's':
-                    if (direction.y === 0) {
-                        direction = { x: 0, y: 1 };
-                    }
+                    if (direction.y === 0) direction = { x: 0, y: 1 };
                     break;
                 case 'a':
-                    if (direction.x === 0) {
-                        direction = { x: -1, y: 0 };
-                    }
+                    if (direction.x === 0) direction = { x: -1, y: 0 };
                     break;
                 case 'd':
-                    if (direction.x === 0) {
-                        direction = { x: 1, y: 0 };
-                    }
+                    if (direction.x === 0) direction = { x: 1, y: 0 };
+                    break;
+            }
+        }
+
+        function changeDirectionFromButton(dir) {
+            switch (dir) {
+                case 'up':
+                    if (direction.y === 0) direction = { x: 0, y: -1 };
+                    break;
+                case 'down':
+                    if (direction.y === 0) direction = { x: 0, y: 1 };
+                    break;
+                case 'left':
+                    if (direction.x === 0) direction = { x: -1, y: 0 };
+                    break;
+                case 'right':
+                    if (direction.x === 0) direction = { x: 1, y: 0 };
                     break;
             }
         }
@@ -81,7 +173,6 @@
         function resetGame() {
             score = 0;
 
-            // Initialize snake
             snake = [];
             snake.push({ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) });
 
@@ -123,7 +214,6 @@
                 return;
             }
 
-            // Move snake
             const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
 
             // Wrap around edges
@@ -153,7 +243,6 @@
                 }
             }
 
-            // Draw everything
             drawGame();
 
             if (!gameRunning) {
@@ -210,14 +299,14 @@
             context.textAlign = 'center';
             context.fillText('Game Over', canvas.width / 2, canvas.height / 2);
             context.font = '24px Arial';
-            context.fillText('Press SPACE to restart', canvas.width / 2, canvas.height / 2 + 40);
+            context.fillText('Press SPACE or tap "Start/Restart"', canvas.width / 2, canvas.height / 2 + 40);
         }
 
-        // Show instructions
+        // Initial instructions
         context.fillStyle = '#fff';
         context.font = '24px Arial';
         context.textAlign = 'center';
-        context.fillText('Press SPACE to start', canvas.width / 2, canvas.height / 2);
+        context.fillText('Press SPACE or tap "Start/Restart" to begin', canvas.width / 2, canvas.height / 2);
     </script>
 </body>
 </html>
