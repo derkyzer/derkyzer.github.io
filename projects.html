@@ -46,25 +46,71 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    position: relative;
   }
 
   .project-card:hover {
     transform: translateY(-5px);
   }
 
-  .project-card img {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin: 0 auto;
+  .slideshow-container {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    background: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slideshow-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+
+  .slideshow-container img.active {
     display: block;
+  }
+
+  .arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.2);
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 1.2rem;
+  }
+
+  .arrow:hover {
+    background: rgba(255,255,255,0.4);
+  }
+
+  .arrow.left {
+    left: 10px;
+  }
+
+  .arrow.right {
+    right: 10px;
+  }
+
+  .no-images {
+    font-size: 0.9rem;
+    color: #aaa;
   }
 
   .project-title {
     font-size: 1.2rem;
     margin: 0;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .project-desc {
@@ -72,7 +118,7 @@
     font-weight: 300;
     color: #ccc;
     margin: 0;
-    min-height: 40px; /* to keep consistent height even if no desc */
+    min-height: 40px; 
   }
 
   .view-link {
@@ -113,40 +159,123 @@
   const username = "derkyzer"; // Replace with your actual GitHub username
   const projectsContainer = document.getElementById('projects-container');
 
+  // Helper function to create a project card
+  function createProjectCard(name, description, html_url, images) {
+    const card = document.createElement('div');
+    card.className = 'project-card';
+
+    let slideshow;
+    if (images && images.length > 0) {
+      slideshow = document.createElement('div');
+      slideshow.className = 'slideshow-container';
+
+      images.forEach((imgSrc, index) => {
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        if (index === 0) img.classList.add('active');
+        slideshow.appendChild(img);
+      });
+
+      if (images.length > 1) {
+        const leftArrow = document.createElement('button');
+        leftArrow.className = 'arrow left';
+        leftArrow.textContent = '‹';
+        const rightArrow = document.createElement('button');
+        rightArrow.className = 'arrow right';
+        rightArrow.textContent = '›';
+
+        leftArrow.addEventListener('click', () => changeSlide(slideshow, -1));
+        rightArrow.addEventListener('click', () => changeSlide(slideshow, 1));
+
+        slideshow.appendChild(leftArrow);
+        slideshow.appendChild(rightArrow);
+      }
+      card.appendChild(slideshow);
+    } else {
+      const noImages = document.createElement('div');
+      noImages.className = 'no-images';
+      noImages.textContent = 'No images found in docs/';
+      card.appendChild(noImages);
+    }
+
+    const title = document.createElement('h2');
+    title.className = 'project-title';
+    title.textContent = name;
+
+    const desc = document.createElement('p');
+    desc.className = 'project-desc';
+    desc.textContent = description || "No description available.";
+
+    const link = document.createElement('a');
+    link.className = 'view-link';
+    link.href = html_url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "View on GitHub";
+
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(link);
+
+    return card;
+  }
+
+  function changeSlide(slideshow, direction) {
+    const images = slideshow.querySelectorAll('img');
+    let currentIndex = -1;
+    images.forEach((img, i) => {
+      if (img.classList.contains('active')) currentIndex = i;
+    });
+    if (currentIndex === -1) return; // No active image found
+    images[currentIndex].classList.remove('active');
+
+    let newIndex = currentIndex + direction;
+    if (newIndex < 0) newIndex = images.length - 1;
+    if (newIndex >= images.length) newIndex = 0;
+
+    images[newIndex].classList.add('active');
+  }
+
+  // Fetch repositories
   fetch(`https://api.github.com/users/${username}/repos?sort=updated`)
     .then(response => response.json())
-    .then(data => {
-      // data is an array of repos
-      data.forEach(repo => {
-        const { name, description, html_url, owner } = repo;
-        const card = document.createElement('div');
-        card.className = 'project-card';
+    .then(repos => {
+      // For each repo, fetch images from docs/ directory
+      repos.forEach(repo => {
+        const { name, description, html_url } = repo;
+        const docsUrl = `https://api.github.com/repos/${username}/${name}/contents/docs?ref=main`;
 
-        const img = document.createElement('img');
-        img.src = owner.avatar_url; // Use owner's avatar as the image
-        img.alt = name;
+        fetch(docsUrl)
+          .then(res => {
+            if (res.status === 404) {
+              // No docs folder
+              return [];
+            }
+            return res.json();
+          })
+          .then(contents => {
+            if (!Array.isArray(contents)) {
+              // No contents or an error
+              return [];
+            }
+            // Filter for images
+            const imageFiles = contents.filter(file => {
+              const lowerName = file.name.toLowerCase();
+              return lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || 
+                     lowerName.endsWith('.jpeg') || lowerName.endsWith('.gif');
+            });
 
-        const title = document.createElement('h2');
-        title.className = 'project-title';
-        title.textContent = name;
+            // Extract raw image URLs
+            const imageUrls = imageFiles.map(file => file.download_url);
 
-        const desc = document.createElement('p');
-        desc.className = 'project-desc';
-        desc.textContent = description || "No description available.";
-
-        const link = document.createElement('a');
-        link.className = 'view-link';
-        link.href = html_url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "View on GitHub";
-
-        card.appendChild(img);
-        card.appendChild(title);
-        card.appendChild(desc);
-        card.appendChild(link);
-
-        projectsContainer.appendChild(card);
+            const card = createProjectCard(name, description, html_url, imageUrls);
+            projectsContainer.appendChild(card);
+          })
+          .catch(err => {
+            console.error('Error fetching docs folder:', err);
+            const card = createProjectCard(name, description, html_url, []);
+            projectsContainer.appendChild(card);
+          });
       });
     })
     .catch(error => {
