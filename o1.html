@@ -7,39 +7,62 @@
 <style>
     html, body {
         margin: 0; padding: 0;
-        overflow: hidden;
         font-family: "Helvetica Neue", Arial, sans-serif;
         background: #0f0f0f;
         color: #fff;
-        height: 100%;
+        min-height: 100%;
         width: 100%;
     }
+
     body {
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: flex-start;
+        position: relative;
     }
-    /* Container for content */
-    .content-wrap {
+
+    /* Canvas background */
+    canvas {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1;
+    }
+
+    /* Content Wrapper */
+    .content {
         position: relative;
         z-index: 2;
         width: 90%;
         max-width: 800px;
-        margin-top: 15vh;
+        margin: 0 auto;
+        padding-top: 15vh;
+    }
+
+    section {
+        padding: 8vh 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    section:last-of-type {
+        border-bottom: none;
+    }
+
+    h1, h2, h3 {
+        margin-top: 0;
         text-align: center;
     }
-    h1 {
+
+    /* Intro Section */
+    .intro h1 {
         font-size: 2.5rem;
         margin-bottom: 1rem;
         animation: fadeSlideIn 1s ease forwards;
         opacity: 0;
         transform: translateY(20px);
     }
-    p {
+
+    .intro p {
         font-size: 1.1rem;
         line-height: 1.5;
-        margin-bottom: 2rem;
+        margin: 0 auto;
+        max-width: 600px;
+        text-align: center;
         opacity: 0;
         animation: fadeInText 1.5s ease forwards;
         animation-delay: 1s;
@@ -58,17 +81,29 @@
         }
     }
 
+    /* About Section */
+    .about p {
+        max-width: 600px;
+        margin: 2rem auto 0 auto;
+        line-height: 1.5;
+        text-align: center;
+        opacity: 0;
+        animation: fadeInText 1.5s ease forwards;
+        animation-delay: 1.5s;
+    }
+
     /* Projects Section */
-    .projects {
+    .projects-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
         max-width: 600px;
-        margin: 0 auto;
+        margin: 2rem auto 0 auto;
         opacity: 0;
         animation: fadeInText 1.5s ease forwards;
         animation-delay: 2s;
     }
+
     .project {
         background: rgba(255,255,255,0.05);
         padding: 1rem;
@@ -79,7 +114,8 @@
         transform: translateY(-5px);
         background: rgba(255,255,255,0.1);
     }
-    .project h2 {
+
+    .project h3 {
         margin-top: 0;
         font-size: 1.2rem;
         margin-bottom: 0.5rem;
@@ -90,17 +126,88 @@
         opacity: 0.8;
     }
 
-    /* Canvas overlay */
-    canvas {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 1;
+    /* Skills Section */
+    .skills .skill-list {
+        max-width: 600px;
+        margin: 2rem auto;
+        opacity: 0;
+        animation: fadeInText 1.5s ease forwards;
+        animation-delay: 2.5s;
+    }
+
+    .skill-item {
+        margin-bottom: 1rem;
+    }
+    .skill-item span {
+        display: inline-block; 
+        width: 100px;
+    }
+    .skill-bar {
+        display: inline-block;
+        width: 200px; 
+        height: 8px; 
+        background: rgba(255,255,255,0.2); 
+        position: relative;
+    }
+    .skill-fill {
+        position: absolute;
+        top: 0; left: 0;
+        height: 100%;
+        background: #fff;
+        width: 0;
+        animation: fillBar 1.5s ease forwards;
+    }
+
+    @keyframes fillBar {
+        to { width: 80%; }
+    }
+
+    /* Contact Section */
+    .contact form {
+        max-width: 600px;
+        margin: 2rem auto 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        opacity: 0;
+        animation: fadeInText 1.5s ease forwards;
+        animation-delay: 3s;
+    }
+
+    .contact input, .contact textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    .contact input::placeholder,
+    .contact textarea::placeholder {
+        color: rgba(255,255,255,0.6);
+    }
+
+    .contact button {
+        padding: 0.75rem;
+        border: none;
+        border-radius: 4px;
+        background: #fff;
+        color: #000;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .contact button:hover {
+        background: #eee;
     }
 
     /* Responsive adjustments */
     @media (max-width: 600px) {
         h1 { font-size: 2rem; }
-        .projects {
+        .projects-container {
             grid-template-columns: 1fr;
         }
     }
@@ -110,46 +217,87 @@
 
 <canvas id="bg"></canvas>
 
-<div class="content-wrap">
-    <h1>Exploring Ideas and Crafting Experiences</h1>
-    <p>Welcome to my personal space online. Here you’ll find a collection of projects, experiments, and thoughts. Dive in, explore, and let’s see what we can create together.</p>
-    <div class="projects">
-        <div class="project">
-            <h2>Project Alpha</h2>
-            <p>A playful web experiment that pushes the boundaries of design and interaction.</p>
+<div class="content">
+    <section class="intro">
+        <h1>Exploring Ideas and Crafting Experiences</h1>
+        <p>Welcome to my personal space online. Here you’ll find a collection of projects, experiments, and thoughts. Let’s explore the possibilities and create something extraordinary.</p>
+    </section>
+
+    <section class="about">
+        <h2>About Me</h2>
+        <p>I’m a designer, developer, and tinkerer who loves blending form and function. Through code, color, and curiosity, I bring new ideas to life. I’m fascinated by the interplay of visual aesthetics, interactive elements, and human-centered design.</p>
+    </section>
+
+    <section class="projects">
+        <h2>Projects</h2>
+        <div class="projects-container">
+            <div class="project">
+                <h3>Project Alpha</h3>
+                <p>A playful web experiment that pushes the boundaries of design and interaction.</p>
+            </div>
+            <div class="project">
+                <h3>Project Beta</h3>
+                <p>An immersive story-driven interface where content meets narrative flair.</p>
+            </div>
+            <div class="project">
+                <h3>Project Gamma</h3>
+                <p>An elegant solution for organizing and visualizing your creative workflow.</p>
+            </div>
+            <div class="project">
+                <h3>Project Delta</h3>
+                <p>A subtle and minimal tool focusing on simplicity, clarity, and speed.</p>
+            </div>
         </div>
-        <div class="project">
-            <h2>Project Beta</h2>
-            <p>An immersive story-driven interface where content meets narrative flair.</p>
+    </section>
+
+    <section class="skills">
+        <h2>Skills</h2>
+        <div class="skill-list">
+            <div class="skill-item">
+                <span>HTML/CSS</span>
+                <div class="skill-bar"><div class="skill-fill"></div></div>
+            </div>
+            <div class="skill-item">
+                <span>JavaScript</span>
+                <div class="skill-bar"><div class="skill-fill"></div></div>
+            </div>
+            <div class="skill-item">
+                <span>UI/UX</span>
+                <div class="skill-bar"><div class="skill-fill"></div></div>
+            </div>
+            <div class="skill-item">
+                <span>Animation</span>
+                <div class="skill-bar"><div class="skill-fill"></div></div>
+            </div>
         </div>
-        <div class="project">
-            <h2>Project Gamma</h2>
-            <p>An elegant solution for organizing and visualizing your creative workflow.</p>
-        </div>
-        <div class="project">
-            <h2>Project Delta</h2>
-            <p>A subtle and minimal tool focusing on simplicity, clarity, and speed.</p>
-        </div>
-    </div>
+    </section>
+
+    <section class="contact">
+        <h2>Contact</h2>
+        <form>
+            <input type="text" name="name" placeholder="Your Name" aria-label="Name" required />
+            <input type="email" name="email" placeholder="Your Email" aria-label="Email" required />
+            <textarea name="message" rows="5" placeholder="Your Message" aria-label="Message"></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </section>
+
 </div>
 
 <script>
-    // Simple particle physics background
-    // Particles move with gentle gravity and respond to mouse movement.
-
+    // Particle physics background
     const canvas = document.getElementById('bg');
     const ctx = canvas.getContext('2d');
 
     let particles = [];
     let mouse = { x: null, y: null };
 
-    // Resize canvas
-    function resize() {
+    function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     // Particle constructor
     function Particle(x, y, vx, vy, size, color) {
@@ -160,23 +308,22 @@
     }
 
     Particle.prototype.update = function() {
-        // Apply some gravity-like pull towards bottom
+        // Gravity-like pull
         this.vy += 0.02;
-        
-        // Basic collision with floor
+
+        // Bounce off bottom
         if (this.y + this.size > canvas.height) {
             this.y = canvas.height - this.size;
-            this.vy *= -0.7; // bounce
-            this.vx *= 0.95; // friction
+            this.vy *= -0.7;
+            this.vx *= 0.95;
         }
 
-        // Apply mouse attraction if close
+        // Mouse repulsion
         if (mouse.x && mouse.y) {
             let dx = mouse.x - this.x;
             let dy = mouse.y - this.y;
             let dist = Math.sqrt(dx*dx + dy*dy);
             if(dist < 150) {
-                // Simple repulsion
                 this.vx -= dx/dist * 0.1;
                 this.vy -= dy/dist * 0.1;
             }
@@ -230,7 +377,7 @@
         mouse.y = t.clientY;
     }, {passive: true});
 
-    window.addEventListener('touchend', function(e){
+    window.addEventListener('touchend', function(){
         mouse.x = null; mouse.y = null;
     });
 
@@ -238,6 +385,5 @@
         mouse.x = null; mouse.y = null;
     });
 </script>
-
 </body>
 </html>
