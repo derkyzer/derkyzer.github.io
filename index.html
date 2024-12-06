@@ -191,7 +191,6 @@
     background: rgba(255,255,255,1);
   }
 
-  /* Navi Fairy */
   .navi {
     position: fixed;
     width: 30px;
@@ -201,9 +200,17 @@
     box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb;
     z-index: 999;
     pointer-events: none;
-    transition: transform 0.2s ease-out;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    animation: naviGlow 2s infinite alternate ease-in-out;
   }
 
+  @keyframes naviGlow {
+    0% { box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb; }
+    100% { box-shadow: 0 0 15px #fff, 0 0 25px #a1c4fd, 0 0 35px #6da2fb; }
+  }
+  
   @media (max-width: 600px) {
     h1 {
       font-size: 2.5rem;
@@ -334,15 +341,15 @@
   let naviTime = 0;
 
   function updateNavi() {
-    naviTime += 0.01;
-    // Navi's position based on scroll and random bobbing
-    // Let's tie navi's Y to scroll plus a sin bob
-    const y = window.scrollY + naviBaseY + Math.sin(naviTime * 2) * 20;
-    const x = window.innerWidth - naviOffsetX - 50; // near right side
-    navi.style.transform = `translate(${x}px, ${y}px)`;
+    naviTime += 0.02;
+    // As user scrolls, we adjust Navi to bob around the center area
+    const scrollY = window.scrollY;
+    // Let’s keep Navi somewhat centered but bob with scroll
+    const x = window.innerWidth / 2;
+    const y = (window.innerHeight / 2) + scrollY + Math.sin(naviTime * 2) * 30;
+    navi.style.transform = `translate(${x - 15}px, ${y - 15}px)`;
   }
 
-  // Start the navi animation loop
   function animateNavi() {
     updateNavi();
     requestAnimationFrame(animateNavi);
