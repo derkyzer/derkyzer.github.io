@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Exploring Ideas and Crafting Experiences</title>
+<style>
+    html, body {
+        margin: 0; padding: 0;
+        overflow: hidden;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        background: #0f0f0f;
+        color: #fff;
+        height: 100%;
+        width: 100%;
+    }
+    body {
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: flex-start;
+    }
+    /* Container for content */
+    .content-wrap {
+        position: relative;
+        z-index: 2;
+        width: 90%;
+        max-width: 800px;
+        margin-top: 15vh;
+        text-align: center;
+    }
+    h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        animation: fadeSlideIn 1s ease forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    p {
+        font-size: 1.1rem;
+        line-height: 1.5;
+        margin-bottom: 2rem;
+        opacity: 0;
+        animation: fadeInText 1.5s ease forwards;
+        animation-delay: 1s;
+    }
+
+    @keyframes fadeSlideIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInText {
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Projects Section */
+    .projects {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        max-width: 600px;
+        margin: 0 auto;
+        opacity: 0;
+        animation: fadeInText 1.5s ease forwards;
+        animation-delay: 2s;
+    }
+    .project {
+        background: rgba(255,255,255,0.05);
+        padding: 1rem;
+        border-radius: 8px;
+        transition: transform 0.3s, background 0.3s;
+    }
+    .project:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.1);
+    }
+    .project h2 {
+        margin-top: 0;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+    .project p {
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    /* Canvas overlay */
+    canvas {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+        h1 { font-size: 2rem; }
+        .projects {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="content-wrap">
+    <h1>Exploring Ideas and Crafting Experiences</h1>
+    <p>Welcome to my personal space online. Here you’ll find a collection of projects, experiments, and thoughts. Dive in, explore, and let’s see what we can create together.</p>
+    <div class="projects">
+        <div class="project">
+            <h2>Project Alpha</h2>
+            <p>A playful web experiment that pushes the boundaries of design and interaction.</p>
+        </div>
+        <div class="project">
+            <h2>Project Beta</h2>
+            <p>An immersive story-driven interface where content meets narrative flair.</p>
+        </div>
+        <div class="project">
+            <h2>Project Gamma</h2>
+            <p>An elegant solution for organizing and visualizing your creative workflow.</p>
+        </div>
+        <div class="project">
+            <h2>Project Delta</h2>
+            <p>A subtle and minimal tool focusing on simplicity, clarity, and speed.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple particle physics background
+    // Particles move with gentle gravity and respond to mouse movement.
+
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let mouse = { x: null, y: null };
+
+    // Resize canvas
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Particle constructor
+    function Particle(x, y, vx, vy, size, color) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.size = size;
+        this.color = color;
+    }
+
+    Particle.prototype.update = function() {
+        // Apply some gravity-like pull towards bottom
+        this.vy += 0.02;
+        
+        // Basic collision with floor
+        if (this.y + this.size > canvas.height) {
+            this.y = canvas.height - this.size;
+            this.vy *= -0.7; // bounce
+            this.vx *= 0.95; // friction
+        }
+
+        // Apply mouse attraction if close
+        if (mouse.x && mouse.y) {
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist < 150) {
+                // Simple repulsion
+                this.vx -= dx/dist * 0.1;
+                this.vy -= dy/dist * 0.1;
+            }
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+
+    Particle.prototype.draw = function() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
+
+    function initParticles() {
+        particles = [];
+        for (let i = 0; i < 50; i++) {
+            let x = Math.random()*canvas.width;
+            let y = Math.random()*canvas.height*0.5;
+            let vx = (Math.random()-0.5)*2;
+            let vy = Math.random()*2;
+            let size = Math.random()*5+3;
+            let color = 'rgba(255,255,255,'+(Math.random()*0.5+0.3)+')';
+            particles.push(new Particle(x, y, vx, vy, size, color));
+        }
+    }
+
+    initParticles();
+
+    function animate() {
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        for(let p of particles) {
+            p.update();
+            p.draw();
+        }
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    window.addEventListener('mousemove', function(e){
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+
+    window.addEventListener('touchmove', function(e){
+        let t = e.touches[0];
+        mouse.x = t.clientX;
+        mouse.y = t.clientY;
+    }, {passive: true});
+
+    window.addEventListener('touchend', function(e){
+        mouse.x = null; mouse.y = null;
+    });
+
+    window.addEventListener('mouseout', function(){
+        mouse.x = null; mouse.y = null;
+    });
+</script>
+
+</body>
+</html>
