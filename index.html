@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Hallo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <style>
   body {
     margin: 0;
@@ -12,7 +13,7 @@
                  Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     color: #fff;
     overflow-x: hidden;
-    background: linear-gradient(135deg, #fc466b, #3f5efb);
+    background: linear-gradient(135deg, #1a2a6c, #2d3436, #0f2027);
     background-size: 400% 400%;
     animation: bgShift 20s ease infinite;
     position: relative;
@@ -35,7 +36,17 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    z-index: 10;
+    z-index: 2;
+  }
+
+  #physics-world {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
   }
 
   h1 {
@@ -44,6 +55,7 @@
     letter-spacing: 0.05em;
     opacity: 0;
     animation: fadeSlide 1.5s forwards;
+    z-index: 2;
   }
 
   h2 {
@@ -53,6 +65,7 @@
     margin-bottom: 3rem;
     opacity: 0;
     animation: fadeSlide 1.5s 0.5s forwards;
+    z-index: 2;
   }
 
   @keyframes fadeSlide {
@@ -73,6 +86,7 @@
     justify-content: center;
     opacity: 0;
     animation: fadeSlide 1.5s 1s forwards;
+    z-index: 2;
   }
 
   .links a {
@@ -89,87 +103,16 @@
     border-bottom: 1px solid #fff;
   }
 
-  /* Parallax layers */
-  .parallax-layer {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: visible;
-  }
-
-  .layer {
-    position: absolute;
-    opacity: 0.6;
-    mix-blend-mode: screen;
-    transition: transform 0.1s ease-out, opacity 0.5s;
-  }
-
-  /* Example shapes */
-  .circle {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: #fff;
-  }
-
-  .square {
-    width: 120px;
-    height: 120px;
-    background: #fff;
-    border-radius: 10%;
-  }
-
-  .triangle {
-    width: 0;
-    height: 0;
-    border-left: 60px solid transparent;
-    border-right: 60px solid transparent;
-    border-bottom: 100px solid #fff;
-  }
-
-  /* Initial placement of shapes */
-  .circle.layer1 { 
-    top: 20%; 
-    left: 15%; 
-    transform: translateZ(0);
-  }
-  .square.layer1 { 
-    top: 65%; 
-    left: 75%; 
-    transform: translateZ(0);
-  }
-  .triangle.layer1 { 
-    top: 40%; 
-    left: 60%; 
-    transform: translateZ(0);
-  }
-
-  .circle.layer2 { 
-    top: 75%; 
-    left: 25%; 
-    transform: translateZ(0);
-  }
-  .square.layer2 { 
-    top: 15%; 
-    left: 80%; 
-    transform: translateZ(0);
-  }
-  .triangle.layer2 { 
-    top: 50%; 
-    left: 40%; 
-    transform: translateZ(0);
-  }
-
   /* Content sections */
   .content {
+    position: relative;
     padding: 100px 20px;
     max-width: 600px;
     margin: 0 auto;
     text-align: left;
     line-height: 1.6;
     color: #fff;
+    z-index: 2;
   }
 
   .content h3 {
@@ -179,12 +122,14 @@
 
   /* Additional bottom section */
   .bottom-section {
+    position: relative;
     padding: 100px 20px;
     max-width: 600px;
     margin: 0 auto 200px auto;
     text-align: left;
     line-height: 1.6;
     color: #fff;
+    z-index: 2;
   }
 
   .bottom-section h3 {
@@ -215,24 +160,66 @@
     background: rgba(255,255,255,1);
   }
 
+  /* Navi styles */
   .navi {
     position: fixed;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(161,196,253,0.8) 70%, rgba(109,162,251,0.7) 100%);
-    box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb;
-    z-index: 999;
     pointer-events: none;
-    opacity: 1;
-    transition: transform 0.3s ease-out;
-    will-change: transform;
-    display: block;
+    z-index: 999;
   }
 
-  @keyframes naviGlow {
-    0% { box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb; }
-    100% { box-shadow: 0 0 15px #fff, 0 0 25px #a1c4fd, 0 0 35px #6da2fb; }
+  .navi-orb {
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+    position: relative;
+  }
+
+  .navi-wing {
+    position: absolute;
+    width: 15px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50% 50% 0 50%;
+    transform-origin: 100% 50%;
+    animation: wingFlap 0.2s ease-in-out infinite alternate;
+  }
+
+  .navi-wing.left {
+    left: -14px;
+    transform: rotate(-30deg);
+  }
+
+  .navi-wing.right {
+    right: -14px;
+    transform: rotate(30deg) scaleX(-1);
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @keyframes wingFlap {
+    0% { transform: rotate(-30deg); }
+    100% { transform: rotate(-10deg); }
+  }
+
+  @keyframes sparkleFloat {
+    0% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translate(var(--tx), var(--ty)) scale(0);
+      opacity: 0;
+    }
   }
 
   @media (max-width: 600px) {
@@ -243,21 +230,9 @@
 </style>
 </head>
 <body>
+<canvas id="physics-world"></canvas>
 
 <div class="hero">
-  <!-- Parallax Layers -->
-  <div class="parallax-layer layer1">
-    <div class="layer circle"></div>
-    <div class="layer square"></div>
-    <div class="layer triangle"></div>
-  </div>
-
-  <div class="parallax-layer layer2">
-    <div class="layer circle"></div>
-    <div class="layer square"></div>
-    <div class="layer triangle"></div>
-  </div>
-
   <h1>Hallo, I'm derKyzer</h1>
   <h2>Exploring ideas and crafting experiences</h2>
   <div class="links">
@@ -273,8 +248,8 @@
   <h3>About My Work</h3>
   <p>
     Here's some placeholder text to give you a reason to scroll. As you move
-    through this page, notice how the shapes in the hero section respond
-    subtly to your scroll movements, and gradually fade away as you scroll down.
+    through this page, notice how the shapes float and interact with each other.
+    Try scrolling to see them react!
   </p>
   <p>
     The shapes add depth and interest without distracting from the content.
@@ -297,92 +272,220 @@
 
 <button class="back-to-top" id="backToTop">↑</button>
 
-<div class="navi" id="navi"></div>
+<div class="navi">
+  <div class="navi-wing left"></div>
+  <div class="navi-orb"></div>
+  <div class="navi-wing right"></div>
+</div>
 
 <script>
-  const layers = document.querySelectorAll('.parallax-layer');
-  let scrollY = 0;
-  let mouseX = 0, mouseY = 0;
+// Matter.js setup
+const Engine = Matter.Engine,
+      Render = Matter.Render,
+      Runner = Matter.Runner,
+      Bodies = Matter.Bodies,
+      Body = Matter.Body,
+      Composite = Matter.Composite;
+
+// Create engine and world
+const engine = Engine.create({
+  gravity: { x: 0, y: 0 }
+});
+const world = engine.world;
+
+// Create renderer
+const canvas = document.getElementById('physics-world');
+const render = Render.create({
+  canvas: canvas,
+  engine: engine,
+  options: {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    wireframes: false,
+    background: 'transparent'
+  }
+});
+
+// Create boundaries
+const wallThickness = 50;
+const walls = [
+  Bodies.rectangle(window.innerWidth/2, -wallThickness/2, window.innerWidth, wallThickness, { isStatic: true }), // Top
+  Bodies.rectangle(window.innerWidth/2, window.innerHeight + wallThickness/2, window.innerWidth, wallThickness, { isStatic: true }), // Bottom
+  Bodies.rectangle(-wallThickness/2, window.innerHeight/2, wallThickness, window.innerHeight, { isStatic: true }), // Left
+  Bodies.rectangle(window.innerWidth + wallThickness/2, window.innerHeight/2, wallThickness, window.innerHeight, { isStatic: true }) // Right
+];
+Composite.add(world, walls);
+
+// Function to create shapes
+function createShape(type, x, y) {
+  let body;
+  const options = {
+    render: {
+      fillStyle: `rgba(255, 255, 255, ${0.15 + Math.random() * 0.15})`,
+      strokeStyle: 'rgba(255, 255, 255, 0.1)',
+      lineWidth: 1
+    },
+    frictionAir: 0.02,
+    restitution: 0.8,
+    density: 0.001
+  };
+
+  switch(type) {
+    case 'circle':
+      const radius = 40 + Math.random() * 80;
+      body = Bodies.circle(x, y, radius, options);
+      break;
+    case 'square':
+      const size = 60 + Math.random() * 100;
+      body = Bodies.rectangle(x, y, size, size, options);
+      break;
+    case 'triangle':
+      const width = 80 + Math.random() * 120;
+      body = Bodies.polygon(x, y, 3, width/2, options);
+      break;
+  }
+
+  return body;
+}
+
+// Create multiple shapes
+const shapes = [];
+const shapeTypes = ['circle', 'square', 'triangle'];
+for(let i = 0; i < 15; i++) {
+  const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+  const x = Math.random() * window.innerWidth;
+  const y = Math.random() * window.innerHeight;
+  shapes.push(createShape(type, x, y));
+}
+Composite.add(world, shapes);
+
+// Add gentle force to shapes periodically
+setInterval(() => {
+  shapes.forEach(shape => {
+    const force = {
+      x: (Math.random() - 0.5) * 0.0005,
+      y: (Math.random() - 0.5) * 0.0005
+    };
+    Body.applyForce(shape, shape.position, force);
+  });
+}, 1000);
+
+// Handle scroll interaction
+let lastScrollY = window.scrollY;
+document.addEventListener('scroll', () => {
+  const scrollDelta = window.scrollY - lastScrollY;
+  lastScrollY = window.scrollY;
   
-  // Increased layer speeds for more noticeable effect
-  const layerSpeeds = [0.05, 0.08]; 
-
-  // Update parallax on scroll
-  document.addEventListener('scroll', () => {
-    scrollY = window.scrollY;
-    requestAnimationFrame(() => {
-      updateParallax();
-      fadeShapes();
-      updateNavi();
+  shapes.forEach(shape => {
+    // Apply force based on scroll direction
+    Body.applyForce(shape, shape.position, {
+      x: 0,
+      y: scrollDelta * 0.0001
     });
+
+    // Fade based on scroll position
+    const fadePoint = 400;
+    const opacity = Math.max(1 - (window.scrollY / fadePoint), 0);
+    shape.render.opacity = opacity * 0.3;
   });
+});
 
-  // Enhanced mouse movement effect
-  document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth) - 0.5; 
-    mouseY = (e.clientY / window.innerHeight) - 0.5;
-    requestAnimationFrame(updateParallax);
-  });
+// Handle touch/mouse movement
+let lastTouchX = 0;
+let lastTouchY = 0;
 
-  function updateParallax() {
-    layers.forEach((layer, index) => {
-      const shapes = layer.querySelectorAll('.layer');
-      shapes.forEach((shape) => {
-        const offsetX = mouseX * 150 * (index + 1) * layerSpeeds[index];
-        const offsetY = (-scrollY * 0.15 * (index + 1)) + (mouseY * 100 * layerSpeeds[index]);
-        shape.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
-      });
-    });
-  }
-
-  function fadeShapes() {
-    const fadePoint = 600; // Increased fade distance
-    const opacity = Math.max(1 - (scrollY / fadePoint), 0);
-    layers.forEach(layer => {
-      const shapes = layer.querySelectorAll('.layer');
-      shapes.forEach(shape => {
-        shape.style.opacity = opacity * 0.6; // Maintain max opacity of 0.6
-      });
-    });
-  }
-
-  // Back to top button
-  const backToTop = document.getElementById('backToTop');
-  backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
-  // Enhanced Navi animation
-  const navi = document.getElementById('navi');
-  let naviTime = 0;
+document.addEventListener('touchmove', (e) => {
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - lastTouchX;
+  const deltaY = touch.clientY - lastTouchY;
   
-  function updateNavi() {
-    naviTime += 0.02;
-    const scrollY = window.scrollY;
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
+  shapes.forEach(shape => {
+    const dx = shape.position.x - touch.clientX;
+    const dy = shape.position.y - touch.clientY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Create a floating motion pattern
-    const floatX = Math.sin(naviTime * 1.5) * 30;
-    const floatY = Math.cos(naviTime * 2) * 20;
-    
-    // Position Navi relative to viewport
-    const x = (viewportWidth / 2) + floatX;
-    const y = (viewportHeight / 2) + floatY + scrollY;
-    
-    navi.style.transform = `translate3d(${x - 15}px, ${y - 15}px, 0)`;
-  }
+    if (distance < 100) {
+      Body.applyForce(shape, shape.position, {
+        x: deltaX * 0.0001,
+        y: deltaY * 0.0001
+      });
+    }
+  });
+  
+  lastTouchX = touch.clientX;
+  lastTouchY = touch.clientY;
+});
 
-  function animateNavi() {
-    updateNavi();
-    requestAnimationFrame(animate);
-  }
-  animate();
+// Navi animation
+const navi = document.querySelector('.navi');
+const leftWing = document.querySelector('.navi-wing.left');
+const rightWing = document.querySelector('.navi-wing.right');
+let naviX = window.innerWidth / 2;
+let naviY = window.innerHeight / 2;
+let targetX = naviX;
+let targetY = naviY;
+let sparkles = [];
 
-  // Initial calls
-  updateParallax();
-  fadeShapes();
-  updateNavi();
+function createSparkle() {
+  const sparkle = document.createElement('div');
+  sparkle.className = 'sparkle';
+  sparkle.style.left = '6px';
+  sparkle.style.top = '6px';
+  
+  const angle = Math.random() * Math.PI * 2;
+  const distance = 20 + Math.random() * 30;
+  const tx = Math.cos(angle) * distance;
+  const ty = Math.sin(angle) * distance;
+  
+  sparkle.style.setProperty('--tx', `${tx}px`);
+  sparkle.style.setProperty('--ty', `${ty}px`);
+  sparkle.style.animation = 'sparkleFloat 1s ease-out forwards';
+  
+  navi.appendChild(sparkle);
+  setTimeout(() => sparkle.remove(), 1000);
+}
+
+function updateNavi() {
+  // Update target position
+  const time = Date.now() * 0.001;
+  targetX = window.innerWidth * (0.3 + 0.4 * (Math.sin(time * 0.5) + 1) / 2);
+  targetY = window.innerHeight * (0.3 + 0.4 * (Math.cos(time * 0.7) + 1) / 2) + window.scrollY;
+  
+  // Smooth movement
+  naviX += (targetX - naviX) * 0.05;
+  naviY += (targetY - naviY) * 0.05;
+  
+  navi.style.transform = `translate(${naviX}px, ${naviY}px)`;
+  
+  // Create sparkles
+  if (Math.random() < 0.3) createSparkle();
+  
+  requestAnimationFrame(updateNavi);
+}
+
+// Run the engine and animations
+Runner.run(engine);
+Render.run(render);
+updateNavi();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  render.canvas.width = window.innerWidth;
+  render.canvas.height = window.innerHeight;
+  Render.setPixelRatio(render, window.devicePixelRatio);
+  
+  // Update wall positions
+  Body.setPosition(walls[0], { x: window.innerWidth/2, y: -wallThickness/2 });
+  Body.setPosition(walls[1], { x: window.innerWidth/2, y: window.innerHeight + wallThickness/2 });
+  Body.setPosition(walls[2], { x: -wallThickness/2, y: window.innerHeight/2 });
+  Body.setPosition(walls[3], { x: window.innerWidth + wallThickness/2, y: window.innerHeight/2 });
+});
+
+// Back to top button
+const backToTop = document.getElementById('backToTop');
+backToTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 </script>
 
 </body>
