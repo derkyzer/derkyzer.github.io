@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Enhanced Splash Page</title>
+<title>Hallo</title>
 <style>
   body {
     margin: 0;
@@ -130,13 +130,37 @@
   }
 
   /* Initial placement of shapes */
-  .circle.layer1 { top: 20%; left: 10%; }
-  .square.layer1 { top: 70%; left: 80%; }
-  .triangle.layer1 { top: 50%; left: 45%; }
+  .circle.layer1 { 
+    top: 20%; 
+    left: 15%; 
+    transform: translateZ(0);
+  }
+  .square.layer1 { 
+    top: 65%; 
+    left: 75%; 
+    transform: translateZ(0);
+  }
+  .triangle.layer1 { 
+    top: 40%; 
+    left: 60%; 
+    transform: translateZ(0);
+  }
 
-  .circle.layer2 { top: 30%; left: 70%; }
-  .square.layer2 { top: 10%; left: 20%; }
-  .triangle.layer2 { top: 80%; left: 60%; }
+  .circle.layer2 { 
+    top: 75%; 
+    left: 25%; 
+    transform: translateZ(0);
+  }
+  .square.layer2 { 
+    top: 15%; 
+    left: 80%; 
+    transform: translateZ(0);
+  }
+  .triangle.layer2 { 
+    top: 50%; 
+    left: 40%; 
+    transform: translateZ(0);
+  }
 
   /* Content sections */
   .content {
@@ -196,21 +220,21 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: radial-gradient(circle, #fff 0%, #a1c4fd 70%, #6da2fb 100%);
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(161,196,253,0.8) 70%, rgba(109,162,251,0.7) 100%);
     box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb;
     z-index: 999;
     pointer-events: none;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    animation: naviGlow 2s infinite alternate ease-in-out;
+    opacity: 1;
+    transition: transform 0.3s ease-out;
+    will-change: transform;
+    display: block;
   }
 
   @keyframes naviGlow {
     0% { box-shadow: 0 0 10px #fff, 0 0 20px #a1c4fd, 0 0 30px #6da2fb; }
     100% { box-shadow: 0 0 15px #fff, 0 0 25px #a1c4fd, 0 0 35px #6da2fb; }
   }
-  
+
   @media (max-width: 600px) {
     h1 {
       font-size: 2.5rem;
@@ -234,7 +258,7 @@
     <div class="layer triangle"></div>
   </div>
 
-  <h1>Hello, I'm Kyzer</h1>
+  <h1>Hallo, I'm derKyzer</h1>
   <h2>Exploring ideas and crafting experiences</h2>
   <div class="links">
     <a href="https://github.com/derkyzer" target="_blank" rel="noopener noreferrer">
@@ -254,8 +278,7 @@
   </p>
   <p>
     The shapes add depth and interest without distracting from the content.
-    Keep scrolling to see more features and eventually a “Navi” styled fairy
-    that hovers near your viewport. There's also a convenient back-to-top
+    Keep scrolling to see more features. There's also a convenient back-to-top
     button in the bottom right corner.
   </p>
 </div>
@@ -268,8 +291,7 @@
   </p>
   <p>
     Notice as you scroll back up, you can use the back-to-top button to 
-    smoothly return to the top. The fairy hovers around, giving the page
-    a whimsical feel.
+    smoothly return to the top.
   </p>
 </div>
 
@@ -282,44 +304,44 @@
   let scrollY = 0;
   let mouseX = 0, mouseY = 0;
   
-  // Speeds for layers
-  const layerSpeeds = [0.03, 0.06]; 
+  // Increased layer speeds for more noticeable effect
+  const layerSpeeds = [0.05, 0.08]; 
 
   // Update parallax on scroll
   document.addEventListener('scroll', () => {
     scrollY = window.scrollY;
-    updateParallax();
-    fadeShapes();
-    updateNavi();
+    requestAnimationFrame(() => {
+      updateParallax();
+      fadeShapes();
+      updateNavi();
+    });
   });
 
-  // Slight mouse effect on desktop (not dragging, just subtle offset)
+  // Enhanced mouse movement effect
   document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth) - 0.5; 
     mouseY = (e.clientY / window.innerHeight) - 0.5;
-    updateParallax();
+    requestAnimationFrame(updateParallax);
   });
 
   function updateParallax() {
     layers.forEach((layer, index) => {
       const shapes = layer.querySelectorAll('.layer');
       shapes.forEach((shape) => {
-        const offsetX = mouseX * 100 * (index+1) * layerSpeeds[index];
-        const offsetY = (- scrollY * 0.1 * (index+1));
-        shape.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        const offsetX = mouseX * 150 * (index + 1) * layerSpeeds[index];
+        const offsetY = (-scrollY * 0.15 * (index + 1)) + (mouseY * 100 * layerSpeeds[index]);
+        shape.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
       });
     });
   }
 
   function fadeShapes() {
-    // As we scroll down, fade out shapes
-    // Let's say by the time we scroll 400px, shapes are gone
-    const fadePoint = 400;
+    const fadePoint = 600; // Increased fade distance
     const opacity = Math.max(1 - (scrollY / fadePoint), 0);
     layers.forEach(layer => {
       const shapes = layer.querySelectorAll('.layer');
       shapes.forEach(shape => {
-        shape.style.opacity = opacity;
+        shape.style.opacity = opacity * 0.6; // Maintain max opacity of 0.6
       });
     });
   }
@@ -330,31 +352,32 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Navi Fairy
+  // Enhanced Navi animation
   const navi = document.getElementById('navi');
-  let naviBaseY = 150; // Base y offset from top of viewport
-  let naviOffsetX = 50; // x offset from right or left side
-  // We'll let Navi float near the right center of viewport
-  // We'll animate navi using requestAnimationFrame
-
-  let lastScrollY = 0;
   let naviTime = 0;
-
+  
   function updateNavi() {
     naviTime += 0.02;
-    // As user scrolls, we adjust Navi to bob around the center area
     const scrollY = window.scrollY;
-    // Let’s keep Navi somewhat centered but bob with scroll
-    const x = window.innerWidth / 2;
-    const y = (window.innerHeight / 2) + scrollY + Math.sin(naviTime * 2) * 30;
-    navi.style.transform = `translate(${x - 15}px, ${y - 15}px)`;
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Create a floating motion pattern
+    const floatX = Math.sin(naviTime * 1.5) * 30;
+    const floatY = Math.cos(naviTime * 2) * 20;
+    
+    // Position Navi relative to viewport
+    const x = (viewportWidth / 2) + floatX;
+    const y = (viewportHeight / 2) + floatY + scrollY;
+    
+    navi.style.transform = `translate3d(${x - 15}px, ${y - 15}px, 0)`;
   }
 
   function animateNavi() {
     updateNavi();
-    requestAnimationFrame(animateNavi);
+    requestAnimationFrame(animate);
   }
-  animateNavi();
+  animate();
 
   // Initial calls
   updateParallax();
