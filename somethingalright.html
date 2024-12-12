@@ -3,9 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Dynamic Page</title>
+    <title>Dynamic HTML Page Generator</title>
     <style>
-        #dynamicContent {
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        #output {
             margin-top: 20px;
             padding: 10px;
             border: 1px solid #ddd;
@@ -14,43 +29,96 @@
     </style>
 </head>
 <body>
-    <main>
-        <h1>Google Assistant Dynamic Page Test</h1>
-        <button id="generateContent">Generate New Content</button>
-        <section id="container" aria-live="polite">
-            <article id="dynamicContent" tabindex="0">
-                Initial content: Click the button to load new content.
-            </article>
-        </section>
-    </main>
+    <h1>Dynamic HTML Page Generator</h1>
+
+    <textarea id="clipboard" placeholder="Paste your text here..."></textarea>
+    
+    <div>
+        <button id="displayOnPage">Display on Page</button>
+        <button id="readTextboxAloud">Read Textbox Aloud</button>
+        <button id="generateBlob">Generate Blob</button>
+        <button id="downloadHTML">Download as HTML</button>
+        <button id="readDisplayedPage">Read Displayed Page Aloud</button>
+    </div>
+
+    <div id="output" tabindex="0" aria-live="polite">Content will be displayed here...</div>
 
     <script>
-        // Function to dynamically generate new content
-        function generateDynamicContent() {
-            const dynamicContent = document.querySelector('#dynamicContent');
-            
-            // Simulate new content creation
-            const newContent = 'This is the newly generated dynamic content that Google Assistant should be able to read.';
-            dynamicContent.innerHTML = newContent;
+        // Function to display text on the page
+        document.querySelector('#displayOnPage').addEventListener('click', () => {
+            const text = document.querySelector('#clipboard').value.trim();
+            if (text) {
+                const formattedContent = `<p>${text.replace(/\n/g, '</p><p>')}</p>`;
+                const outputDiv = document.querySelector('#output');
+                outputDiv.innerHTML = formattedContent;
+                outputDiv.focus(); // Set focus for assistive technologies
+            } else {
+                alert('Please paste some text in the text area!');
+            }
+        });
 
-            // Focus on new content for assistive tech
-            dynamicContent.focus();
+        // Function to read textbox content aloud
+        document.querySelector('#readTextboxAloud').addEventListener('click', () => {
+            const text = document.querySelector('#clipboard').value.trim();
+            if (text) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('Please paste some text in the text area!');
+            }
+        });
 
-            // Log for debugging
-            console.log('Dynamic content updated:', newContent);
+        // Function to generate an HTML blob
+        document.querySelector('#generateBlob').addEventListener('click', () => {
+            const text = document.querySelector('#clipboard').value.trim();
+            if (text) {
+                const formattedContent = `<p>${text.replace(/\n/g, '</p><p>')}</p>`;
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Generated HTML</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            p { margin-bottom: 1em; }
+                        </style>
+                    </head>
+                    <body>
+                        ${formattedContent}
+                    </body>
+                    </html>`;
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                window.generatedBlob = blob; // Save blob for downloading
+                alert('HTML Blob generated successfully!');
+            } else {
+                alert('Please paste some text in the text area!');
+            }
+        });
 
-            // Optional: Trigger fallback Text-to-Speech (debugging)
-            triggerTTS(newContent);
-        }
+        // Function to download HTML blob as a file
+        document.querySelector('#downloadHTML').addEventListener('click', () => {
+            if (window.generatedBlob) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(window.generatedBlob);
+                link.download = 'generated.html';
+                link.click();
+            } else {
+                alert('Please generate the blob first!');
+            }
+        });
 
-        // Attach click event to button
-        document.querySelector('#generateContent').addEventListener('click', generateDynamicContent);
-
-        // Fallback Text-to-Speech Function
-        function triggerTTS(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            speechSynthesis.speak(utterance);
-        }
+        // Function to read displayed content aloud
+        document.querySelector('#readDisplayedPage').addEventListener('click', () => {
+            const displayedText = document.querySelector('#output').innerText.trim();
+            if (displayedText) {
+                const utterance = new SpeechSynthesisUtterance(displayedText);
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('No content to read! Display some text first.');
+            }
+        });
     </script>
 </body>
 </html>
