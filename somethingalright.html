@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Content with Google Assistant</title>
+    <style>
+        #dynamicContent {
+            visibility: visible;
+            display: block;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section id="container" aria-live="polite">
+            <article id="dynamicContent" tabindex="0">
+                Click the button to generate content.
+            </article>
+        </section>
+        <button id="generateContent">Generate Content</button>
+    </main>
+
+    <script>
+        // MutationObserver to notify changes in the DOM
+        const container = document.querySelector('#container');
+        const config = { childList: true, subtree: true };
+
+        const observer = new MutationObserver(() => {
+            console.log('DOM updated. Content should now be readable.');
+            // Optional: Set focus to the updated content
+            const dynamicContent = document.querySelector('#dynamicContent');
+            if (dynamicContent) dynamicContent.focus();
+        });
+
+        observer.observe(container, config);
+
+        // Button click handler to dynamically update content
+        document.querySelector('#generateContent').addEventListener('click', () => {
+            // Dynamically load content
+            const dynamicContent = document.querySelector('#dynamicContent');
+            dynamicContent.innerHTML = 'This is dynamically generated content. Google Assistant should recognize it now.';
+            
+            // Log for debugging
+            console.log('Content updated:', dynamicContent.innerText);
+        });
+    </script>
+</body>
+</html>
