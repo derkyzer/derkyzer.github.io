@@ -3,90 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dynamic Page Generator</title>
-<style>
-    html, body {
-        margin: 0; padding: 0;
-        font-family: "Helvetica Neue", Arial, sans-serif;
-        background: #0f0f0f;
-        color: #fff;
-        min-height: 100%;
-        width: 100%;
-    }
-
-    body {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 2rem;
-    }
-
-    textarea {
-        width: 90%;
-        max-width: 600px;
-        height: 150px;
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 1rem;
-        font-size: 1rem;
-    }
-
-    button {
-        background: #fff;
-        color: #000;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-        margin: 0.5rem;
-        transition: background 0.3s;
-    }
-
-    button:hover {
-        background: #eee;
-    }
-
-    iframe {
-        width: 100%;
-        height: 70vh;
-        margin-top: 1rem;
-        border: none;
-        background: #1a1a1a;
-        border-radius: 8px;
-    }
-</style>
-</head>
-<body>
-
-<h1>Dynamic Page Generator</h1>
-<textarea id="inputText" placeholder="Enter your text here (use ### for sections, * for bullet points, etc.)"></textarea>
-<div>
-    <button id="generatePage">Generate Page</button>
-    <button id="downloadHtml">Download as HTML</button>
-    <button id="copyHtml">Copy HTML to Clipboard</button>
-</div>
-<iframe id="preview"></iframe>
-
-<script>
-    const inputText = document.getElementById('inputText');
-    const preview = document.getElementById('preview');
-    const generatePageButton = document.getElementById('generatePage');
-    const downloadHtmlButton = document.getElementById('downloadHtml');
-    const copyHtmlButton = document.getElementById('copyHtml');
-
-    // Helper function to generate styled HTML
-    function generateStyledHtml(content) {
-        return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Generated Page</title>
+<title>Clipboard to HTML Converter</title>
 <style>
     html, body {
         margin: 0; padding: 0;
@@ -99,101 +16,126 @@
 
     .content {
         position: relative;
+        z-index: 2;
         width: 90%;
         max-width: 800px;
         margin: 0 auto;
-        padding: 5vh 0;
+        padding-top: 15vh;
     }
 
-    section {
-        padding: 8vh 0;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    section:last-of-type {
-        border-bottom: none;
-    }
-
-    h1, h2, h3 {
-        margin-top: 0;
-        text-align: center;
-    }
-
-    p, ul {
-        font-size: 1.1rem;
-        line-height: 1.5;
-        margin: 0 auto;
-        max-width: 600px;
-        text-align: center;
-    }
-
-    ul {
-        list-style: none;
-        padding: 0;
-    }
-    ul li::before {
-        content: "•";
+    textarea {
+        width: 100%;
+        height: 150px;
+        margin-bottom: 1rem;
+        background: rgba(255,255,255,0.1);
+        border: none;
         color: #fff;
-        margin-right: 0.5rem;
+        font-size: 1rem;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    button {
+        margin: 0.5rem 0;
+        padding: 0.75rem;
+        background: #fff;
+        color: #000;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    button:hover {
+        background: #eee;
+    }
+
+    .output-container {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
     }
 </style>
 </head>
 <body>
-    <div class="content">
-        ${content}
-    </div>
+
+<div class="content">
+    <h1>Clipboard to HTML Converter</h1>
+    <textarea id="inputText" placeholder="Paste your text here..."></textarea>
+    <button onclick="displayText()">Print Text Below</button>
+    <button onclick="createBlob()">Create Blob</button>
+    <button onclick="downloadAsHTML()">Download as HTML</button>
+    <button onclick="copyToClipboard()">Copy Text Back to Clipboard</button>
+
+    <div id="output" class="output-container" hidden></div>
+</div>
+
+<script>
+    function displayText() {
+        const input = document.getElementById('inputText').value;
+        const output = document.getElementById('output');
+        output.hidden = false;
+        output.innerHTML = `<h2>Output:</h2><p>${input.replace(/\n/g, '<br>')}</p>`;
+    }
+
+    function createBlob() {
+        const input = document.getElementById('inputText').value;
+        const blob = new Blob([generateHTML(input)], { type: "text/html" });
+        const blobURL = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobURL;
+        link.target = "_blank";
+        link.innerText = "Open Generated HTML";
+        document.getElementById('output').hidden = false;
+        document.getElementById('output').innerHTML = `<h2>Blob Generated:</h2>`;
+        document.getElementById('output').appendChild(link);
+    }
+
+    function downloadAsHTML() {
+        const input = document.getElementById('inputText').value;
+        const blob = new Blob([generateHTML(input)], { type: "text/html" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "generated.html";
+        link.click();
+    }
+
+    function copyToClipboard() {
+        const input = document.getElementById('inputText').value;
+        navigator.clipboard.writeText(input).then(() => {
+            alert("Text copied to clipboard!");
+        });
+    }
+
+    function generateHTML(content) {
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generated Page</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #0f0f0f;
+        color: #fff;
+        padding: 20px;
+        line-height: 1.6;
+    }
+    h1 {
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+    <h1>Generated Content</h1>
+    <p>${content.replace(/\n/g, '<br>')}</p>
 </body>
 </html>
         `;
     }
-
-    // Convert input text into formatted HTML
-    function convertToHtml(text) {
-        const lines = text.trim().split("\n");
-        let html = "";
-
-        lines.forEach(line => {
-            if (line.startsWith("###")) {
-                html += `<h2>${line.slice(3).trim()}</h2>`;
-            } else if (line.startsWith("*")) {
-                if (!html.endsWith("</ul>")) html += "<ul>";
-                html += `<li>${line.slice(1).trim()}</li>`;
-                if (!lines[lines.indexOf(line) + 1]?.startsWith("*")) html += "</ul>";
-            } else {
-                html += `<p>${line.trim()}</p>`;
-            }
-        });
-
-        return html;
-    }
-
-    // Generate the page in the iframe
-    generatePageButton.addEventListener('click', () => {
-        const content = convertToHtml(inputText.value);
-        const styledHtml = generateStyledHtml(content);
-        preview.srcdoc = styledHtml;
-    });
-
-    // Download as HTML
-    downloadHtmlButton.addEventListener('click', () => {
-        const content = convertToHtml(inputText.value);
-        const styledHtml = generateStyledHtml(content);
-        const blob = new Blob([styledHtml], { type: 'text/html' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'generated_page.html';
-        link.click();
-    });
-
-    // Copy HTML to clipboard
-    copyHtmlButton.addEventListener('click', () => {
-        const content = convertToHtml(inputText.value);
-        const styledHtml = generateStyledHtml(content);
-        navigator.clipboard.writeText(styledHtml).then(() => {
-            alert("HTML copied to clipboard!");
-        }).catch(err => {
-            console.error("Error copying HTML: ", err);
-        });
-    });
 </script>
 
 </body>
