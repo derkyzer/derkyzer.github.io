@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Text to Webpage Converter</title>
+<title>Dynamic Page Generator</title>
 <style>
     html, body {
         margin: 0; padding: 0;
         font-family: "Helvetica Neue", Arial, sans-serif;
         background: #0f0f0f;
         color: #fff;
-        height: 100%;
+        min-height: 100%;
+        width: 100%;
     }
 
     body {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 1rem;
         padding: 2rem;
     }
 
@@ -42,6 +42,7 @@
         border-radius: 4px;
         cursor: pointer;
         font-size: 1rem;
+        margin: 0.5rem;
         transition: background 0.3s;
     }
 
@@ -49,97 +50,151 @@
         background: #eee;
     }
 
-    .output {
-        width: 90%;
-        max-width: 600px;
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
+    iframe {
+        width: 100%;
+        height: 70vh;
+        margin-top: 1rem;
+        border: none;
+        background: #1a1a1a;
         border-radius: 8px;
-        padding: 1rem;
-        word-wrap: break-word;
-        overflow-wrap: anywhere;
-        font-size: 1rem;
     }
 </style>
 </head>
 <body>
 
-<h1>Text to Webpage Converter</h1>
-<textarea id="inputText" placeholder="Paste your text here..."></textarea>
+<h1>Dynamic Page Generator</h1>
+<textarea id="inputText" placeholder="Enter your text here (use ### for sections, * for bullet points, etc.)"></textarea>
 <div>
-    <button id="generatePage">Print Below</button>
-    <button id="createBlob">Create Blob</button>
+    <button id="generatePage">Generate Page</button>
     <button id="downloadHtml">Download as HTML</button>
-    <button id="copyText">Copy Back to Clipboard</button>
+    <button id="copyHtml">Copy HTML to Clipboard</button>
 </div>
-<div class="output" id="outputText"></div>
+<iframe id="preview"></iframe>
 
 <script>
     const inputText = document.getElementById('inputText');
-    const outputText = document.getElementById('outputText');
+    const preview = document.getElementById('preview');
     const generatePageButton = document.getElementById('generatePage');
-    const createBlobButton = document.getElementById('createBlob');
     const downloadHtmlButton = document.getElementById('downloadHtml');
-    const copyTextButton = document.getElementById('copyText');
+    const copyHtmlButton = document.getElementById('copyHtml');
 
-    // Print text below
+    // Helper function to generate styled HTML
+    function generateStyledHtml(content) {
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Generated Page</title>
+<style>
+    html, body {
+        margin: 0; padding: 0;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        background: #0f0f0f;
+        color: #fff;
+        min-height: 100%;
+        width: 100%;
+    }
+
+    .content {
+        position: relative;
+        width: 90%;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 5vh 0;
+    }
+
+    section {
+        padding: 8vh 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    section:last-of-type {
+        border-bottom: none;
+    }
+
+    h1, h2, h3 {
+        margin-top: 0;
+        text-align: center;
+    }
+
+    p, ul {
+        font-size: 1.1rem;
+        line-height: 1.5;
+        margin: 0 auto;
+        max-width: 600px;
+        text-align: center;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+    ul li::before {
+        content: "•";
+        color: #fff;
+        margin-right: 0.5rem;
+    }
+</style>
+</head>
+<body>
+    <div class="content">
+        ${content}
+    </div>
+</body>
+</html>
+        `;
+    }
+
+    // Convert input text into formatted HTML
+    function convertToHtml(text) {
+        const lines = text.trim().split("\n");
+        let html = "";
+
+        lines.forEach(line => {
+            if (line.startsWith("###")) {
+                html += `<h2>${line.slice(3).trim()}</h2>`;
+            } else if (line.startsWith("*")) {
+                if (!html.endsWith("</ul>")) html += "<ul>";
+                html += `<li>${line.slice(1).trim()}</li>`;
+                if (!lines[lines.indexOf(line) + 1]?.startsWith("*")) html += "</ul>";
+            } else {
+                html += `<p>${line.trim()}</p>`;
+            }
+        });
+
+        return html;
+    }
+
+    // Generate the page in the iframe
     generatePageButton.addEventListener('click', () => {
-        const content = inputText.value.trim();
-        outputText.innerText = content || "Your generated content will appear here.";
-    });
-
-    // Create blob
-    createBlobButton.addEventListener('click', () => {
-        const content = inputText.value.trim();
-        if (content) {
-            const blob = new Blob([content], { type: 'text/plain' });
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-        } else {
-            alert("Please enter text to create a blob.");
-        }
+        const content = convertToHtml(inputText.value);
+        const styledHtml = generateStyledHtml(content);
+        preview.srcdoc = styledHtml;
     });
 
     // Download as HTML
     downloadHtmlButton.addEventListener('click', () => {
-        const content = inputText.value.trim();
-        if (content) {
-            const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generated Page</title>
-</head>
-<body>
-    <div>${content.replace(/\n/g, '<br />')}</div>
-</body>
-</html>
-            `;
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'generated_page.html';
-            link.click();
-        } else {
-            alert("Please enter text to download as HTML.");
-        }
+        const content = convertToHtml(inputText.value);
+        const styledHtml = generateStyledHtml(content);
+        const blob = new Blob([styledHtml], { type: 'text/html' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'generated_page.html';
+        link.click();
     });
 
-    // Copy back to clipboard
-    copyTextButton.addEventListener('click', () => {
-        const content = inputText.value.trim();
-        if (content) {
-            navigator.clipboard.writeText(content).then(() => {
-                alert("Text copied to clipboard!");
-            }).catch(err => {
-                console.error("Error copying text: ", err);
-            });
-        } else {
-            alert("Please enter text to copy to clipboard.");
-        }
+    // Copy HTML to clipboard
+    copyHtmlButton.addEventListener('click', () => {
+        const content = convertToHtml(inputText.value);
+        const styledHtml = generateStyledHtml(content);
+        navigator.clipboard.writeText(styledHtml).then(() => {
+            alert("HTML copied to clipboard!");
+        }).catch(err => {
+            console.error("Error copying HTML: ", err);
+        });
     });
 </script>
+
 </body>
 </html>
