@@ -13,30 +13,21 @@ html, body {
   background: #121212;
   color: #ffffff;
   height: 100%;
+  overflow-y: scroll;
 }
 
+/* Default dark mode colors */
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
   --footer-bg: #1c1c1c;
-  --drawer-bg: #0f0f0f; /* Slightly darker drawer background */
+  --drawer-bg: #0f0f0f;
 }
 
-/* Dark mode by default */
 body {
   background: var(--bg-color);
   color: var(--text-color);
-}
-
-body.scrolled .remove-on-scroll {
-  display: none;
-}
-
-/* Drawer open state: shift main and footer down */
-body.drawer-open main,
-body.drawer-open footer {
-  margin-top: 200px;
-  transition: margin-top 0.3s ease;
+  transition: background 0.3s, color 0.3s;
 }
 
 /* Title Bar */
@@ -49,44 +40,35 @@ body.drawer-open footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  transition: background 0.3s;
 }
 
-/* Hero Logo:
-   Initially large and centered.
-   On scroll, move into title bar and shorten to KZR. */
+/* Hero Text (KYZER) Behavior */
 .hero-logo {
   font-weight: bold;
   transition: all 0.3s ease;
 }
 
-/* Before scroll: Large and centered in viewport */
+/* Large and centered initially */
 body:not(.scrolled) .hero-logo {
-  position: fixed;
-  top: 50%; left: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   font-size: 64px;
 }
 
-/* After scroll: inside title bar, smaller, remove Y and E */
+/* Smaller and in title bar after scrolling */
 body.scrolled .hero-logo {
   position: static;
   transform: none;
   font-size: 24px;
 }
 
-/* Tray Toggle Button */
-.tray-toggle {
-  position: absolute;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-color);
+body.scrolled .remove-on-scroll {
+  display: none;
 }
 
 /* Drawer */
@@ -96,16 +78,16 @@ body.scrolled .hero-logo {
   left: 0;
   width: 100%;
   background: var(--drawer-bg);
-  padding: 20px 0;
   transform: translateY(-100%);
   transition: transform 0.3s ease;
   z-index: 999;
+  padding: 20px 0;
 }
+
 body.drawer-open .content-tray {
   transform: translateY(0);
 }
 
-/* Icon links in drawer */
 .icon-links {
   display: flex;
   flex-direction: row;
@@ -120,50 +102,21 @@ body.drawer-open .content-tray {
   fill: var(--text-color);
 }
 
-/* Tooltips for icons */
-.icon-links a {
-  position: relative;
-}
-.icon-links a[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: -35px; /* show below the icon */
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  animation: fadein 0.2s forwards;
-}
-@keyframes fadein {
-  to { opacity: 1; }
-}
-
-/* Main content spacing:
-   Enough so we initially only see KYZER centered in the viewport.
-   After scrolling slightly, KYZER moves up. */
+/* Content Wrapper */
 main {
-  padding-top: 100vh;
-  padding-bottom: 100px;
-  transition: margin-top 0.3s ease; /* for drawer-open */
+  padding-top: 140px; /* Enough space for title bar and drawer when open */
+  margin: 0 auto;
+  max-width: 900px;
 }
 
 /* Sections */
 .text-section {
   margin: 100px 0;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
 }
+
 .text-section.two-columns {
   display: flex;
   gap: 20px;
-  max-width: 900px;
   margin: 100px auto;
 }
 
@@ -171,26 +124,11 @@ main {
 footer {
   background: var(--footer-bg);
   padding: 50px 20px;
-  transition: margin-top 0.3s ease;
-}
-.triple-footer {
-  display: flex;
-  gap: 20px;
-}
-.triple-footer > div {
-  flex: 1;
-}
-.triple-footer > div:nth-child(1) {
-  text-align: right;
-}
-.triple-footer > div:nth-child(2) {
   text-align: center;
-}
-.triple-footer > div:nth-child(3) {
-  text-align: left;
+  margin-top: 100px;
 }
 
-/* Back to top button */
+/* Back to Top Button */
 .back-to-top {
   position: fixed;
   bottom: 20px;
@@ -205,11 +143,13 @@ footer {
   justify-content: center;
   cursor: pointer;
   z-index: 1001;
+  transition: opacity 0.3s;
 }
+
 .back-to-top.show {
   display: flex;
 }
-/* Back to top arrow icon */
+
 .back-to-top svg {
   width: 20px;
   height: 20px;
@@ -221,8 +161,9 @@ footer {
 }
 </style>
 </head>
-<body class="dark-mode">
+<body>
 
+<!-- Title Bar -->
 <header class="title-bar">
   <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
     <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold">
@@ -232,50 +173,42 @@ footer {
   <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
 
+<!-- Drawer -->
 <div class="content-tray">
   <nav class="icon-links">
-    <!-- Each icon link has a tooltip via data-tooltip -->
-    <a href="#" data-tooltip="Placeholder: Icon 1"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#" data-tooltip="Placeholder: Icon 2"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
-    <a href="#" data-tooltip="Toggle Theme" id="themeToggle"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#" data-tooltip="Placeholder: Icon 4"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
-    <a href="#" data-tooltip="Placeholder: Icon 5"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
+    <a href="#" title="Icon 1"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" title="Icon 2"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
+    <a href="#" title="Toggle Theme" id="themeToggle"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" title="Icon 4"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a href="#" title="Icon 5"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
   </nav>
 </div>
 
+<!-- Main Content -->
 <main>
   <section class="text-section single-column">
     <h1>Welcome to Our Playground</h1>
-    <p>Scroll slightly and "KYZER" moves up and becomes "KZR" in the title bar. The back-to-top button appears after you scroll more than a little.</p>
+    <p>Scroll slightly and watch "KYZER" move up and shorten to "KZR" in the title bar. The back-to-top button will appear once you scroll more.</p>
   </section>
 
   <section class="text-section two-columns">
     <div>
       <h2>Column 1 Heading</h2>
-      <p>Hover over the drawer icons to see tooltips. Open/close the drawer by clicking the menu (☰).</p>
+      <p>Click the menu (☰) to open the drawer and reveal its icons. Hover over each icon to see tooltips.</p>
     </div>
     <div>
       <h2>Column 2 Heading</h2>
-      <p>Toggle theme in the drawer. The back-to-top button is now an arrow icon.</p>
+      <p>The back-to-top button is an arrow icon. Use the toggle icon in the drawer to switch themes.</p>
     </div>
   </section>
 </main>
 
-<footer class="triple-footer">
-  <div>
-    <h3>Footer Col 1</h3>
-    <p>Right-aligned footer content...</p>
-  </div>
-  <div>
-    <h3>Footer Col 2</h3>
-    <p>Center-aligned footer info...</p>
-  </div>
-  <div>
-    <h3>Footer Col 3</h3>
-    <p>Left-aligned footer text...</p>
-  </div>
+<!-- Footer -->
+<footer>
+  <p>Footer content with links and information goes here.</p>
 </footer>
 
+<!-- Back to Top Button -->
 <button class="back-to-top" id="backToTop" aria-label="Back to top">
   <svg viewBox="0 0 24 24">
     <path d="M12 19V5M5 12l7-7 7 7"/>
@@ -285,11 +218,11 @@ footer {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
+  const backToTop = document.getElementById('backToTop');
   const trayToggle = document.getElementById('trayToggle');
   const themeToggle = document.getElementById('themeToggle');
-  const backToTop = document.getElementById('backToTop');
 
-  // Handle scroll for hero logo and back-to-top button
+  // Handle scroll for hero text and back-to-top button
   window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
       body.classList.add('scrolled');
@@ -300,35 +233,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Back to top
+  // Back to Top button functionality
   backToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Toggle the drawer (open/close)
+  // Toggle Drawer
   trayToggle.addEventListener('click', () => {
-    if (!body.classList.contains('drawer-open')) {
-      body.classList.add('drawer-open');
-    } else {
-      body.classList.remove('drawer-open');
-    }
+    body.classList.toggle('drawer-open');
   });
 
-  // Toggle dark/light mode
+  // Toggle Theme
   themeToggle.addEventListener('click', () => {
-    if (body.classList.contains('dark-mode')) {
-      body.classList.remove('dark-mode');
-      body.style.setProperty('--bg-color', '#ffffff');
-      body.style.setProperty('--text-color', '#000000');
-      body.style.setProperty('--footer-bg', '#dddddd');
-      body.style.setProperty('--drawer-bg', '#f0f0f0');
-    } else {
-      body.classList.add('dark-mode');
-      body.style.setProperty('--bg-color', '#121212');
-      body.style.setProperty('--text-color', '#ffffff');
-      body.style.setProperty('--footer-bg', '#1c1c1c');
-      body.style.setProperty('--drawer-bg', '#0f0f0f');
-    }
+    body.classList.toggle('dark-mode');
   });
 });
 </script>
