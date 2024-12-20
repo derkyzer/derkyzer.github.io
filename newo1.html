@@ -9,10 +9,10 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  /* Removed height:100% so natural scrolling occurs */
   font-family: sans-serif;
   background: #121212;
   color: #ffffff;
-  height: 100%;
 }
 
 /* Dark mode by default */
@@ -94,7 +94,7 @@ body.scrolled .remove-on-scroll {
 
 /* When drawer is shown, pageWrapper moves down */
 .page-down {
-  margin-top: 260px; /* 60px for title + ~200px drawer */
+  margin-top: 260px; /* 60px title + ~200px drawer */
 }
 
 /* Icons in drawer */
@@ -118,7 +118,7 @@ body.scrolled .remove-on-scroll {
 
 /* Tooltip for icons */
 .tooltip {
-  position: fixed; /* position in viewport */
+  position: fixed;
   background: var(--tooltip-bg);
   color: #fff;
   padding: 6px 10px;
@@ -138,10 +138,11 @@ body.scrolled .remove-on-scroll {
   transition: margin-top 0.3s ease;
 }
 
-/* Main content: less spacing so scrolling occurs quickly */
+/* Main content:
+   Added lots of text to ensure scrolling is possible */
 main {
-  padding-top: 300px; /* Enough so you see hero and can scroll slightly */
-  padding-bottom: 300px; /* Enough space to scroll and test back-to-top */
+  padding-top: 300px;
+  padding-bottom: 300px;
 }
 
 /* Sections */
@@ -235,7 +236,8 @@ main {
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll slightly and watch "KYZER" become "KZR" and move into the title bar. The back-to-top button will appear after you scroll a bit.</p>
+      <p>Scroll slightly and you'll see "KYZER" turn into "KZR" in the title bar. The back-to-top button appears after you scroll a bit. Keep scrolling to ensure it's detecting scroll correctly.</p>
+      <p>Additional content to ensure scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vehicula cursus erat, non aliquet urna pellentesque in. Sed sodales ligula non fermentum faucibus. Praesent in placerat dui. Curabitur hendrerit turpis at pharetra tempus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer non rhoncus magna, et sodales orci.</p>
     </section>
 
     <section class="text-section two-columns">
@@ -245,7 +247,7 @@ main {
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Second column content. Use the theme icon in the drawer to toggle dark/light mode. Tooltips now stay visible on-screen.</p>
+        <p>Use the theme icon in the drawer to toggle dark/light mode. Tooltips now clamp to the screen so they never overflow.</p>
       </div>
     </section>
   </main>
@@ -272,7 +274,6 @@ main {
   </svg>
 </button>
 
-<!-- Tooltip element for icons -->
 <div class="tooltip" id="iconTooltip"></div>
 
 <script>
@@ -348,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let top = rect.top - tooltipRect.height - 8; // Place above icon
       let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
 
-      // Clamp values to ensure on-screen
+      // Clamp values so tooltip stays on screen
       if (top < 0) top = rect.bottom + 8; // If not enough space above, put below
       if (left < 0) left = 0;
       if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
