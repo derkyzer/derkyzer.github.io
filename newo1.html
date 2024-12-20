@@ -9,7 +9,6 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  /* Removed height:100% so natural scrolling occurs */
   font-family: sans-serif;
   background: #121212;
   color: #ffffff;
@@ -43,28 +42,10 @@ body {
   z-index: 1000;
 }
 
-/* Hero Logo */
+/* Hero Logo (interpolated) */
 .hero-logo {
   font-weight: bold;
-  transition: all 0.3s ease;
-}
-
-/* Before scroll: Large, centered on screen */
-body:not(.scrolled) .hero-logo {
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 64px;
-}
-
-/* After scroll: smaller, inside title bar, remove Y and E */
-body.scrolled .hero-logo {
-  position: static;
-  transform: none;
-  font-size: 24px;
-}
-body.scrolled .remove-on-scroll {
-  display: none;
+  white-space: nowrap;
 }
 
 /* Tray toggle button */
@@ -80,7 +61,7 @@ body.scrolled .remove-on-scroll {
   color: var(--text-color);
 }
 
-/* Drawer: hidden by default, appears when toggled */
+/* Drawer */
 .content-tray {
   position: fixed;
   top: 60px;
@@ -92,9 +73,8 @@ body.scrolled .remove-on-scroll {
   z-index: 500;
 }
 
-/* When drawer is shown, pageWrapper moves down */
 .page-down {
-  margin-top: 260px; /* 60px title + ~200px drawer */
+  margin-top: 260px;
 }
 
 /* Icons in drawer */
@@ -131,15 +111,32 @@ body.scrolled .remove-on-scroll {
   z-index: 2000;
 }
 
-/* Page Wrapper for main content */
+/* Page Wrapper */
 #pageWrapper {
   position: relative;
-  margin-top: 60px; /* offset for title bar */
+  margin-top: 60px; 
   transition: margin-top 0.3s ease;
 }
 
-/* Main content:
-   Added lots of text to ensure scrolling is possible */
+/* Hard divider at bottom of screen */
+.bottom-divider {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1500;
+}
+
+/* Once we scroll, show the divider */
+body.scrolled .bottom-divider {
+  opacity: 1;
+}
+
+/* Main content */
 main {
   padding-top: 300px;
   padding-bottom: 300px;
@@ -153,11 +150,48 @@ main {
   margin-right: auto;
 }
 
+/* Two columns evenly spaced */
 .text-section.two-columns {
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
   max-width: 900px;
   margin: 60px auto;
+}
+.text-section.two-columns > div {
+  flex: 1;
+  margin: 0 20px; 
+}
+.text-section.two-columns > div:first-child {
+  margin-left: 0;
+}
+.text-section.two-columns > div:last-child {
+  margin-right: 0;
+}
+
+/* Rotating image gallery */
+.gallery {
+  max-width: 600px;
+  margin: 60px auto;
+  text-align: center;
+}
+.gallery-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 10px;
+}
+.gallery-title {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+.gallery-desc {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.gallery-nav {
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
 }
 
 /* Footer */
@@ -179,6 +213,11 @@ main {
 .triple-footer > div:nth-child(3) {
   text-align: left;
 }
+.footer-bottom-text {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 14px;
+}
 
 /* Back to top button */
 .back-to-top {
@@ -190,7 +229,7 @@ main {
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  display: none; /* hidden by default */
+  display: none; 
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -199,7 +238,6 @@ main {
 .back-to-top.show {
   display: flex;
 }
-/* SVG arrow for back-to-top */
 .back-to-top svg {
   width: 20px;
   height: 20px;
@@ -224,31 +262,41 @@ main {
 
 <div class="content-tray" id="contentTray">
   <nav class="icon-links">
-    <a href="#" data-tooltip="Icon 1: Placeholder"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#" data-tooltip="Icon 2: Placeholder"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
-    <a href="#" id="themeToggle" data-tooltip="Toggle Theme"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#" data-tooltip="Icon 4: Placeholder"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
-    <a href="#" data-tooltip="Icon 5: Placeholder"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
+    <a href="#" data-tooltip="Icon 1: Placeholder"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Icon 2: Placeholder"><svg class="icon"><rect x="6" y="6" width="12" height="12"/></svg></a>
+    <a href="#" id="themeToggle" data-tooltip="Toggle Theme"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Icon 4: Placeholder"><svg class="icon"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a href="#" data-tooltip="Icon 5: Placeholder"><svg class="icon"><polygon points="12,2 22,22 2,22"/></svg></a>
   </nav>
 </div>
+
+<div class="tooltip" id="iconTooltip"></div>
 
 <div id="pageWrapper">
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll slightly and you'll see "KYZER" turn into "KZR" in the title bar. The back-to-top button appears after you scroll a bit. Keep scrolling to ensure it's detecting scroll correctly.</p>
-      <p>Additional content to ensure scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vehicula cursus erat, non aliquet urna pellentesque in. Sed sodales ligula non fermentum faucibus. Praesent in placerat dui. Curabitur hendrerit turpis at pharetra tempus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer non rhoncus magna, et sodales orci.</p>
+      <p>Scroll slightly and "KYZER" will become "KZR" as it moves into the title bar. The back-to-top button appears after you scroll. Also note the hard divider line at the bottom of the screen appears once you start scrolling.</p>
+      <p>Some filler content to ensure scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum nec varius metus, ut dignissim arcu...</p>
     </section>
 
     <section class="text-section two-columns">
       <div>
         <h2>Column 1 Heading</h2>
-        <p>First column content. Click the menu (☰) to open the drawer, revealing icons and their tooltips on hover.</p>
+        <p>First column content. Click the menu (☰) to open the drawer and hover icons for tooltips.</p>
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Use the theme icon in the drawer to toggle dark/light mode. Tooltips now clamp to the screen so they never overflow.</p>
+        <p>Use the theme icon to toggle dark/light mode. The columns are evenly spaced now.</p>
       </div>
+    </section>
+
+    <!-- Rotating Image Gallery -->
+    <section class="gallery" id="gallerySection">
+      <div class="gallery-title" id="galleryTitle"></div>
+      <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
+      <div class="gallery-desc" id="galleryDesc"></div>
+      <div class="gallery-nav" id="galleryNav"></div>
     </section>
   </main>
 
@@ -266,6 +314,7 @@ main {
       <p>Left-aligned footer text...</p>
     </div>
   </footer>
+  <div class="footer-bottom-text">This is the line of text at the very bottom of the footer</div>
 </div>
 
 <button class="back-to-top" id="backToTop" aria-label="Back to top">
@@ -274,7 +323,7 @@ main {
   </svg>
 </button>
 
-<div class="tooltip" id="iconTooltip"></div>
+<div class="bottom-divider"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -285,17 +334,44 @@ document.addEventListener('DOMContentLoaded', () => {
   const backToTop = document.getElementById('backToTop');
   const pageWrapper = document.getElementById('pageWrapper');
   const iconTooltip = document.getElementById('iconTooltip');
+  const heroLogo = document.getElementById('heroLogo');
 
-  // Handle scroll for hero logo and back-to-top button
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
+  // Hero Logo Interpolation
+  // We'll define a scroll range [0, 100] after which hero is fully "scrolled"
+  let heroMaxScroll = 100;
+  function updateHero() {
+    const sy = window.scrollY;
+    const t = Math.min(Math.max(sy / heroMaxScroll, 0), 1); 
+    // t=0 at top (KYZER large center), t=1 fully in title bar as KZR
+
+    // Interpolate scale and position:
+    // At t=0: scale ~1.0 (64px font), at t=1: scale smaller (24px font about 24/64 ~0.375 scale)
+    // We can just linearly scale font or apply transform scale.
+    // We'll do transform: scale and vertical translate.
+    // But since we changed display modes, let's just scale and slightly translate.
+    const startScale = 1;
+    const endScale = 0.375;
+    const scale = startScale + (endScale - startScale)*t;
+
+    heroLogo.style.transform = `scale(${scale})`;
+
+    // For hiding Y and E at t>0.5, we already have a CSS class:
+    if (t > 0.5) {
       body.classList.add('scrolled');
-      backToTop.classList.add('show');
     } else {
       body.classList.remove('scrolled');
+    }
+
+    // Back-to-top button appear after t>0.5 as well
+    if (t > 0.5) {
+      backToTop.classList.add('show');
+    } else {
       backToTop.classList.remove('show');
     }
-  });
+
+    requestAnimationFrame(updateHero);
+  }
+  requestAnimationFrame(updateHero);
 
   // Back to top
   backToTop.addEventListener('click', () => {
@@ -346,11 +422,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const rect = iconLink.getBoundingClientRect();
       const tooltipRect = iconTooltip.getBoundingClientRect();
 
-      let top = rect.top - tooltipRect.height - 8; // Place above icon
+      let top = rect.top - tooltipRect.height - 8;
       let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
 
-      // Clamp values so tooltip stays on screen
-      if (top < 0) top = rect.bottom + 8; // If not enough space above, put below
+      // Clamp tooltip positions
+      if (top < 0) top = rect.bottom + 8; 
       if (left < 0) left = 0;
       if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
       if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
@@ -365,6 +441,79 @@ document.addEventListener('DOMContentLoaded', () => {
       iconTooltip.style.top = '-9999px';
       iconTooltip.style.left = '-9999px';
     });
+  });
+
+  // Show divider as soon as we start scrolling
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 0) {
+      body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
+    }
+  });
+
+  // Rotating image gallery
+  const galleryDataUrl = 'https://raw.githubusercontent.com/user/repo/branch/gallery.json'; 
+  // Placeholder: We'll simulate with static data here
+  const galleryData = [
+    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
+    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
+    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
+    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
+  ];
+
+  const galleryTitle = document.getElementById('galleryTitle');
+  const galleryDesc = document.getElementById('galleryDesc');
+  const galleryImage = document.getElementById('galleryImage');
+  const galleryNav = document.getElementById('galleryNav');
+
+  let currentIndex = 0;
+
+  function updateGallery() {
+    const item = galleryData[currentIndex];
+    galleryTitle.textContent = item.title;
+    galleryDesc.textContent = item.description;
+    galleryImage.src = item.image;
+
+    // Create nav pattern like .oOo. for current slide
+    // currentIndex is the slide, total = galleryData.length
+    // We can represent something like: '.' at start if not at first, 'o' for slides before current, 'O' for current, 'o' for after, '.' at end if not at last
+    // We'll just show all slides in a linear pattern: For i in slides:
+    // '.' at start and end always, 'O' is current, 'o' others
+    let navString = ".";
+    for (let i=0; i<galleryData.length; i++) {
+      if (i === currentIndex) {
+        navString += "O";
+      } else {
+        navString += "o";
+      }
+    }
+    navString += ".";
+
+    galleryNav.textContent = navString;
+  }
+
+  updateGallery();
+
+  // Click handling on nav (based on position of 'o')
+  // We'll handle left/right by clicking on 'o' near the ends:
+  galleryNav.addEventListener('click', (e) => {
+    const clickX = e.clientX;
+    const rect = galleryNav.getBoundingClientRect();
+    const charWidth = rect.width / galleryNav.textContent.length;
+    const charIndex = Math.floor((clickX - rect.left) / charWidth);
+
+    // '.' at start is charIndex=0, '.' at end is last char
+    // slides start at charIndex=1 to charIndex=galleryData.length
+    // If user clicks on an 'o' charIndex and it's < currentIndex+1, move left, if > currentIndex+1, move right
+    // currentIndex+1 because navString starts with a '.'
+    const startIndex = 1;
+    const clickedSlide = charIndex - startIndex;
+
+    if (clickedSlide >= 0 && clickedSlide < galleryData.length && clickedSlide !== currentIndex) {
+      currentIndex = clickedSlide;
+      updateGallery();
+    }
   });
 });
 </script>
