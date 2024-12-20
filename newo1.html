@@ -15,17 +15,28 @@ html, body {
   height: 100%;
 }
 
-/* Default dark mode variables */
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
   --footer-bg: #1c1c1c;
-  --drawer-bg: #0f0f0f; /* darker background for drawer */
+  --drawer-bg: #0f0f0f; /* Slightly darker drawer background */
 }
 
+/* Dark mode by default */
 body {
   background: var(--bg-color);
   color: var(--text-color);
+}
+
+body.scrolled .remove-on-scroll {
+  display: none;
+}
+
+/* Drawer open state: shift main and footer down */
+body.drawer-open main,
+body.drawer-open footer {
+  margin-top: 200px;
+  transition: margin-top 0.3s ease;
 }
 
 /* Title Bar */
@@ -43,14 +54,14 @@ body {
 }
 
 /* Hero Logo:
-   Initially large and centered in viewport.
-   On scroll, moves into title bar and shortens to KZR. */
+   Initially large and centered.
+   On scroll, move into title bar and shorten to KZR. */
 .hero-logo {
   font-weight: bold;
   transition: all 0.3s ease;
 }
 
-/* Before scroll: Large, centered */
+/* Before scroll: Large and centered in viewport */
 body:not(.scrolled) .hero-logo {
   position: fixed;
   top: 50%; left: 50%;
@@ -58,17 +69,14 @@ body:not(.scrolled) .hero-logo {
   font-size: 64px;
 }
 
-/* After scroll: smaller, inside title bar, hide Y and E */
+/* After scroll: inside title bar, smaller, remove Y and E */
 body.scrolled .hero-logo {
   position: static;
   transform: none;
   font-size: 24px;
 }
-body.scrolled .remove-on-scroll {
-  display: none;
-}
 
-/* Tray toggle */
+/* Tray Toggle Button */
 .tray-toggle {
   position: absolute;
   top: 50%;
@@ -83,7 +91,7 @@ body.scrolled .remove-on-scroll {
 
 /* Drawer */
 .content-tray {
-  position: absolute;
+  position: fixed;
   top: 60px;
   left: 0;
   width: 100%;
@@ -91,12 +99,13 @@ body.scrolled .remove-on-scroll {
   padding: 20px 0;
   transform: translateY(-100%);
   transition: transform 0.3s ease;
-  z-index: 500;
+  z-index: 999;
 }
-.content-tray.open {
+body.drawer-open .content-tray {
   transform: translateY(0);
 }
 
+/* Icon links in drawer */
 .icon-links {
   display: flex;
   flex-direction: row;
@@ -111,44 +120,37 @@ body.scrolled .remove-on-scroll {
   fill: var(--text-color);
 }
 
-/* Page Wrapper slides down when drawer is opened */
-#pageWrapper {
+/* Tooltips for icons */
+.icon-links a {
   position: relative;
-  z-index: 600;
-  transition: transform 0.3s ease;
-  margin-top: 60px; /* offset for title bar */
 }
-#pageWrapper.page-down {
-  transform: translateY(200px);
-}
-
-/* Tooltip below the drawer when open */
-.tooltip {
+.icon-links a[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
   position: absolute;
-  top: calc(60px + 200px + 10px); /* below title bar + drawer height + a little space */
+  bottom: -35px; /* show below the icon */
   left: 50%;
   transform: translateX(-50%);
   background: #333;
   color: #fff;
-  padding: 8px 12px;
+  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 14px;
-  opacity: 0;
+  font-size: 12px;
+  white-space: nowrap;
   pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 700;
+  opacity: 0;
+  animation: fadein 0.2s forwards;
 }
-.tooltip.show {
-  opacity: 1;
-  pointer-events: auto;
+@keyframes fadein {
+  to { opacity: 1; }
 }
 
 /* Main content spacing:
-   Enough so initially you only see KYZER in the center.
-   After a small scroll, KYZER moves up. */
+   Enough so we initially only see KYZER centered in the viewport.
+   After scrolling slightly, KYZER moves up. */
 main {
   padding-top: 100vh;
   padding-bottom: 100px;
+  transition: margin-top 0.3s ease; /* for drawer-open */
 }
 
 /* Sections */
@@ -158,7 +160,6 @@ main {
   margin-left: auto;
   margin-right: auto;
 }
-
 .text-section.two-columns {
   display: flex;
   gap: 20px;
@@ -167,11 +168,14 @@ main {
 }
 
 /* Footer */
+footer {
+  background: var(--footer-bg);
+  padding: 50px 20px;
+  transition: margin-top 0.3s ease;
+}
 .triple-footer {
   display: flex;
   gap: 20px;
-  padding: 50px 20px;
-  background: var(--footer-bg);
 }
 .triple-footer > div {
   flex: 1;
@@ -196,7 +200,7 @@ main {
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  display: none; /* hidden by default */
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -205,7 +209,7 @@ main {
 .back-to-top.show {
   display: flex;
 }
-/* SVG arrow styling for back-to-top */
+/* Back to top arrow icon */
 .back-to-top svg {
   width: 20px;
   height: 20px;
@@ -228,52 +232,49 @@ main {
   <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
 
-<div class="content-tray" id="contentTray">
+<div class="content-tray">
   <nav class="icon-links">
-    <a href="#"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
-    <a href="#" id="themeToggle"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
-    <a href="#"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
+    <!-- Each icon link has a tooltip via data-tooltip -->
+    <a href="#" data-tooltip="Placeholder: Icon 1"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Placeholder: Icon 2"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
+    <a href="#" data-tooltip="Toggle Theme" id="themeToggle"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Placeholder: Icon 4"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a href="#" data-tooltip="Placeholder: Icon 5"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
   </nav>
 </div>
 
-<div class="tooltip" id="drawerTooltip">Placeholder: This drawer toggles content</div>
+<main>
+  <section class="text-section single-column">
+    <h1>Welcome to Our Playground</h1>
+    <p>Scroll slightly and "KYZER" moves up and becomes "KZR" in the title bar. The back-to-top button appears after you scroll more than a little.</p>
+  </section>
 
-<div id="pageWrapper">
-  <main>
-    <section class="text-section single-column">
-      <h1>Welcome to Our Playground</h1>
-      <p>Scroll slightly and watch "KYZER" move up and become "KZR". The back-to-top button will appear after you scroll more than a small amount.</p>
-    </section>
-
-    <section class="text-section two-columns">
-      <div>
-        <h2>Column 1 Heading</h2>
-        <p>First column content. Click the menu (☰) to open the drawer below the title bar and reveal icons and this tooltip.</p>
-      </div>
-      <div>
-        <h2>Column 2 Heading</h2>
-        <p>Second column content. Use the theme icon in the drawer to toggle dark/light mode. Back to top button is now an arrow icon.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="triple-footer">
+  <section class="text-section two-columns">
     <div>
-      <h3>Footer Col 1</h3>
-      <p>Right-aligned footer content...</p>
+      <h2>Column 1 Heading</h2>
+      <p>Hover over the drawer icons to see tooltips. Open/close the drawer by clicking the menu (☰).</p>
     </div>
     <div>
-      <h3>Footer Col 2</h3>
-      <p>Center-aligned footer info...</p>
+      <h2>Column 2 Heading</h2>
+      <p>Toggle theme in the drawer. The back-to-top button is now an arrow icon.</p>
     </div>
-    <div>
-      <h3>Footer Col 3</h3>
-      <p>Left-aligned footer text...</p>
-    </div>
-  </footer>
-</div>
+  </section>
+</main>
+
+<footer class="triple-footer">
+  <div>
+    <h3>Footer Col 1</h3>
+    <p>Right-aligned footer content...</p>
+  </div>
+  <div>
+    <h3>Footer Col 2</h3>
+    <p>Center-aligned footer info...</p>
+  </div>
+  <div>
+    <h3>Footer Col 3</h3>
+    <p>Left-aligned footer text...</p>
+  </div>
+</footer>
 
 <button class="back-to-top" id="backToTop" aria-label="Back to top">
   <svg viewBox="0 0 24 24">
@@ -284,12 +285,9 @@ main {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
-  const tray = document.getElementById('contentTray');
   const trayToggle = document.getElementById('trayToggle');
   const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
-  const pageWrapper = document.getElementById('pageWrapper');
-  const drawerTooltip = document.getElementById('drawerTooltip');
 
   // Handle scroll for hero logo and back-to-top button
   window.addEventListener('scroll', () => {
@@ -307,16 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Toggle the drawer
+  // Toggle the drawer (open/close)
   trayToggle.addEventListener('click', () => {
-    if (!tray.classList.contains('open')) {
-      tray.classList.add('open');
-      pageWrapper.classList.add('page-down');
-      drawerTooltip.classList.add('show');
+    if (!body.classList.contains('drawer-open')) {
+      body.classList.add('drawer-open');
     } else {
-      tray.classList.remove('open');
-      pageWrapper.classList.remove('page-down');
-      drawerTooltip.classList.remove('show');
+      body.classList.remove('drawer-open');
     }
   });
 
