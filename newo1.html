@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>KYZER</title>
 <style>
 * {
@@ -21,6 +21,7 @@ body {
   background: var(--bg-color, #121212);
   color: var(--text-color, #ffffff);
   padding: 0 20px;
+  position: relative;
 }
 
 :root {
@@ -29,7 +30,7 @@ body {
   --footer-bg: #1c1c1c;
   --drawer-bg: #0f0f0f;
   --tooltip-bg: #333333;
-  --r-color: #ffffff; /* R color in dark mode */
+  --r-color: #ffffff;
 }
 
 /* Title Bar */
@@ -47,10 +48,10 @@ body {
   z-index: 1000;
 }
 
-/* Theme Toggle Button */
-.theme-toggle {
+/* Drawer toggle button */
+.drawer-toggle {
   position: absolute;
-  left: 10px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -60,10 +61,7 @@ body {
   color: var(--text-color);
 }
 
-/* Hero Logo:
-   Will interpolate its size and position via JS.
-   Colored letters: K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R(var(--r-color)).
-*/
+/* Hero Logo */
 .hero-logo {
   font-weight: bold;
   white-space: nowrap;
@@ -84,7 +82,7 @@ body.scrolled .remove-on-scroll {
   padding: 20px 0;
   display: none;
   z-index: 500;
-  box-shadow: inset 0 10px 20px -10px rgba(0, 0, 0, 0.5); /* Upward shadow */
+  box-shadow: inset 0 10px 20px -10px rgba(0, 0, 0, 0.5);
 }
 
 .page-down {
@@ -100,49 +98,41 @@ body.scrolled .remove-on-scroll {
   gap: 40px;
 }
 
-.icon-links a {
-  position: relative;
-}
-
 .icon-links .icon {
   width: 40px;
   height: 40px;
   fill: var(--text-color);
 }
 
-/* Content Divider (Sticky position at the pre-scroll bottom of screen) */
+/* Sticky Divider */
 .content-divider {
   position: sticky;
-  top: calc(100vh - 60px); /* Where bottom of screen was before scroll */
+  top: 100vh;
   height: 2px;
   background: #ffffff;
   width: 100%;
   z-index: 900;
   box-shadow: 0 -10px 20px -10px rgba(0, 0, 0, 0.5); /* Upward shadow */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+body.scrolled .content-divider {
+  opacity: 1;
 }
 
 /* Main Content */
 main {
-  padding-top: 1000px; /* Push content far below hero */
+  padding-top: 1000px;
   padding-bottom: 300px;
+  text-align: center; /* Ensure content is centered */
 }
 
-/* Two-column section */
-.text-section.two-columns {
-  display: flex;
-  justify-content: space-between;
-  max-width: 900px;
-  margin: 60px auto;
-}
-.text-section.two-columns > div {
-  flex: 1;
-  margin: 0 20px;
-}
-.text-section.two-columns > div:first-child {
-  margin-left: 0;
-}
-.text-section.two-columns > div:last-child {
-  margin-right: 0;
+.text-section {
+  margin: 60px 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Footer */
@@ -152,18 +142,7 @@ main {
   padding: 50px 20px;
   background: var(--footer-bg);
 }
-.triple-footer > div {
-  flex: 1;
-}
-.triple-footer > div:nth-child(1) {
-  text-align: right;
-}
-.triple-footer > div:nth-child(2) {
-  text-align: center;
-}
-.triple-footer > div:nth-child(3) {
-  text-align: left;
-}
+
 .footer-bottom-text {
   text-align: center;
   padding: 20px 0;
@@ -186,9 +165,11 @@ main {
   cursor: pointer;
   z-index: 1001;
 }
+
 .back-to-top.show {
   display: flex;
 }
+
 .back-to-top svg {
   width: 20px;
   height: 20px;
@@ -198,13 +179,31 @@ main {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* Mouse Trail Shapes */
+.trail-shape {
+  position: absolute;
+  pointer-events: none;
+  animation: shrink-fade 2s ease-out forwards;
+}
+
+@keyframes shrink-fade {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) scale(0);
+  }
+}
 </style>
 </head>
 <body class="dark-mode" style="--r-color: #ffffff;">
 
 <header class="title-bar">
-  <!-- Theme toggle button -->
-  <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">☀️</button>
+  <!-- Drawer toggle button -->
+  <button class="drawer-toggle" id="drawerToggle" aria-label="Open Menu">☰</button>
 
   <!-- Hero logo with colored letters -->
   <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
@@ -235,32 +234,12 @@ main {
     <h1>Welcome Content</h1>
     <p>Scroll to see KYZER become KZR and observe other visual effects.</p>
   </section>
-
-  <section class="text-section two-columns">
-    <div>
-      <h2>Column 1</h2>
-      <p>First column content.</p>
-    </div>
-    <div>
-      <h2>Column 2</h2>
-      <p>Second column content.</p>
-    </div>
-  </section>
 </main>
 
 <footer class="triple-footer">
-  <div>
-    <h3>Footer Col 1</h3>
-    <p>Right-aligned footer content.</p>
-  </div>
-  <div>
-    <h3>Footer Col 2</h3>
-    <p>Center-aligned footer info.</p>
-  </div>
-  <div>
-    <h3>Footer Col 3</h3>
-    <p>Left-aligned footer text.</p>
-  </div>
+  <div>Footer Content Left</div>
+  <div>Footer Content Center</div>
+  <div>Footer Content Right</div>
 </footer>
 <div class="footer-bottom-text">Footer bottom line of text</div>
 
@@ -273,25 +252,23 @@ main {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
-  const heroLogo = document.getElementById('heroLogo');
-  const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
   const contentTray = document.getElementById('contentTray');
+  const drawerToggle = document.getElementById('drawerToggle');
+  const heroLogo = document.getElementById('heroLogo');
 
-  // KYZER logo interpolation
+  // Hero interpolation
   const maxScroll = 100;
   function updateHero() {
     const sy = window.scrollY;
     const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    // Scaling: 80% screen width to 85% of title bar height
     const startScale = 0.8 * window.innerWidth / heroLogo.getBoundingClientRect().width;
     const endScale = 0.85 * 60 / heroLogo.getBoundingClientRect().height;
     const scale = startScale + (endScale - startScale) * t;
 
-    // Positioning
     const startY = window.innerHeight / 2;
-    const endY = 30; // Vertically centered in 60px title bar
+    const endY = 30;
     const currentY = startY + (endY - startY) * t;
 
     heroLogo.style.transform = `translate(-50%, -50%) scale(${scale})`;
@@ -306,19 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   requestAnimationFrame(updateHero);
 
-  // Theme toggle
-  themeToggle.addEventListener('click', () => {
-    const isDark = body.classList.contains('dark-mode');
-    if (isDark) {
-      body.classList.remove('dark-mode');
-      body.style.setProperty('--bg-color', '#ffffff');
-      body.style.setProperty('--text-color', '#000000');
-      body.style.setProperty('--r-color', '#000000');
+  // Drawer toggle
+  drawerToggle.addEventListener('click', () => {
+    if (contentTray.style.display === 'block') {
+      contentTray.style.display = 'none';
     } else {
-      body.classList.add('dark-mode');
-      body.style.setProperty('--bg-color', '#121212');
-      body.style.setProperty('--text-color', '#ffffff');
-      body.style.setProperty('--r-color', '#ffffff');
+      contentTray.style.display = 'block';
     }
   });
 
@@ -327,8 +297,48 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Drawer toggle (for demonstration, not hooked to a button here)
-  contentTray.style.display = 'block'; // To demonstrate upward shadow
+  // Mouse trail effect
+  const trailColorsDark = ['#00FFFF', '#FF00FF', '#FFFF00', '#FFFFFF'];
+  const trailColorsLight = ['#00FFFF', '#FF00FF', '#FFFF00', '#000000'];
+  const shapes = ['circle', 'triangle', 'square'];
+
+  document.addEventListener('mousemove', (e) => {
+    const trail = document.createElement('div');
+    trail.className = 'trail-shape';
+
+    const color = body.classList.contains('dark-mode') ? 
+                  trailColorsDark[Math.floor(Math.random() * trailColorsDark.length)] : 
+                  trailColorsLight[Math.floor(Math.random() * trailColorsLight.length)];
+
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+    const rotation = Math.random() * 360;
+    const size = Math.random() * 20 + 10;
+    const isFilled = Math.random() > 0.5;
+
+    trail.style.width = `${size}px`;
+    trail.style.height = `${size}px`;
+    trail.style.backgroundColor = isFilled && shape !== 'triangle' ? color : 'transparent';
+    trail.style.border = `2px solid ${color}`;
+    trail.style.borderRadius = shape === 'circle' ? '50%' : '0';
+    trail.style.transform = `translate(${e.pageX}px, ${e.pageY}px) rotate(${rotation}deg)`;
+    trail.style.position = 'absolute';
+    trail.style.left = `${e.pageX}px`;
+    trail.style.top = `${e.pageY}px`;
+
+    if (shape === 'triangle') {
+      trail.style.width = '0';
+      trail.style.height = '0';
+      trail.style.borderLeft = `${size / 2}px solid transparent`;
+      trail.style.borderRight = `${size / 2}px solid transparent`;
+      trail.style.borderBottom = `${size}px solid ${color}`;
+    }
+
+    document.body.appendChild(trail);
+
+    setTimeout(() => {
+      trail.remove();
+    }, 2000);
+  });
 });
 </script>
 </body>
