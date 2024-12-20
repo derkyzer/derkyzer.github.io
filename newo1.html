@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Toys Inline</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: sans-serif;
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #000);
+}
+
+/* Light and dark mode variables */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+.dark-mode {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+}
+
+.title-bar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.logo-container {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.hero-logo {
+  transition: all 0.3s ease;
+  height: 100%;
+  width: auto;
+}
+
+/* When the hero logo is at top, it's centered and large */
+body:not(.scrolled) .hero-logo {
+  height: 100px; /* hero size */
+  transform: translateX(-50%);
+  position: absolute;
+  left: 50%;
+  top: 10px;
+}
+
+/* When scrolled, hero-logo shrinks and moves into title-bar */
+body.scrolled .hero-logo {
+  position: static;
+  height: 40px;
+  transform: none;
+}
+
+/* Hide certain SVG parts after scroll */
+body.scrolled .hero-part {
+  display: none;
+}
+
+.tray-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.content-tray {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  background: var(--bg-color);
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  z-index: 999;
+  padding: 20px;
+}
+
+.content-tray.open {
+  transform: translateY(0);
+}
+
+.icon-links {
+  display: flex;
+  gap: 20px;
+}
+
+.icon-links .icon {
+  width: 30px;
+  height: 30px;
+  fill: var(--text-color);
+}
+
+main {
+  margin-top: 60px; /* accommodate title bar */
+  padding: 20px;
+}
+
+.text-section.single-column {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.text-section.two-columns {
+  display: flex;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.two-columns > div {
+  flex: 1;
+}
+
+.triple-footer {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background: #eee;
+}
+
+.triple-footer > div {
+  flex: 1;
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg-color);
+  border: 1px solid var(--text-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.back-to-top.show {
+  display: flex;
+}
+
+.physics-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.physics-toy {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: red;
+  border-radius: 50%;
+}
+</style>
+</head>
+<body>
+<header class="title-bar">
+  <div class="logo-container">
+    <!-- Hero logo (example shape) -->
+    <svg class="hero-logo" id="heroLogo" viewBox="0 0 200 100">
+      <!-- Example hero-part that will be removed after scroll -->
+      <circle class="hero-part" cx="50" cy="50" r="40" fill="blue"></circle>
+      <!-- Another part that remains -->
+      <rect x="100" y="30" width="60" height="40" fill="green"></rect>
+    </svg>
+  </div>
+  <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
+</header>
+
+<div class="content-tray" id="contentTray">
+  <nav class="icon-links">
+    <!-- Dummy SVG icons (just placeholders) -->
+    <a href="#"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
+    <a href="#" id="themeToggle"><svg class="icon" id="iconTheme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a href="#"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
+  </nav>
+</div>
+
+<main>
+  <section class="text-section single-column">
+    <h1>Welcome to Our Physics Playground</h1>
+    <p>This is an introductory paragraph of text showcasing some content at the top of the page.</p>
+  </section>
+
+  <section class="text-section two-columns">
+    <div>
+      <h2>Column 1 Heading</h2>
+      <p>First column content goes here. Add more text as needed to demonstrate layout and scrolling.</p>
+    </div>
+    <div>
+      <h2>Column 2 Heading</h2>
+      <p>Second column content. Perhaps detail the physics toys or site features. Add enough text to enable scrolling.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="triple-footer">
+  <div>
+    <h3>Footer Col 1</h3>
+    <p>Some footer content...</p>
+  </div>
+  <div>
+    <h3>Footer Col 2</h3>
+    <p>Additional footer info...</p>
+  </div>
+  <div>
+    <h3>Footer Col 3</h3>
+    <p>More footer text...</p>
+  </div>
+</footer>
+
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+<div class="physics-container" id="physicsContainer"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const body = document.body;
+  const tray = document.getElementById('contentTray');
+  const trayToggle = document.getElementById('trayToggle');
+  const themeToggle = document.getElementById('themeToggle');
+  const backToTop = document.getElementById('backToTop');
+  const physicsContainer = document.getElementById('physicsContainer');
+
+  let toys = [];
+  const GRAVITY = 0.9; // 90% gravity factor
+  const TOY_COUNT = 10;
+
+  // Initialize physics toys
+  for (let i = 0; i < TOY_COUNT; i++) {
+    spawnToy();
+  }
+
+  function spawnToy() {
+    const toy = document.createElement('div');
+    toy.className = 'physics-toy';
+    toy.style.left = Math.random() * window.innerWidth + 'px';
+    toy.y = -50;  // Start above the top
+    toy.vy = 0;   // initial velocity
+    physicsContainer.appendChild(toy);
+    toys.push(toy);
+  }
+
+  function updateToys() {
+    const bottomLimit = window.innerHeight + 50;
+    for (let i = toys.length - 1; i >= 0; i--) {
+      const toy = toys[i];
+      toy.vy += 0.5 * GRAVITY; // basic gravity increment
+      toy.y += toy.vy;
+      toy.style.top = toy.y + 'px';
+
+      // Remove off-screen toys
+      if (toy.y > bottomLimit) {
+        physicsContainer.removeChild(toy);
+        toys.splice(i, 1);
+        spawnToy();
+      }
+    }
+    requestAnimationFrame(updateToys);
+  }
+  requestAnimationFrame(updateToys);
+
+  // Toggle the tray
+  trayToggle.addEventListener('click', () => {
+    tray.classList.toggle('open');
+  });
+
+  // Toggle dark/light mode
+  themeToggle.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+  });
+
+  // Handle scroll events for hero logo and back-to-top
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 0) {
+      body.classList.add('scrolled');
+      backToTop.classList.add('show');
+    } else {
+      body.classList.remove('scrolled');
+      backToTop.classList.remove('show');
+    }
+  });
+
+  // Back to top behavior
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
