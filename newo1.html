@@ -35,23 +35,48 @@ body {
 /* Title Bar */
 .title-bar {
   position: fixed;
-  top: 0; left: 0;
+  top: 0; left:0;
   width: 100%;
   height: 60px;
   background: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 5px rgba(0,0,0,0.5);
   z-index: 1000;
 }
 
-/* Hero Logo */
+/* Hero Logo:
+   We'll do letter coloring directly via tspan fills.
+   K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R uses var(--r-color).
+*/
 .hero-logo {
   font-weight: bold;
   white-space: nowrap;
 }
+.remove-on-scroll {
+  transition: opacity 0.3s ease;
+}
 
-/* Drawer */
+/* Remove Y and E when scrolled */
+body.scrolled .remove-on-scroll {
+  display: none;
+}
+
+/* Tray toggle button */
+.tray-toggle {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+/* Drawer with upward shadow at its bottom */
 .content-tray {
   position: fixed;
   top: 60px;
@@ -61,70 +86,184 @@ body {
   padding: 20px 0;
   display: none;
   z-index: 500;
-  box-shadow: 0px -10px 20px -10px rgba(0, 0, 0, 0.5); /* Upward shadow */
+  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5); /* Upward shadow */
 }
 
 .page-down {
-  margin-top: 260px; /* Content shifted when drawer opens */
+  margin-top: 260px;
 }
 
-/* Image Gallery Navigation */
-.gallery-nav {
+/* Icons in drawer */
+.icon-links {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  margin-top: 10px;
-  gap: 5px;
+  gap: 40px;
 }
 
-.gallery-nav span {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  transition: all 0.3s ease;
+.icon-links a {
+  position: relative;
 }
 
-.gallery-nav span.large {
-  width: 20px;
-  height: 20px;
+.icon-links .icon {
+  width: 40px;
+  height: 40px;
+  fill: var(--text-color);
 }
 
-.gallery-nav span.small {
-  width: 8px;
-  height: 8px;
+/* Tooltip for icons */
+.tooltip {
+  position: fixed;
+  background: var(--tooltip-bg);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  z-index: 2000;
 }
 
-.gallery-nav span.dot {
-  width: 4px;
-  height: 4px;
-  background-color: #888888;
+/* Page Wrapper */
+#pageWrapper {
+  position: relative;
+  margin-top: 60px; 
+  transition: margin-top 0.3s ease;
 }
 
-/* Sticky Divider */
+/* Content Divider (Upward shadow at top of main content)
+   position sticky after scroll to show a shadow line */
 .content-divider {
   position: sticky;
-  bottom: 0;
+  top: 60px; 
+  height: 0;
+  margin-bottom: 20px;
   width: 100%;
-  height: 2px;
-  background-color: white;
+  box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
   z-index: 900;
 }
 
-/* Mouse Trail Shapes */
-.shape {
+/* Main content: increased top padding so we must scroll to see welcome */
+main {
+  padding-top: 1000px;
+  padding-bottom: 300px;
+}
+
+/* Sections */
+.text-section {
+  margin: 60px 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.text-section.two-columns {
+  display: flex;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 60px auto;
+}
+
+.text-section.two-columns > div {
+  flex: 1;
+  margin: 0 20px;
+}
+.text-section.two-columns > div:first-child {
+  margin-left: 0;
+}
+.text-section.two-columns > div:last-child {
+  margin-right: 0;
+}
+
+/* Rotating image gallery */
+.gallery {
+  max-width: 600px;
+  margin: 60px auto;
+  text-align: center;
+}
+.gallery-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 10px;
+}
+.gallery-title {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+.gallery-desc {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.gallery-nav {
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Footer */
+.triple-footer {
+  display: flex;
+  gap: 20px;
+  padding: 50px 20px;
+  background: var(--footer-bg);
+}
+.triple-footer > div {
+  flex: 1;
+}
+.triple-footer > div:nth-child(1) {
+  text-align: right;
+}
+.triple-footer > div:nth-child(2) {
+  text-align: center;
+}
+.triple-footer > div:nth-child(3) {
+  text-align: left;
+}
+.footer-bottom-text {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 14px;
+}
+
+/* Back to top button */
+.back-to-top {
   position: fixed;
-  opacity: 1;
-  pointer-events: none;
-  transition: transform 1s, opacity 1s;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg-color);
+  border: 1px solid var(--text-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: none; 
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+}
+.back-to-top.show {
+  display: flex;
+}
+.back-to-top svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--text-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 </style>
 </head>
 <body class="dark-mode" style="--r-color: #ffffff;">
 
 <header class="title-bar">
-  <!-- Hero Logo -->
+  <!-- Hero logo with colored letters:
+       K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R(var(--r-color)) -->
   <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
     <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="64">
       <tspan fill="#00FFFF">K</tspan>
@@ -138,97 +277,241 @@ body {
 </header>
 
 <div class="content-tray" id="contentTray">
-  <!-- Drawer Content -->
+  <nav class="icon-links">
+    <a href="#" data-tooltip="Icon 1: Placeholder"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Icon 2: Placeholder"><svg class="icon"><rect x="6" y="6" width="12" height="12"/></svg></a>
+    <a href="#" id="themeToggle" data-tooltip="Toggle Theme"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Icon 4: Placeholder"><svg class="icon"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a href="#" data-tooltip="Icon 5: Placeholder"><svg class="icon"><polygon points="12,2 22,22 2,22"/></svg></a>
+  </nav>
 </div>
 
-<div class="content-divider"></div>
+<div class="tooltip" id="iconTooltip"></div>
 
 <div id="pageWrapper">
+  <!-- Content divider with upward shadow at the top of main content -->
+  <div class="content-divider"></div>
   <main>
-    <!-- Main Content -->
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll down to see "KYZER" shrink and move into the title bar, removing Y and E.</p>
+      <p>Scroll down to see "KYZER" become "KZR" as it moves into the title bar (Y&E removed halfway). The back-to-top button appears after you scroll. The content is shifted way down, so you must scroll to reach here. Also note the upward shadow line at the top once main content scrolls into view.</p>
     </section>
 
-    <!-- Image Gallery -->
+    <section class="text-section two-columns">
+      <div>
+        <h2>Column 1 Heading</h2>
+        <p>First column content. Click the menu (☰) to open the drawer and hover icons for tooltips.</p>
+      </div>
+      <div>
+        <h2>Column 2 Heading</h2>
+        <p>Use the theme icon to toggle dark/light mode. Columns are evenly spaced now.</p>
+      </div>
+    </section>
+
+    <!-- Rotating Image Gallery -->
     <section class="gallery" id="gallerySection">
-      <img class="gallery-img" id="galleryImage" src="https://via.placeholder.com/600x400" alt="Gallery Image">
+      <div class="gallery-title" id="galleryTitle"></div>
+      <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
+      <div class="gallery-desc" id="galleryDesc"></div>
       <div class="gallery-nav" id="galleryNav"></div>
     </section>
   </main>
+
+  <footer class="triple-footer">
+    <div>
+      <h3>Footer Col 1</h3>
+      <p>Right-aligned footer content...</p>
+    </div>
+    <div>
+      <h3>Footer Col 2</h3>
+      <p>Center-aligned footer info...</p>
+    </div>
+    <div>
+      <h3>Footer Col 3</h3>
+      <p>Left-aligned footer text...</p>
+    </div>
+  </footer>
+  <div class="footer-bottom-text">This is the line of text at the very bottom of the footer</div>
 </div>
+
+<button class="back-to-top" id="backToTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
-  const trayToggle = document.getElementById('trayToggle');
   const tray = document.getElementById('contentTray');
+  const trayToggle = document.getElementById('trayToggle');
+  const themeToggle = document.getElementById('themeToggle');
+  const backToTop = document.getElementById('backToTop');
+  const iconTooltip = document.getElementById('iconTooltip');
   const heroLogo = document.getElementById('heroLogo');
-  const galleryNav = document.getElementById('galleryNav');
-  const galleryImage = document.getElementById('galleryImage');
-  
-  // Mouse Trail Shapes
-  const mouseTrailColors = ['#00FFFF', '#FF00FF', '#FFFF00', '#000000', '#FFFFFF'];
-  const mouseTrailShapes = ['circle', 'square', 'triangle'];
 
-  document.addEventListener('mousemove', (e) => {
-    const shape = document.createElement('div');
-    const size = Math.random() * 20 + 10;
-    const rotation = Math.random() * 360;
-    const shapeType = mouseTrailShapes[Math.floor(Math.random() * mouseTrailShapes.length)];
-    const color = mouseTrailColors[Math.floor(Math.random() * mouseTrailColors.length)];
+  // Hero interpolation
+  const maxScroll = 100;
+  function updateHero() {
+    const sy = window.scrollY;
+    const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    shape.className = `shape ${shapeType}`;
-    shape.style.width = `${size}px`;
-    shape.style.height = `${size}px`;
-    shape.style.backgroundColor = color;
-    shape.style.top = `${e.clientY}px`;
-    shape.style.left = `${e.clientX}px`;
-    shape.style.transform = `rotate(${rotation}deg)`;
+    // Scale from 1 (large) to ~0.375 (small)
+    const scale = 1 - 0.625 * t;
+    // Move from center screen to title bar area:
+    const startY = window.innerHeight / 2; 
+    const endY = 60/2 + 30; 
+    const currentY = startY + (endY - startY)*t;
 
-    document.body.appendChild(shape);
+    heroLogo.style.position = 'fixed';
+    heroLogo.style.left = '50%';
+    heroLogo.style.top = currentY + 'px';
+    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
 
-    // Animate and remove
-    setTimeout(() => {
-      shape.style.transform += ' scale(0.1) translateY(20px)';
-      shape.style.opacity = 0;
-    }, 0);
-    setTimeout(() => shape.remove(), 1000);
+    if (t > 0.5) {
+      body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
+    }
+
+    // Back-to-top after t>0.5
+    if (t > 0.5) {
+      backToTop.classList.add('show');
+    } else {
+      backToTop.classList.remove('show');
+    }
+
+    requestAnimationFrame(updateHero);
+  }
+  requestAnimationFrame(updateHero);
+
+  // Back to top
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Drawer Toggle
+  // Toggle the drawer
   trayToggle.addEventListener('click', () => {
-    tray.style.display = tray.style.display === 'block' ? 'none' : 'block';
+    if (tray.style.display === 'block') {
+      // Close
+      tray.style.display = 'none';
+      document.getElementById('pageWrapper').classList.remove('page-down');
+    } else {
+      // Open
+      tray.style.display = 'block';
+      document.getElementById('pageWrapper').classList.add('page-down');
+    }
   });
 
-  // Image Gallery Navigation
+  // Toggle dark/light mode
+  themeToggle.addEventListener('click', () => {
+    if (body.classList.contains('dark-mode')) {
+      body.classList.remove('dark-mode');
+      body.style.setProperty('--bg-color', '#ffffff');
+      body.style.setProperty('--text-color', '#000000');
+      body.style.setProperty('--footer-bg', '#dddddd');
+      body.style.setProperty('--drawer-bg', '#f0f0f0');
+      body.style.setProperty('--tooltip-bg', '#ccc');
+      body.style.setProperty('--r-color', '#000000');
+    } else {
+      body.classList.add('dark-mode');
+      body.style.setProperty('--bg-color', '#121212');
+      body.style.setProperty('--text-color', '#ffffff');
+      body.style.setProperty('--footer-bg', '#1c1c1c');
+      body.style.setProperty('--drawer-bg', '#0f0f0f');
+      body.style.setProperty('--tooltip-bg', '#333333');
+      body.style.setProperty('--r-color', '#ffffff');
+    }
+  });
+
+  // Icon tooltips
+  const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
+  iconLinks.forEach(iconLink => {
+    iconLink.addEventListener('mouseenter', () => {
+      const tooltipText = iconLink.getAttribute('data-tooltip');
+      iconTooltip.textContent = tooltipText;
+      iconTooltip.style.opacity = '1';
+
+      // Position tooltip
+      const rect = iconLink.getBoundingClientRect();
+      const tooltipRect = iconTooltip.getBoundingClientRect();
+
+      let top = rect.top - tooltipRect.height - 8;
+      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
+
+      if (top < 0) top = rect.bottom + 8; 
+      if (left < 0) left = 0;
+      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
+      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
+
+      iconTooltip.style.top = `${top}px`;
+      iconTooltip.style.left = `${left}px`;
+      iconTooltip.style.opacity = '1';
+    });
+
+    iconLink.addEventListener('mouseleave', () => {
+      iconTooltip.style.opacity = '0';
+      iconTooltip.style.top = '-9999px';
+      iconTooltip.style.left = '-9999px';
+    });
+  });
+
+  // Rotating image gallery
   const galleryData = [
-    { img: 'https://via.placeholder.com/600x400?text=1' },
-    { img: 'https://via.placeholder.com/600x400?text=2' },
-    { img: 'https://via.placeholder.com/600x400?text=3' },
-    { img: 'https://via.placeholder.com/600x400?text=4' },
+    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
+    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
+    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
+    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
   ];
 
-  let currentImage = 0;
+  const galleryTitle = document.getElementById('galleryTitle');
+  const galleryDesc = document.getElementById('galleryDesc');
+  const galleryImage = document.getElementById('galleryImage');
+  const galleryNav = document.getElementById('galleryNav');
 
-  function updateGalleryNav() {
-    galleryNav.innerHTML = '';
+  let currentIndex = 0;
 
-    galleryData.forEach((_, index) => {
-      const span = document.createElement('span');
-      span.className = index === currentImage ? 'large' : Math.abs(index - currentImage) === 1 ? 'small' : 'dot';
-      span.addEventListener('click', () => {
-        currentImage = index;
-        galleryImage.src = galleryData[currentImage].img;
-        updateGalleryNav();
-      });
-      galleryNav.appendChild(span);
-    });
+  function updateGallery() {
+    const item = galleryData[currentIndex];
+    galleryTitle.textContent = item.title;
+    galleryDesc.textContent = item.description;
+    galleryImage.src = item.image;
+
+    let navString = ".";
+    for (let i=0; i<galleryData.length; i++) {
+      if (i === currentIndex) {
+        navString += "O";
+      } else {
+        navString += "o";
+      }
+    }
+    navString += ".";
+    galleryNav.textContent = navString;
   }
 
-  galleryImage.src = galleryData[currentImage].img;
-  updateGalleryNav();
+  updateGallery();
+
+  galleryNav.addEventListener('click', (e) => {
+    const clickX = e.clientX;
+    const rect = galleryNav.getBoundingClientRect();
+    const charWidth = rect.width / galleryNav.textContent.length;
+    const charIndex = Math.floor((clickX - rect.left) / charWidth);
+
+    const clickedSlide = charIndex - 1; 
+    if (clickedSlide >= 0 && clickedSlide < galleryData.length && clickedSlide !== currentIndex) {
+      currentIndex = clickedSlide;
+      updateGallery();
+    }
+  });
+
+  // Show divider/shadow on scroll
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 0) {
+      body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
+    }
+  });
 });
 </script>
 </body>
