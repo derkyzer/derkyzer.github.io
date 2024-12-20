@@ -15,11 +15,12 @@ html, body {
   height: 100%;
 }
 
-/* Dark mode by default */
+/* Default dark mode variables */
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
   --footer-bg: #1c1c1c;
+  --drawer-bg: #0f0f0f; /* darker background for drawer */
 }
 
 body {
@@ -42,15 +43,14 @@ body {
 }
 
 /* Hero Logo:
-   Initially large and centered in the viewport (not scrolled).
-   On scroll, moves into title bar and shrinks.
-   Also removes Y and E to display KZR. */
+   Initially large and centered in viewport.
+   On scroll, moves into title bar and shortens to KZR. */
 .hero-logo {
   font-weight: bold;
   transition: all 0.3s ease;
 }
 
-/* Before scroll: Large and centered in the screen */
+/* Before scroll: Large, centered */
 body:not(.scrolled) .hero-logo {
   position: fixed;
   top: 50%; left: 50%;
@@ -58,7 +58,7 @@ body:not(.scrolled) .hero-logo {
   font-size: 64px;
 }
 
-/* After scroll: smaller, inside the title bar, and letters removed */
+/* After scroll: smaller, inside title bar, hide Y and E */
 body.scrolled .hero-logo {
   position: static;
   transform: none;
@@ -68,7 +68,7 @@ body.scrolled .remove-on-scroll {
   display: none;
 }
 
-/* Tray toggle button at top-right of title bar */
+/* Tray toggle */
 .tray-toggle {
   position: absolute;
   top: 50%;
@@ -81,24 +81,22 @@ body.scrolled .remove-on-scroll {
   color: var(--text-color);
 }
 
-/* Drawer hidden above the screen initially.
-   It will slide down when open. */
+/* Drawer */
 .content-tray {
   position: absolute;
   top: 60px;
   left: 0;
   width: 100%;
-  background: var(--bg-color);
+  background: var(--drawer-bg);
   padding: 20px 0;
   transform: translateY(-100%);
   transition: transform 0.3s ease;
-  z-index: 500; /* below title bar, will be revealed by sliding page down */
+  z-index: 500;
 }
 .content-tray.open {
   transform: translateY(0);
 }
 
-/* Icons in drawer horizontally centered */
 .icon-links {
   display: flex;
   flex-direction: row;
@@ -116,7 +114,7 @@ body.scrolled .remove-on-scroll {
 /* Page Wrapper slides down when drawer is opened */
 #pageWrapper {
   position: relative;
-  z-index: 600; /* Above drawer so it's hidden until we open and move page down */
+  z-index: 600;
   transition: transform 0.3s ease;
   margin-top: 60px; /* offset for title bar */
 }
@@ -124,15 +122,36 @@ body.scrolled .remove-on-scroll {
   transform: translateY(200px);
 }
 
-/* Main content:
-   Enough space so initially you only see KYZER.
-   After a small scroll, KYZER moves up and text appears. */
+/* Tooltip below the drawer when open */
+.tooltip {
+  position: absolute;
+  top: calc(60px + 200px + 10px); /* below title bar + drawer height + a little space */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 700;
+}
+.tooltip.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Main content spacing:
+   Enough so initially you only see KYZER in the center.
+   After a small scroll, KYZER moves up. */
 main {
   padding-top: 100vh;
   padding-bottom: 100px;
 }
 
-/* Text Sections */
+/* Sections */
 .text-section {
   margin: 100px 0;
   max-width: 600px;
@@ -186,6 +205,16 @@ main {
 .back-to-top.show {
   display: flex;
 }
+/* SVG arrow styling for back-to-top */
+.back-to-top svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--text-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 </style>
 </head>
 <body class="dark-mode">
@@ -209,21 +238,23 @@ main {
   </nav>
 </div>
 
+<div class="tooltip" id="drawerTooltip">Placeholder: This drawer toggles content</div>
+
 <div id="pageWrapper">
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>After a small scroll, KYZER moves up into the title bar and shortens to KZR. Now you see this text.</p>
+      <p>Scroll slightly and watch "KYZER" move up and become "KZR". The back-to-top button will appear after you scroll more than a small amount.</p>
     </section>
 
     <section class="text-section two-columns">
       <div>
         <h2>Column 1 Heading</h2>
-        <p>First column content. Scroll down to see more content and footer. Back to top appears once you scroll.</p>
+        <p>First column content. Click the menu (☰) to open the drawer below the title bar and reveal icons and this tooltip.</p>
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Second column content. Explore the drawer by clicking the menu button. Toggle dark/light mode from the drawer.</p>
+        <p>Second column content. Use the theme icon in the drawer to toggle dark/light mode. Back to top button is now an arrow icon.</p>
       </div>
     </section>
   </main>
@@ -244,7 +275,11 @@ main {
   </footer>
 </div>
 
-<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+<button class="back-to-top" id="backToTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
   const pageWrapper = document.getElementById('pageWrapper');
+  const drawerTooltip = document.getElementById('drawerTooltip');
 
   // Handle scroll for hero logo and back-to-top button
   window.addEventListener('scroll', () => {
@@ -273,14 +309,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle the drawer
   trayToggle.addEventListener('click', () => {
-    // If drawer is closed, open it
     if (!tray.classList.contains('open')) {
       tray.classList.add('open');
       pageWrapper.classList.add('page-down');
+      drawerTooltip.classList.add('show');
     } else {
-      // If drawer is open, close it
       tray.classList.remove('open');
       pageWrapper.classList.remove('page-down');
+      drawerTooltip.classList.remove('show');
     }
   });
 
@@ -291,11 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
       body.style.setProperty('--bg-color', '#ffffff');
       body.style.setProperty('--text-color', '#000000');
       body.style.setProperty('--footer-bg', '#dddddd');
+      body.style.setProperty('--drawer-bg', '#f0f0f0');
     } else {
       body.classList.add('dark-mode');
       body.style.setProperty('--bg-color', '#121212');
       body.style.setProperty('--text-color', '#ffffff');
       body.style.setProperty('--footer-bg', '#1c1c1c');
+      body.style.setProperty('--drawer-bg', '#0f0f0f');
     }
   });
 });
