@@ -10,18 +10,16 @@ html, body {
   padding: 0;
   overflow-x: hidden;
   font-family: sans-serif;
-  background: var(--bg-color, #fff);
-  color: var(--text-color, #000);
-}
-
-/* Light and dark mode variables */
-:root {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-}
-.dark-mode {
+  /* Dark mode by default */
   --bg-color: #121212;
   --text-color: #ffffff;
+  --footer-bg: #1c1c1c;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+body.scrolled .hero-part {
+  display: none;
 }
 
 .title-bar {
@@ -34,42 +32,39 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 0 5px rgba(0,0,0,0.5);
   z-index: 1000;
 }
 
 .logo-container {
-  height: 40px;
+  position: relative;
   display: flex;
   align-items: center;
-  position: relative;
+  height: 40px;
 }
 
 .hero-logo {
   transition: all 0.3s ease;
-  height: 100%;
+  height: 40px;
   width: auto;
 }
 
-/* When the hero logo is at top, it's centered and large */
+/* Initially large and centered SVG word */
 body:not(.scrolled) .hero-logo {
-  height: 100px; /* hero size */
-  transform: translateX(-50%);
+  height: 100px;
   position: absolute;
   left: 50%;
-  top: 10px;
+  top: 150px; /* center on screen */
+  transform: translateX(-50%);
 }
 
-/* When scrolled, hero-logo shrinks and moves into title-bar */
+/* On scroll, it moves into the title bar */
 body.scrolled .hero-logo {
   position: static;
   height: 40px;
   transform: none;
-}
-
-/* Hide certain SVG parts after scroll */
-body.scrolled .hero-part {
-  display: none;
+  top: 0;
+  left: 0;
 }
 
 .tray-toggle {
@@ -78,65 +73,76 @@ body.scrolled .hero-part {
   font-size: 24px;
   cursor: pointer;
   color: var(--text-color);
+  padding: 5px;
 }
 
 .content-tray {
-  position: fixed;
-  top: 60px;
-  left: 0;
   width: 100%;
   background: var(--bg-color);
-  transform: translateY(-100%);
-  transition: transform 0.3s ease;
-  z-index: 999;
-  padding: 20px;
-}
-
-.content-tray.open {
-  transform: translateY(0);
+  padding: 20px 0;
+  transition: all 0.3s ease;
 }
 
 .icon-links {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 20px;
 }
 
 .icon-links .icon {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   fill: var(--text-color);
 }
 
+#pageWrapper {
+  transition: transform 0.3s ease;
+  margin-top: 60px; /* initial offset for title bar */
+}
+
+/* When tray is open, push the page down by tray height (approx. 200px) */
+.page-down {
+  transform: translateY(200px);
+}
+
+/* Spacing everything out */
 main {
-  margin-top: 60px; /* accommodate title bar */
-  padding: 20px;
+  padding: 200vh 20px 50px; /* large top padding so you scroll to see text */
+  /* no background */
 }
 
-.text-section.single-column {
-  max-width: 600px;
-  margin: 0 auto;
+.text-section {
+  margin-bottom: 100px;
 }
 
+/* Two columns layout */
 .text-section.two-columns {
   display: flex;
   gap: 20px;
   max-width: 900px;
-  margin: 0 auto;
+  margin: 0 auto 100px;
 }
 
-.two-columns > div {
-  flex: 1;
-}
-
+/* Footer alignment */
 .triple-footer {
   display: flex;
   gap: 20px;
-  padding: 20px;
-  background: #eee;
+  padding: 50px 20px;
+  background: var(--footer-bg);
 }
 
 .triple-footer > div {
   flex: 1;
+}
+.triple-footer > div:nth-child(1) {
+  text-align: right;
+}
+.triple-footer > div:nth-child(2) {
+  text-align: center;
+}
+.triple-footer > div:nth-child(3) {
+  text-align: left;
 }
 
 .back-to-top {
@@ -152,6 +158,7 @@ main {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 1001;
 }
 
 .back-to-top.show {
@@ -160,10 +167,10 @@ main {
 
 .physics-container {
   position: fixed;
-  top: 0;
+  top: 60px; /* Just under title bar */
   left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 60px); /* from just under title bar to just above footer */
   pointer-events: none;
   overflow: hidden;
   z-index: -1;
@@ -171,22 +178,19 @@ main {
 
 .physics-toy {
   position: absolute;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   background: red;
   border-radius: 50%;
 }
 </style>
 </head>
-<body>
+<body class="dark-mode">
 <header class="title-bar">
   <div class="logo-container">
-    <!-- Hero logo (example shape) -->
-    <svg class="hero-logo" id="heroLogo" viewBox="0 0 200 100">
-      <!-- Example hero-part that will be removed after scroll -->
-      <circle class="hero-part" cx="50" cy="50" r="40" fill="blue"></circle>
-      <!-- Another part that remains -->
-      <rect x="100" y="30" width="60" height="40" fill="green"></rect>
+    <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
+      <!-- Large text in SVG -->
+      <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="64" font-family="sans-serif">PHYSICS TOYS</text>
     </svg>
   </div>
   <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
@@ -194,50 +198,51 @@ main {
 
 <div class="content-tray" id="contentTray">
   <nav class="icon-links">
-    <!-- Dummy SVG icons (just placeholders) -->
+    <!-- Dummy SVG icons -->
     <a href="#"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
     <a href="#"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
-    <a href="#" id="themeToggle"><svg class="icon" id="iconTheme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" id="themeToggle"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
     <a href="#"><svg class="icon" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
     <a href="#"><svg class="icon" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg></a>
   </nav>
 </div>
 
-<main>
-  <section class="text-section single-column">
-    <h1>Welcome to Our Physics Playground</h1>
-    <p>This is an introductory paragraph of text showcasing some content at the top of the page.</p>
-  </section>
+<div id="pageWrapper">
+  <main>
+    <section class="text-section single-column">
+      <h1>Welcome to Our Physics Playground</h1>
+      <p>This text is initially off-screen below. Scroll up to see the hero word. Scroll down to reveal this content.</p>
+    </section>
 
-  <section class="text-section two-columns">
+    <section class="text-section two-columns">
+      <div>
+        <h2>Column 1 Heading</h2>
+        <p>First column content goes here. This should be visible after more scrolling. It's right before the footer. Add some filler text.</p>
+      </div>
+      <div>
+        <h2>Column 2 Heading</h2>
+        <p>Second column content. Another block of text that you find after scrolling. Add more text for demonstration.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="triple-footer">
     <div>
-      <h2>Column 1 Heading</h2>
-      <p>First column content goes here. Add more text as needed to demonstrate layout and scrolling.</p>
+      <h3>Footer Col 1</h3>
+      <p>Right-aligned footer content...</p>
     </div>
     <div>
-      <h2>Column 2 Heading</h2>
-      <p>Second column content. Perhaps detail the physics toys or site features. Add enough text to enable scrolling.</p>
+      <h3>Footer Col 2</h3>
+      <p>Center-aligned footer info...</p>
     </div>
-  </section>
-</main>
-
-<footer class="triple-footer">
-  <div>
-    <h3>Footer Col 1</h3>
-    <p>Some footer content...</p>
-  </div>
-  <div>
-    <h3>Footer Col 2</h3>
-    <p>Additional footer info...</p>
-  </div>
-  <div>
-    <h3>Footer Col 3</h3>
-    <p>More footer text...</p>
-  </div>
-</footer>
+    <div>
+      <h3>Footer Col 3</h3>
+      <p>Left-aligned footer text...</p>
+    </div>
+  </footer>
+</div>
 
 <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
-
 <div class="physics-container" id="physicsContainer"></div>
 
 <script>
@@ -248,12 +253,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
   const physicsContainer = document.getElementById('physicsContainer');
+  const pageWrapper = document.getElementById('pageWrapper');
 
   let toys = [];
-  const GRAVITY = 0.9; // 90% gravity factor
-  const TOY_COUNT = 10;
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  const TOY_COUNT = 1; 
+  const GRAVITY = 0.2;
+  const REPEL_FORCE = 20000; // strength of repulsion from mouse
+  const FLOOR_Y = window.innerHeight - 60; // bottom limit (top of footer area would be approx. viewport height)
+  
+  // Start dark mode by default (already done via CSS)
+  // body.classList.add('dark-mode');
 
-  // Initialize physics toys
+  // Spawn one toy
   for (let i = 0; i < TOY_COUNT; i++) {
     spawnToy();
   }
@@ -261,40 +274,95 @@ document.addEventListener('DOMContentLoaded', () => {
   function spawnToy() {
     const toy = document.createElement('div');
     toy.className = 'physics-toy';
-    toy.style.left = Math.random() * window.innerWidth + 'px';
-    toy.y = -50;  // Start above the top
-    toy.vy = 0;   // initial velocity
+    toy.x = window.innerWidth/2;
+    toy.y = 70; // just under title bar (title bar is 60px)
+    toy.vx = (Math.random() - 0.5)*2;
+    toy.vy = 0;
+    updateToyPosition(toy);
     physicsContainer.appendChild(toy);
     toys.push(toy);
   }
 
-  function updateToys() {
-    const bottomLimit = window.innerHeight + 50;
-    for (let i = toys.length - 1; i >= 0; i--) {
-      const toy = toys[i];
-      toy.vy += 0.5 * GRAVITY; // basic gravity increment
-      toy.y += toy.vy;
-      toy.style.top = toy.y + 'px';
+  function updateToyPosition(toy) {
+    toy.style.transform = `translate(${toy.x}px, ${toy.y}px)`;
+  }
 
-      // Remove off-screen toys
-      if (toy.y > bottomLimit) {
-        physicsContainer.removeChild(toy);
-        toys.splice(i, 1);
-        spawnToy();
+  function updateToys() {
+    for (let toy of toys) {
+      // Gravity
+      toy.vy += GRAVITY;
+
+      // Repel from mouse: calculate direction away from mouse
+      const dx = toy.x - mouseX;
+      const dy = toy.y - mouseY;
+      const distSq = dx*dx + dy*dy;
+      const dist = Math.sqrt(distSq);
+      if (dist < 200) {
+        // Apply a repulsive force
+        const force = REPEL_FORCE / (distSq + 1);
+        const fx = (dx/dist)*force;
+        const fy = (dy/dist)*force;
+        toy.vx += fx;
+        toy.vy += fy;
       }
+
+      // Update position
+      toy.x += toy.vx;
+      toy.y += toy.vy;
+
+      // Bounce off bottom (don’t go into footer)
+      if (toy.y > FLOOR_Y - 30) { // toy size is 30px
+        toy.y = FLOOR_Y - 30;
+        toy.vy *= -0.7; // bounce
+      }
+
+      // Bounce off sides
+      if (toy.x < 0) {
+        toy.x = 0;
+        toy.vx *= -0.7;
+      } else if (toy.x > window.innerWidth - 30) {
+        toy.x = window.innerWidth - 30;
+        toy.vx *= -0.7;
+      }
+
+      // toy should not go above the title bar area
+      if (toy.y < 70) {
+        toy.y = 70;
+        toy.vy *= -0.7;
+      }
+
+      // Update styling
+      updateToyPosition(toy);
     }
     requestAnimationFrame(updateToys);
   }
   requestAnimationFrame(updateToys);
 
+  // Mouse move
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
   // Toggle the tray
   trayToggle.addEventListener('click', () => {
-    tray.classList.toggle('open');
+    const isOpen = pageWrapper.classList.toggle('page-down');
   });
 
   // Toggle dark/light mode
   themeToggle.addEventListener('click', () => {
-    body.classList.toggle('dark-mode');
+    // If dark-mode is on, remove it => goes to light mode
+    if (body.classList.contains('dark-mode')) {
+      body.classList.remove('dark-mode');
+      body.style.setProperty('--bg-color', '#ffffff');
+      body.style.setProperty('--text-color', '#000000');
+      body.style.setProperty('--footer-bg', '#dddddd');
+    } else {
+      body.classList.add('dark-mode');
+      body.style.setProperty('--bg-color', '#121212');
+      body.style.setProperty('--text-color', '#ffffff');
+      body.style.setProperty('--footer-bg', '#1c1c1c');
+    }
   });
 
   // Handle scroll events for hero logo and back-to-top
