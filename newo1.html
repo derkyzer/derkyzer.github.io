@@ -15,6 +15,7 @@ html, body {
   height: 100%;
 }
 
+/* Dark mode by default */
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
@@ -40,6 +41,34 @@ body {
   z-index: 1000;
 }
 
+/* Hero Logo:
+   Initially large and centered in the viewport (not scrolled).
+   On scroll, moves into title bar and shrinks.
+   Also removes Y and E to display KZR. */
+.hero-logo {
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+/* Before scroll: Large and centered in the screen */
+body:not(.scrolled) .hero-logo {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 64px;
+}
+
+/* After scroll: smaller, inside the title bar, and letters removed */
+body.scrolled .hero-logo {
+  position: static;
+  transform: none;
+  font-size: 24px;
+}
+body.scrolled .remove-on-scroll {
+  display: none;
+}
+
+/* Tray toggle button at top-right of title bar */
 .tray-toggle {
   position: absolute;
   top: 50%;
@@ -52,32 +81,24 @@ body {
   color: var(--text-color);
 }
 
-/* Hero logo: Large and centered at load */
-.hero-logo {
-  font-weight: bold;
-  font-size: 64px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transition: all 0.3s ease;
-}
-
-/* On scroll, hero goes into title bar, smaller */
-body.scrolled .hero-logo {
-  position: static;
-  transform: none;
-  font-size: 24px;
-}
-
-/* Drawer hidden by default */
+/* Drawer hidden above the screen initially.
+   It will slide down when open. */
 .content-tray {
-  display: none;
+  position: absolute;
+  top: 60px;
+  left: 0;
   width: 100%;
   background: var(--bg-color);
   padding: 20px 0;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  z-index: 500; /* below title bar, will be revealed by sliding page down */
+}
+.content-tray.open {
+  transform: translateY(0);
 }
 
+/* Icons in drawer horizontally centered */
 .icon-links {
   display: flex;
   flex-direction: row;
@@ -92,24 +113,26 @@ body.scrolled .hero-logo {
   fill: var(--text-color);
 }
 
-/* Page Wrapper - moves down when drawer is shown */
+/* Page Wrapper slides down when drawer is opened */
 #pageWrapper {
+  position: relative;
+  z-index: 600; /* Above drawer so it's hidden until we open and move page down */
   transition: transform 0.3s ease;
-  margin-top: 60px; /* to accommodate the title bar */
+  margin-top: 60px; /* offset for title bar */
 }
 #pageWrapper.page-down {
   transform: translateY(200px);
 }
 
-/* Main content spacing:
-   Enough so you see KYZER centered at load,
-   then scroll slightly to reveal text. */
+/* Main content:
+   Enough space so initially you only see KYZER.
+   After a small scroll, KYZER moves up and text appears. */
 main {
-  padding-top: 100vh; /* one viewport height of space so user must scroll to see content */
+  padding-top: 100vh;
   padding-bottom: 100px;
 }
 
-/* Sections */
+/* Text Sections */
 .text-section {
   margin: 100px 0;
   max-width: 600px;
@@ -117,7 +140,6 @@ main {
   margin-right: auto;
 }
 
-/* Two columns layout */
 .text-section.two-columns {
   display: flex;
   gap: 20px;
@@ -155,13 +177,12 @@ main {
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  display: none;
+  display: none; /* hidden by default */
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1001;
 }
-
 .back-to-top.show {
   display: flex;
 }
@@ -170,7 +191,11 @@ main {
 <body class="dark-mode">
 
 <header class="title-bar">
-  <div class="hero-logo" id="heroLogo">KYZER</div>
+  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
+    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold">
+      K<tspan class="remove-on-scroll">Y</tspan>Z<tspan class="remove-on-scroll">E</tspan>R
+    </text>
+  </svg>
   <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
 
@@ -188,17 +213,17 @@ main {
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>After scrolling slightly, you reveal this text. The hero text has moved up to the title bar and shrunk in size.</p>
+      <p>After a small scroll, KYZER moves up into the title bar and shortens to KZR. Now you see this text.</p>
     </section>
 
     <section class="text-section two-columns">
       <div>
         <h2>Column 1 Heading</h2>
-        <p>First column content goes here. More content to demonstrate layout.</p>
+        <p>First column content. Scroll down to see more content and footer. Back to top appears once you scroll.</p>
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Second column content. Additional text to show two-column layout.</p>
+        <p>Second column content. Explore the drawer by clicking the menu button. Toggle dark/light mode from the drawer.</p>
       </div>
     </section>
   </main>
@@ -230,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const backToTop = document.getElementById('backToTop');
   const pageWrapper = document.getElementById('pageWrapper');
 
-  // Handle scroll events for hero logo and back-to-top
+  // Handle scroll for hero logo and back-to-top button
   window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
       body.classList.add('scrolled');
@@ -241,21 +266,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Back to top behavior
+  // Back to top
   backToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Toggle the tray
+  // Toggle the drawer
   trayToggle.addEventListener('click', () => {
-    if (tray.style.display === 'block') {
-      // Hide the tray
-      tray.style.display = 'none';
-      pageWrapper.classList.remove('page-down');
-    } else {
-      // Show the tray
-      tray.style.display = 'block';
+    // If drawer is closed, open it
+    if (!tray.classList.contains('open')) {
+      tray.classList.add('open');
       pageWrapper.classList.add('page-down');
+    } else {
+      // If drawer is open, close it
+      tray.classList.remove('open');
+      pageWrapper.classList.remove('page-down');
     }
   });
 
