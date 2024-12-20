@@ -10,20 +10,53 @@ html, body {
   padding: 0;
   overflow-x: hidden;
   font-family: sans-serif;
-  /* Dark mode by default */
+  background: #121212; /* Dark by default */
+  color: #ffffff;
+  height: 100%;
+}
+
+/* Dark mode variables (start dark) */
+:root {
   --bg-color: #121212;
   --text-color: #ffffff;
   --footer-bg: #1c1c1c;
+}
+
+body.dark-mode {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --footer-bg: #1c1c1c;
+}
+body:not(.dark-mode) {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --footer-bg: #dddddd;
+}
+
+body {
   background: var(--bg-color);
   color: var(--text-color);
 }
 
-/* Remove horizontal scrollbar possibilities */
-body {
-  max-width: 100%;
-  overflow-x: hidden;
+/* Physics container at the top, behind everything else */
+.physics-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0; /* Base layer */
 }
 
+.physics-toy {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: #ff4444;
+  border-radius: 50%;
+}
+
+/* Title bar centered text */
 .title-bar {
   position: fixed;
   top: 0;
@@ -32,14 +65,14 @@ body {
   background: var(--bg-color);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* Center the logo */
   padding: 0 20px;
   box-shadow: 0 0 5px rgba(0,0,0,0.5);
   z-index: 1000;
+  position: relative;
 }
 
 .logo-container {
-  position: relative;
   display: flex;
   align-items: center;
   height: 40px;
@@ -52,47 +85,54 @@ body {
   font-weight: bold;
 }
 
-/* Initially large and centered "KYZER" */
+/* Large and centered (vertically/horizontally) at page load */
 body:not(.scrolled) .hero-logo {
-  height: 100px;
   position: absolute;
-  left: 50%;
-  top: 150px;
-  transform: translateX(-50%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  height: 100px;
 }
 
-/* On scroll, it moves into the title bar and becomes "KZR" */
-body.scrolled .hero-logo text {
-  /* We'll hide 'Y' and 'E' */
-  /* One approach: separate letters into <tspan> and hide them after scroll */
-}
-body.scrolled .hero-logo .remove-on-scroll {
+/* On scroll, shrink and remove Y and E (KYZER -> KZR) */
+body.scrolled .remove-on-scroll {
   display: none;
 }
 
-/* On scroll, hero logo shrinks and is in title bar */
+/* When scrolled, it sits in the title bar, still centered */
 body.scrolled .hero-logo {
   position: static;
-  height: 40px;
   transform: none;
-  top: 0;
-  left: 0;
+  height: 40px;
 }
 
+/* Tray toggle button in top-right corner (absolute) */
 .tray-toggle {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
   background: none;
   border: none;
   font-size: 24px;
   cursor: pointer;
   color: var(--text-color);
-  padding: 5px;
 }
 
+/* Content tray */
 .content-tray {
   width: 100%;
   background: var(--bg-color);
   padding: 20px 0;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
+  position: fixed;
+  top: 60px; /* just below title bar */
+  left: 0;
+  transform: translateY(-100%); /* hidden by default */
+  z-index: 999;
+}
+
+.content-tray.open {
+  transform: translateY(0);
 }
 
 .icon-links {
@@ -109,44 +149,54 @@ body.scrolled .hero-logo {
   fill: var(--text-color);
 }
 
+/* Page wrapper shifts down when tray is open */
 #pageWrapper {
   transition: transform 0.3s ease;
   margin-top: 60px; /* offset for title bar */
 }
-
-/* When tray is open, push the page down by tray height (approx. 200px) */
-.page-down {
+#pageWrapper.page-down {
   transform: translateY(200px);
 }
 
-/* Spacing everything out */
+/* Main content spacing:
+   Start below the hero text so you scroll about one screen to see the first text. */
 main {
-  /* Large top padding so we must scroll to see the text */
-  padding: 200vh 20px 50px; 
+  position: relative;
+  z-index: 1; /* Above the physics-container */
+  padding-top: 100vh; /* scroll one viewport to see text */
+  padding-bottom: 100px;
+  background: transparent; /* no background */
 }
 
 .text-section {
-  margin-bottom: 100px;
+  margin: 100px 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  background: transparent; /* no background */
 }
 
-/* Two columns layout */
 .text-section.two-columns {
   display: flex;
   gap: 20px;
   max-width: 900px;
-  margin: 0 auto 100px;
+  margin: 100px auto;
+  background: transparent; 
 }
 
-/* Footer alignment */
+/* Footer */
 .triple-footer {
   display: flex;
   gap: 20px;
   padding: 50px 20px;
   background: var(--footer-bg);
+  position: relative;
+  z-index: 1;
 }
 
 .triple-footer > div {
   flex: 1;
+  background: transparent; 
 }
 .triple-footer > div:nth-child(1) {
   text-align: right;
@@ -158,6 +208,7 @@ main {
   text-align: left;
 }
 
+/* Back to top */
 .back-to-top {
   position: fixed;
   bottom: 20px;
@@ -177,34 +228,16 @@ main {
 .back-to-top.show {
   display: flex;
 }
-
-.physics-container {
-  position: fixed;
-  top: 60px; 
-  left: 0;
-  width: 100%;
-  height: calc(100vh - 60px); 
-  pointer-events: none;
-  overflow: hidden;
-  z-index: -1;
-}
-
-.physics-toy {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  background: red;
-  border-radius: 50%;
-}
 </style>
 </head>
 <body class="dark-mode">
+
+<div class="physics-container" id="physicsContainer"></div>
+
 <header class="title-bar">
   <div class="logo-container">
     <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
-      <!-- Split letters so we can remove Y and E on scroll -->
-      <!-- Original: KYZER  -> K, Y, Z, E, R -->
-      <!-- On scroll, hide Y and E: leaving K, Z, R => "KZR" -->
+      <!-- KYZER large, on scroll hide Y and E to show KZR -->
       <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="64" font-family="sans-serif" font-weight="bold">
         K<tspan class="remove-on-scroll">Y</tspan>Z<tspan class="remove-on-scroll">E</tspan>R
       </text>
@@ -215,7 +248,6 @@ main {
 
 <div class="content-tray" id="contentTray">
   <nav class="icon-links">
-    <!-- 5 Icons horizontally -->
     <a href="#"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
     <a href="#"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></a>
     <a href="#" id="themeToggle"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></a>
@@ -228,17 +260,17 @@ main {
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>This text is initially off-screen below. Scroll up to see the "KYZER" in big letters. Scroll down to reveal this content.</p>
+      <p>After scrolling down from the centered "KYZER", you reach this text. It's no longer too far down, and not bunched at the bottom.</p>
     </section>
 
     <section class="text-section two-columns">
       <div>
         <h2>Column 1 Heading</h2>
-        <p>First column content goes here. As you scroll further down, you find these columns.</p>
+        <p>First column content. Some filler text to demonstrate layout. Now more reasonably spaced.</p>
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Second column content. More text to ensure scrolling and layout. Add some filler text as needed.</p>
+        <p>Second column content. Another block of text that you find after some scrolling.</p>
       </div>
     </section>
   </main>
@@ -260,11 +292,11 @@ main {
 </div>
 
 <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
-<div class="physics-container" id="physicsContainer"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
+  const tray = document.getElementById('contentTray');
   const trayToggle = document.getElementById('trayToggle');
   const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
@@ -276,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let mouseY = window.innerHeight / 2;
   const TOY_COUNT = 1; 
   const GRAVITY = 0.2;
-  const REPEL_FORCE = 20000; // strength of repulsion from mouse
+  const REPEL_FORCE = 20000; 
   const FLOOR_Y = window.innerHeight - 60; 
 
   // Spawn one toy
@@ -288,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toy = document.createElement('div');
     toy.className = 'physics-toy';
     toy.x = window.innerWidth/2;
-    toy.y = 70; // just under title bar
+    toy.y = 70; // just below title bar
     toy.vx = (Math.random() - 0.5)*2;
     toy.vy = 0;
     updateToyPosition(toy);
@@ -311,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const distSq = dx*dx + dy*dy;
       const dist = Math.sqrt(distSq);
       if (dist < 200) {
-        // Apply a repulsive force
+        // Repulsive force
         const force = REPEL_FORCE / (distSq + 1);
         const fx = (dx/dist)*force;
         const fy = (dy/dist)*force;
@@ -358,12 +390,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle the tray
   trayToggle.addEventListener('click', () => {
+    tray.classList.toggle('open');
     pageWrapper.classList.toggle('page-down');
   });
 
   // Toggle dark/light mode
   themeToggle.addEventListener('click', () => {
-    // If dark-mode is on, remove it => goes to light mode
     if (body.classList.contains('dark-mode')) {
       body.classList.remove('dark-mode');
       body.style.setProperty('--bg-color', '#ffffff');
