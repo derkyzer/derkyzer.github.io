@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>KYZER</title>
 <style>
 html, body {
@@ -18,18 +18,7 @@ html, body {
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
-  --footer-bg: rgba(28,28,28,0.5); /* semi-transparent so balls show behind */
-}
-
-body.dark-mode {
-  --bg-color: #121212;
-  --text-color: #ffffff;
-  --footer-bg: rgba(28,28,28,0.5);
-}
-body:not(.dark-mode) {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-  --footer-bg: rgba(221,221,221,0.5);
+  --footer-bg: #1c1c1c;
 }
 
 body {
@@ -37,25 +26,7 @@ body {
   color: var(--text-color);
 }
 
-/* Balls container above everything to ensure visibility */
-.physics-container {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 2000; /* Above all content so never hidden by footer */
-}
-
-.physics-toy {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  background: #ff4444;
-  border-radius: 50%;
-}
-
-/* Title bar */
+/* Title Bar */
 .title-bar {
   position: fixed;
   top: 0;
@@ -66,37 +37,9 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 5px rgba(0,0,0,0.5);
-  z-index: 100; /* Under balls, but above main content */
-  position: relative;
+  z-index: 1000;
 }
 
-/* Hero logo: Large and centered at load, shrinks on scroll */
-.hero-logo {
-  transition: all 0.3s ease;
-  font-weight: bold;
-}
-
-/* At load (not scrolled), hero text is large and centered in viewport */
-body:not(.scrolled) .hero-logo {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 64px;
-}
-
-/* Once scrolled, hero text moves into title bar and shrinks */
-body.scrolled .hero-logo {
-  position: static;
-  transform: none;
-  font-size: 24px;
-}
-
-/* Remove Y and E when scrolled (KYZER -> KZR) */
-body.scrolled .remove-on-scroll {
-  display: none;
-}
-
-/* Tray toggle in top-right corner */
 .tray-toggle {
   position: absolute;
   top: 50%;
@@ -109,21 +52,30 @@ body.scrolled .remove-on-scroll {
   color: var(--text-color);
 }
 
-/* Drawer is initially off-screen above */
+/* Hero logo: Large and centered at load */
+.hero-logo {
+  font-weight: bold;
+  font-size: 64px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+/* On scroll, hero goes into title bar, smaller */
+body.scrolled .hero-logo {
+  position: static;
+  transform: none;
+  font-size: 24px;
+}
+
+/* Drawer hidden by default */
 .content-tray {
+  display: none;
   width: 100%;
   background: var(--bg-color);
   padding: 20px 0;
-  position: fixed;
-  top: 60px;
-  left: 0;
-  transform: translateY(-100%);
-  transition: transform 0.3s ease;
-  z-index: 50; /* Below the main content wrapper */
-}
-
-.content-tray.open {
-  transform: translateY(0);
 }
 
 .icon-links {
@@ -140,33 +92,29 @@ body.scrolled .remove-on-scroll {
   fill: var(--text-color);
 }
 
-/* Page Wrapper on top of the tray, sliding down to reveal it */
+/* Page Wrapper - moves down when drawer is shown */
 #pageWrapper {
   transition: transform 0.3s ease;
-  position: relative;
-  z-index: 100; /* Above the tray so it's hidden until opened */
-  margin-top: 60px; 
+  margin-top: 60px; /* to accommodate the title bar */
 }
 #pageWrapper.page-down {
   transform: translateY(200px);
 }
 
-/* Spacing in main: small scroll to see content */
+/* Main content spacing:
+   Enough so you see KYZER centered at load,
+   then scroll slightly to reveal text. */
 main {
-  position: relative;
-  z-index: 1;
-  padding-top: 100vh; /* About one screen scroll to see first text */
+  padding-top: 100vh; /* one viewport height of space so user must scroll to see content */
   padding-bottom: 100px;
-  background: transparent;
 }
 
-/* Sections spaced reasonably */
+/* Sections */
 .text-section {
   margin: 100px 0;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  background: transparent;
 }
 
 /* Two columns layout */
@@ -177,16 +125,13 @@ main {
   margin: 100px auto;
 }
 
-/* Footer with semi-transparent background */
+/* Footer */
 .triple-footer {
   display: flex;
   gap: 20px;
   padding: 50px 20px;
   background: var(--footer-bg);
-  position: relative;
-  z-index: 1;
 }
-
 .triple-footer > div {
   flex: 1;
 }
@@ -200,7 +145,7 @@ main {
   text-align: left;
 }
 
-/* Back to top */
+/* Back to top button */
 .back-to-top {
   position: fixed;
   bottom: 20px;
@@ -224,14 +169,8 @@ main {
 </head>
 <body class="dark-mode">
 
-<div class="physics-container" id="physicsContainer"></div>
-
 <header class="title-bar">
-  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
-    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold">
-      K<tspan class="remove-on-scroll">Y</tspan>Z<tspan class="remove-on-scroll">E</tspan>R
-    </text>
-  </svg>
+  <div class="hero-logo" id="heroLogo">KYZER</div>
   <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
 
@@ -249,17 +188,17 @@ main {
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll down a bit from the "KYZER" hero to see this text. Not too far, not bunched at the bottom.</p>
+      <p>After scrolling slightly, you reveal this text. The hero text has moved up to the title bar and shrunk in size.</p>
     </section>
 
     <section class="text-section two-columns">
       <div>
         <h2>Column 1 Heading</h2>
-        <p>First column content. Scrolling also affects the balls' movement.</p>
+        <p>First column content goes here. More content to demonstrate layout.</p>
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Second column content. As you scroll, balls gain horizontal motion and may move off-screen.</p>
+        <p>Second column content. Additional text to show two-column layout.</p>
       </div>
     </section>
   </main>
@@ -289,76 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const trayToggle = document.getElementById('trayToggle');
   const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
-  const physicsContainer = document.getElementById('physicsContainer');
   const pageWrapper = document.getElementById('pageWrapper');
 
-  let toys = [];
-  const TOY_COUNT = 5;
-  const GRAVITY = 0.2;
-  let lastScrollY = 0;
-
-  // Spawn multiple toys at top
-  for (let i = 0; i < TOY_COUNT; i++) {
-    spawnToy();
-  }
-
-  function spawnToy() {
-    const toy = document.createElement('div');
-    toy.className = 'physics-toy';
-    toy.x = window.innerWidth/2 - 15;
-    toy.y = 70; // below title bar
-    toy.vx = (Math.random() - 0.5)*2;
-    toy.vy = 0;
-    updateToyPosition(toy);
-    physicsContainer.appendChild(toy);
-    toys.push(toy);
-  }
-
-  function updateToyPosition(toy) {
-    toy.style.transform = `translate(${toy.x}px, ${toy.y}px)`;
-  }
-
-  function updateToys() {
-    for (let toy of toys) {
-      // Gravity
-      toy.vy += GRAVITY;
-
-      // Update position
-      toy.x += toy.vx;
-      toy.y += toy.vy;
-
-      // If toy goes off bottom screen, remove and spawn new at top
-      if (toy.y > window.innerHeight) {
-        physicsContainer.removeChild(toy);
-        toys.splice(toys.indexOf(toy), 1);
-        spawnToy();
-        continue;
-      }
-
-      // If toy goes off sides, remove and spawn new
-      if (toy.x < -30 || toy.x > window.innerWidth) {
-        physicsContainer.removeChild(toy);
-        toys.splice(toys.indexOf(toy), 1);
-        spawnToy();
-        continue;
-      }
-
-      updateToyPosition(toy);
-    }
-    requestAnimationFrame(updateToys);
-  }
-  requestAnimationFrame(updateToys);
-
-  // Scrolling affects physics: Each scroll changes horizontal velocity of toys slightly
+  // Handle scroll events for hero logo and back-to-top
   window.addEventListener('scroll', () => {
-    const dy = window.scrollY - lastScrollY;
-    lastScrollY = window.scrollY;
-    // Add a small horizontal push based on scroll direction
-    for (let toy of toys) {
-      toy.vx += dy * 0.05; 
-    }
-
-    // Hero text transition
     if (window.scrollY > 50) {
       body.classList.add('scrolled');
       backToTop.classList.add('show');
@@ -368,10 +241,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Toggle the drawer
+  // Back to top behavior
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Toggle the tray
   trayToggle.addEventListener('click', () => {
-    tray.classList.toggle('open');
-    pageWrapper.classList.toggle('page-down');
+    if (tray.style.display === 'block') {
+      // Hide the tray
+      tray.style.display = 'none';
+      pageWrapper.classList.remove('page-down');
+    } else {
+      // Show the tray
+      tray.style.display = 'block';
+      pageWrapper.classList.add('page-down');
+    }
   });
 
   // Toggle dark/light mode
@@ -380,18 +265,13 @@ document.addEventListener('DOMContentLoaded', () => {
       body.classList.remove('dark-mode');
       body.style.setProperty('--bg-color', '#ffffff');
       body.style.setProperty('--text-color', '#000000');
-      body.style.setProperty('--footer-bg', 'rgba(221,221,221,0.5)');
+      body.style.setProperty('--footer-bg', '#dddddd');
     } else {
       body.classList.add('dark-mode');
       body.style.setProperty('--bg-color', '#121212');
       body.style.setProperty('--text-color', '#ffffff');
-      body.style.setProperty('--footer-bg', 'rgba(28,28,28,0.5)');
+      body.style.setProperty('--footer-bg', '#1c1c1c');
     }
-  });
-
-  // Back to top
-  backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
 </script>
