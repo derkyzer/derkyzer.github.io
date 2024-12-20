@@ -29,13 +29,14 @@ body {
   --footer-bg: #1c1c1c;
   --drawer-bg: #0f0f0f;
   --tooltip-bg: #333333;
-  --r-color: #ffffff; /* R color in dark mode */
+  --r-color: #ffffff;
+  --opposite-color: #ffffff;
 }
 
 /* Title Bar */
 .title-bar {
   position: fixed;
-  top: 0; left:0;
+  top: 0; left: 0;
   width: 100%;
   height: 60px;
   background: var(--bg-color);
@@ -46,29 +47,9 @@ body {
   z-index: 1000;
 }
 
-/* Hero Logo:
-   We'll do letter coloring directly via tspan fills.
-   K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R uses var(--r-color).
-*/
-.hero-logo {
-  font-weight: bold;
-  white-space: nowrap;
-}
-.remove-on-scroll {
-  transition: opacity 0.3s ease;
-}
-
-/* Remove Y and E when scrolled */
-body.scrolled .remove-on-scroll {
-  display: none;
-}
-
-/* Tray toggle button */
-.tray-toggle {
+.theme-toggle {
   position: absolute;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
+  left: 20px;
   background: none;
   border: none;
   font-size: 24px;
@@ -76,7 +57,24 @@ body.scrolled .remove-on-scroll {
   color: var(--text-color);
 }
 
-/* Drawer with upward shadow at its bottom */
+.hero-logo {
+  font-weight: bold;
+  white-space: nowrap;
+  width: 80%;
+  text-align: center;
+  font-size: 5vw; /* Large on load */
+  transition: all 0.3s ease;
+}
+.remove-on-scroll {
+  transition: opacity 0.3s ease;
+}
+
+/* When scrolled, remove Y and E */
+body.scrolled .remove-on-scroll {
+  display: none;
+}
+
+/* Drawer */
 .content-tray {
   position: fixed;
   top: 60px;
@@ -86,67 +84,30 @@ body.scrolled .remove-on-scroll {
   padding: 20px 0;
   display: none;
   z-index: 500;
-  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5); /* Upward shadow */
+  box-shadow: inset 0 10px 20px -10px rgba(0,0,0,0.5); /* Upward shadow */
 }
 
 .page-down {
   margin-top: 260px;
 }
 
-/* Icons in drawer */
-.icon-links {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-}
-
-.icon-links a {
-  position: relative;
-}
-
-.icon-links .icon {
-  width: 40px;
-  height: 40px;
-  fill: var(--text-color);
-}
-
-/* Tooltip for icons */
-.tooltip {
+/* Glowing Divider */
+.glowing-divider {
   position: fixed;
-  background: var(--tooltip-bg);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  white-space: nowrap;
-  z-index: 2000;
-}
-
-/* Page Wrapper */
-#pageWrapper {
-  position: relative;
-  margin-top: 60px; 
-  transition: margin-top 0.3s ease;
-}
-
-/* Content Divider (Upward shadow at top of main content)
-   position sticky after scroll to show a shadow line */
-.content-divider {
-  position: sticky;
-  top: 60px; 
-  height: 0;
-  margin-bottom: 20px;
+  bottom: 0;
   width: 100%;
-  box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
-  z-index: 900;
+  height: 4px;
+  background: radial-gradient(circle, rgba(255,255,255,0.5) 50%, transparent 100%);
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0; /* Hidden initially */
+  transition: opacity 0.3s ease;
+}
+body.scrolled .glowing-divider {
+  opacity: 1;
 }
 
-/* Main content: increased top padding so we must scroll to see welcome */
+/* Main content */
 main {
   padding-top: 1000px;
   padding-bottom: 300px;
@@ -199,9 +160,20 @@ main {
   margin-bottom: 20px;
 }
 .gallery-nav {
-  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.gallery-nav svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-color);
   cursor: pointer;
-  user-select: none;
+}
+.gallery-nav .active {
+  width: 30px;
+  height: 30px;
 }
 
 /* Footer */
@@ -229,41 +201,34 @@ main {
   font-size: 14px;
 }
 
-/* Back to top button */
-.back-to-top {
+/* Mouse Trail */
+.mouse-trail {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--bg-color);
-  border: 1px solid var(--text-color);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: none; 
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 1001;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 9999;
+  animation: fadeOut 0.5s forwards;
 }
-.back-to-top.show {
-  display: flex;
-}
-.back-to-top svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: var(--text-color);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+@keyframes fadeOut {
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.1);
+  }
 }
 </style>
 </head>
 <body class="dark-mode" style="--r-color: #ffffff;">
 
 <header class="title-bar">
-  <!-- Hero logo with colored letters:
-       K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R(var(--r-color)) -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-3.87 2.76-7.16 6.5-7.87V12h7.87C19.16 18.24 15.87 20 12 20z"></path>
+    </svg>
+  </button>
   <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
     <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="64">
       <tspan fill="#00FFFF">K</tspan>
@@ -273,42 +238,27 @@ main {
       <tspan fill="var(--r-color)">R</tspan>
     </text>
   </svg>
-  <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
 
-<div class="content-tray" id="contentTray">
-  <nav class="icon-links">
-    <a href="#" data-tooltip="Icon 1: Placeholder"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#" data-tooltip="Icon 2: Placeholder"><svg class="icon"><rect x="6" y="6" width="12" height="12"/></svg></a>
-    <a href="#" id="themeToggle" data-tooltip="Toggle Theme"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#" data-tooltip="Icon 4: Placeholder"><svg class="icon"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
-    <a href="#" data-tooltip="Icon 5: Placeholder"><svg class="icon"><polygon points="12,2 22,22 2,22"/></svg></a>
-  </nav>
-</div>
-
-<div class="tooltip" id="iconTooltip"></div>
-
 <div id="pageWrapper">
-  <!-- Content divider with upward shadow at the top of main content -->
-  <div class="content-divider"></div>
+  <div class="glowing-divider" id="glowingDivider"></div>
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll down to see "KYZER" become "KZR" as it moves into the title bar (Y&E removed halfway). The back-to-top button appears after you scroll. The content is shifted way down, so you must scroll to reach here. Also note the upward shadow line at the top once main content scrolls into view.</p>
+      <p>Scroll slightly to see changes, hover to see glowing divider react to your cursor, and click to test the dynamic gallery and theme toggling.</p>
     </section>
 
     <section class="text-section two-columns">
       <div>
         <h2>Column 1 Heading</h2>
-        <p>First column content. Click the menu (☰) to open the drawer and hover icons for tooltips.</p>
+        <p>First column content.</p>
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Use the theme icon to toggle dark/light mode. Columns are evenly spaced now.</p>
+        <p>Second column content.</p>
       </div>
     </section>
 
-    <!-- Rotating Image Gallery -->
     <section class="gallery" id="gallerySection">
       <div class="gallery-title" id="galleryTitle"></div>
       <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
@@ -334,183 +284,39 @@ main {
   <div class="footer-bottom-text">This is the line of text at the very bottom of the footer</div>
 </div>
 
-<button class="back-to-top" id="backToTop" aria-label="Back to top">
-  <svg viewBox="0 0 24 24">
-    <path d="M12 19V5M5 12l7-7 7 7"/>
-  </svg>
-</button>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
-  const tray = document.getElementById('contentTray');
-  const trayToggle = document.getElementById('trayToggle');
   const themeToggle = document.getElementById('themeToggle');
-  const backToTop = document.getElementById('backToTop');
-  const iconTooltip = document.getElementById('iconTooltip');
-  const heroLogo = document.getElementById('heroLogo');
+  const glowingDivider = document.getElementById('glowingDivider');
 
-  // Hero interpolation
-  const maxScroll = 100;
-  function updateHero() {
-    const sy = window.scrollY;
-    const t = Math.min(Math.max(sy / maxScroll, 0), 1);
-
-    // Scale from 1 (large) to ~0.375 (small)
-    const scale = 1 - 0.625 * t;
-    // Move from center screen to title bar area:
-    const startY = window.innerHeight / 2; 
-    const endY = 60/2 + 30; 
-    const currentY = startY + (endY - startY)*t;
-
-    heroLogo.style.position = 'fixed';
-    heroLogo.style.left = '50%';
-    heroLogo.style.top = currentY + 'px';
-    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
-
-    if (t > 0.5) {
-      body.classList.add('scrolled');
-    } else {
-      body.classList.remove('scrolled');
-    }
-
-    // Back-to-top after t>0.5
-    if (t > 0.5) {
-      backToTop.classList.add('show');
-    } else {
-      backToTop.classList.remove('show');
-    }
-
-    requestAnimationFrame(updateHero);
-  }
-  requestAnimationFrame(updateHero);
-
-  // Back to top
-  backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
-  // Toggle the drawer
-  trayToggle.addEventListener('click', () => {
-    if (tray.style.display === 'block') {
-      // Close
-      tray.style.display = 'none';
-      document.getElementById('pageWrapper').classList.remove('page-down');
-    } else {
-      // Open
-      tray.style.display = 'block';
-      document.getElementById('pageWrapper').classList.add('page-down');
-    }
-  });
-
-  // Toggle dark/light mode
+  // Theme toggle
   themeToggle.addEventListener('click', () => {
-    if (body.classList.contains('dark-mode')) {
-      body.classList.remove('dark-mode');
-      body.style.setProperty('--bg-color', '#ffffff');
-      body.style.setProperty('--text-color', '#000000');
-      body.style.setProperty('--footer-bg', '#dddddd');
-      body.style.setProperty('--drawer-bg', '#f0f0f0');
-      body.style.setProperty('--tooltip-bg', '#ccc');
-      body.style.setProperty('--r-color', '#000000');
-    } else {
-      body.classList.add('dark-mode');
-      body.style.setProperty('--bg-color', '#121212');
-      body.style.setProperty('--text-color', '#ffffff');
-      body.style.setProperty('--footer-bg', '#1c1c1c');
-      body.style.setProperty('--drawer-bg', '#0f0f0f');
-      body.style.setProperty('--tooltip-bg', '#333333');
-      body.style.setProperty('--r-color', '#ffffff');
-    }
+    const isDark = body.classList.toggle('dark-mode');
+    body.style.setProperty('--bg-color', isDark ? '#121212' : '#ffffff');
+    body.style.setProperty('--text-color', isDark ? '#ffffff' : '#000000');
+    body.style.setProperty('--r-color', isDark ? '#ffffff' : '#000000');
+    body.style.setProperty('--opposite-color', isDark ? '#000000' : '#ffffff');
   });
 
-  // Icon tooltips
-  const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
-  iconLinks.forEach(iconLink => {
-    iconLink.addEventListener('mouseenter', () => {
-      const tooltipText = iconLink.getAttribute('data-tooltip');
-      iconTooltip.textContent = tooltipText;
-      iconTooltip.style.opacity = '1';
-
-      // Position tooltip
-      const rect = iconLink.getBoundingClientRect();
-      const tooltipRect = iconTooltip.getBoundingClientRect();
-
-      let top = rect.top - tooltipRect.height - 8;
-      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
-
-      if (top < 0) top = rect.bottom + 8; 
-      if (left < 0) left = 0;
-      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
-      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
-
-      iconTooltip.style.top = `${top}px`;
-      iconTooltip.style.left = `${left}px`;
-      iconTooltip.style.opacity = '1';
-    });
-
-    iconLink.addEventListener('mouseleave', () => {
-      iconTooltip.style.opacity = '0';
-      iconTooltip.style.top = '-9999px';
-      iconTooltip.style.left = '-9999px';
-    });
+  // Glowing divider mouse effect
+  window.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX;
+    const glowStrength = 100 - Math.abs(window.innerWidth / 2 - mouseX) / (window.innerWidth / 2) * 100;
+    glowingDivider.style.background = `radial-gradient(circle at ${mouseX}px, rgba(255,255,255,${glowStrength / 100}) 50%, transparent 100%)`;
   });
 
-  // Rotating image gallery
-  const galleryData = [
-    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
-    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
-    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
-    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
-  ];
+  // Mouse trail
+  window.addEventListener('mousemove', (e) => {
+    const trail = document.createElement('div');
+    trail.className = 'mouse-trail';
+    const randomColor = ['#00FFFF', '#FF00FF', '#FFFF00', getComputedStyle(body).getPropertyValue('--opposite-color')].sort(() => Math.random() - 0.5)[0];
+    trail.style.background = randomColor;
+    trail.style.left = `${e.clientX}px`;
+    trail.style.top = `${e.clientY}px`;
+    document.body.appendChild(trail);
 
-  const galleryTitle = document.getElementById('galleryTitle');
-  const galleryDesc = document.getElementById('galleryDesc');
-  const galleryImage = document.getElementById('galleryImage');
-  const galleryNav = document.getElementById('galleryNav');
-
-  let currentIndex = 0;
-
-  function updateGallery() {
-    const item = galleryData[currentIndex];
-    galleryTitle.textContent = item.title;
-    galleryDesc.textContent = item.description;
-    galleryImage.src = item.image;
-
-    let navString = ".";
-    for (let i=0; i<galleryData.length; i++) {
-      if (i === currentIndex) {
-        navString += "O";
-      } else {
-        navString += "o";
-      }
-    }
-    navString += ".";
-    galleryNav.textContent = navString;
-  }
-
-  updateGallery();
-
-  galleryNav.addEventListener('click', (e) => {
-    const clickX = e.clientX;
-    const rect = galleryNav.getBoundingClientRect();
-    const charWidth = rect.width / galleryNav.textContent.length;
-    const charIndex = Math.floor((clickX - rect.left) / charWidth);
-
-    const clickedSlide = charIndex - 1; 
-    if (clickedSlide >= 0 && clickedSlide < galleryData.length && clickedSlide !== currentIndex) {
-      currentIndex = clickedSlide;
-      updateGallery();
-    }
-  });
-
-  // Show divider/shadow on scroll
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 0) {
-      body.classList.add('scrolled');
-    } else {
-      body.classList.remove('scrolled');
-    }
+    setTimeout(() => trail.remove(), 500);
   });
 });
 </script>
