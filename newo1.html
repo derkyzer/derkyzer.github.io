@@ -80,7 +80,7 @@ body.scrolled .remove-on-scroll {
   color: var(--text-color);
 }
 
-/* Drawer (fixed at top, hidden off-screen until opened) */
+/* Drawer: hidden by default, appears when toggled */
 .content-tray {
   position: fixed;
   top: 60px;
@@ -88,13 +88,13 @@ body.scrolled .remove-on-scroll {
   width: 100%;
   background: var(--drawer-bg);
   padding: 20px 0;
-  display: none; /* hidden by default */
+  display: none;
   z-index: 500;
 }
 
-/* When drawer is open, we show it and push page content down by increasing margin-top of pageWrapper */
+/* When drawer is shown, pageWrapper moves down */
 .page-down {
-  margin-top: 260px; /* 60px title bar + ~200px drawer */
+  margin-top: 260px; /* 60px for title + ~200px drawer */
 }
 
 /* Icons in drawer */
@@ -107,7 +107,7 @@ body.scrolled .remove-on-scroll {
 }
 
 .icon-links a {
-  position: relative; /* for tooltip positioning */
+  position: relative;
 }
 
 .icon-links .icon {
@@ -118,7 +118,7 @@ body.scrolled .remove-on-scroll {
 
 /* Tooltip for icons */
 .tooltip {
-  position: fixed; /* position relative to viewport to ensure visibility */
+  position: fixed; /* position in viewport */
   background: var(--tooltip-bg);
   color: #fff;
   padding: 6px 10px;
@@ -138,15 +138,15 @@ body.scrolled .remove-on-scroll {
   transition: margin-top 0.3s ease;
 }
 
-/* Main content: large padding to allow scrolling */
+/* Main content: less spacing so scrolling occurs quickly */
 main {
-  padding-top: 100vh;
-  padding-bottom: 200vh; /* ensure plenty of scroll space to test back-to-top and hero transition */
+  padding-top: 300px; /* Enough so you see hero and can scroll slightly */
+  padding-bottom: 300px; /* Enough space to scroll and test back-to-top */
 }
 
 /* Sections */
 .text-section {
-  margin: 100px 0;
+  margin: 60px 0;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -156,7 +156,7 @@ main {
   display: flex;
   gap: 20px;
   max-width: 900px;
-  margin: 100px auto;
+  margin: 60px auto;
 }
 
 /* Footer */
@@ -235,7 +235,7 @@ main {
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll slightly and watch "KYZER" become "KZR" and move into the title bar. The back-to-top button will appear after you scroll.</p>
+      <p>Scroll slightly and watch "KYZER" become "KZR" and move into the title bar. The back-to-top button will appear after you scroll a bit.</p>
     </section>
 
     <section class="text-section two-columns">
@@ -245,7 +245,7 @@ main {
       </div>
       <div>
         <h2>Column 2 Heading</h2>
-        <p>Second column content. Use the theme icon in the drawer to toggle dark/light mode. Back to top button is now an arrow icon.</p>
+        <p>Second column content. Use the theme icon in the drawer to toggle dark/light mode. Tooltips now stay visible on-screen.</p>
       </div>
     </section>
   </main>
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Icon tooltips
   const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
   iconLinks.forEach(iconLink => {
-    iconLink.addEventListener('mouseenter', (e) => {
+    iconLink.addEventListener('mouseenter', () => {
       const tooltipText = iconLink.getAttribute('data-tooltip');
       iconTooltip.textContent = tooltipText;
       iconTooltip.style.opacity = '1';
@@ -344,11 +344,18 @@ document.addEventListener('DOMContentLoaded', () => {
       // Position tooltip above the icon
       const rect = iconLink.getBoundingClientRect();
       const tooltipRect = iconTooltip.getBoundingClientRect();
-      const top = rect.top - tooltipRect.height - 8; // 8px gap
-      const left = rect.left + (rect.width/2) - (tooltipRect.width/2);
 
-      iconTooltip.style.top = `${Math.max(top, 0)}px`;
-      iconTooltip.style.left = `${Math.max(left, 0)}px`;
+      let top = rect.top - tooltipRect.height - 8; // Place above icon
+      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
+
+      // Clamp values to ensure on-screen
+      if (top < 0) top = rect.bottom + 8; // If not enough space above, put below
+      if (left < 0) left = 0;
+      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
+      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
+
+      iconTooltip.style.top = `${top}px`;
+      iconTooltip.style.left = `${left}px`;
       iconTooltip.style.opacity = '1';
     });
 
