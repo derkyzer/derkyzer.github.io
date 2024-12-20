@@ -18,9 +18,7 @@ html, body {
 }
 
 body {
-  background: var(--bg-color, #121212);
-  color: var(--text-color, #ffffff);
-  padding: 0 20px; /* padding on left and right */
+  padding: 0 20px; /* Padding for text */
 }
 
 :root {
@@ -29,50 +27,50 @@ body {
   --footer-bg: #1c1c1c;
   --drawer-bg: #0f0f0f;
   --tooltip-bg: #333333;
+  --day-mode-r: #000000; /* R color for light mode */
+  --night-mode-r: #ffffff; /* R color for dark mode */
 }
 
 /* Title Bar */
 .title-bar {
   position: fixed;
   top: 0;
-  left:0;
+  left: 0;
   width: 100%;
   height: 60px;
   background: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
   z-index: 1000;
 }
 
-/* Hero Logo:
-   We will control position & scale in JS.
-   By default it's just a large text. We'll remove Y&E when scrolled by CSS. */
+/* Hero Logo: Styled letters for KYZER */
 .hero-logo {
   font-weight: bold;
-  white-space: nowrap;
-}
-.remove-on-scroll {
-  transition: opacity 0.3s ease;
-}
-
-/* When scrolled, remove Y and E */
-body.scrolled .remove-on-scroll {
-  display: none;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
 }
 
-/* Tray toggle button */
-.tray-toggle {
+.hero-logo .k { color: cyan; }
+.hero-logo .y { color: magenta; }
+.hero-logo .z { color: yellow; }
+.hero-logo .e { color: grey; }
+.hero-logo .r { color: var(--night-mode-r); }
+body.light-mode .hero-logo .r { color: var(--day-mode-r); }
+
+/* Hard Divider */
+.hard-divider {
   position: absolute;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-color);
+  top: 100vh; /* Just below viewport at load */
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: transparent;
+  box-shadow: 0px -6px 10px rgba(0, 0, 0, 0.4); /* Upward shadow */
+  z-index: 1500;
 }
 
 /* Drawer */
@@ -85,71 +83,16 @@ body.scrolled .remove-on-scroll {
   padding: 20px 0;
   display: none;
   z-index: 500;
+  box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.5); /* Upward shadow for the drawer */
 }
 
 .page-down {
-  margin-top: 260px; /* pushed down when drawer open */
-}
-
-/* Icons in drawer */
-.icon-links {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-}
-
-.icon-links a {
-  position: relative;
-}
-
-.icon-links .icon {
-  width: 40px;
-  height: 40px;
-  fill: var(--text-color);
-}
-
-/* Tooltip for icons */
-.tooltip {
-  position: fixed;
-  background: var(--tooltip-bg);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  white-space: nowrap;
-  z-index: 2000;
-}
-
-/* Page Wrapper */
-#pageWrapper {
-  position: relative;
-  margin-top: 60px; 
-  transition: margin-top 0.3s ease;
-}
-
-/* Hard divider at bottom of screen */
-.bottom-divider {
-  position: fixed;
-  bottom: 0; left:0;
-  width: 100%;
-  height: 2px;
-  background: #ffffff;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1500;
-}
-body.scrolled .bottom-divider {
-  opacity: 1;
+  margin-top: 260px;
 }
 
 /* Main content */
 main {
-  padding-top: 300px;
+  padding-top: 150vh; /* Ensure you scroll to see the content */
   padding-bottom: 300px;
 }
 
@@ -240,7 +183,7 @@ main {
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  display: none; 
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -263,14 +206,14 @@ main {
 <body class="dark-mode">
 
 <header class="title-bar">
-  <!-- Hero logo letters: Y and E have remove-on-scroll class -->
-  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
-    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold" font-size="64">
-      K<tspan class="remove-on-scroll">Y</tspan>Z<tspan class="remove-on-scroll">E</tspan>R
-    </text>
-  </svg>
+  <!-- Hero Logo -->
+  <div class="hero-logo" id="heroLogo">
+    <span class="k">K</span><span class="y">Y</span><span class="z">Z</span><span class="e">E</span><span class="r">R</span>
+  </div>
   <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
+
+<div class="hard-divider"></div>
 
 <div class="content-tray" id="contentTray">
   <nav class="icon-links">
@@ -282,51 +225,14 @@ main {
   </nav>
 </div>
 
-<div class="tooltip" id="iconTooltip"></div>
-
 <div id="pageWrapper">
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll slightly and "KYZER" will become "KZR" as it moves into the title bar and removes Y&E. The back-to-top button appears after you scroll. The bottom divider line appears as soon as you start scrolling.</p>
-      <p>Filler content to ensure scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum nec varius metus...</p>
-    </section>
-
-    <section class="text-section two-columns">
-      <div>
-        <h2>Column 1 Heading</h2>
-        <p>First column content. Click the menu (☰) to open the drawer and hover icons for tooltips.</p>
-      </div>
-      <div>
-        <h2>Column 2 Heading</h2>
-        <p>Use the theme icon to toggle dark/light mode. The columns are evenly spaced now.</p>
-      </div>
-    </section>
-
-    <!-- Rotating Image Gallery -->
-    <section class="gallery" id="gallerySection">
-      <div class="gallery-title" id="galleryTitle"></div>
-      <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
-      <div class="gallery-desc" id="galleryDesc"></div>
-      <div class="gallery-nav" id="galleryNav"></div>
+      <p>Scroll down to reveal content. "KYZER" uses CMY colors for KYZ, grey for E, and dynamic R.</p>
+      <p>Scroll to see the upward shadow divider and the first content.</p>
     </section>
   </main>
-
-  <footer class="triple-footer">
-    <div>
-      <h3>Footer Col 1</h3>
-      <p>Right-aligned footer content...</p>
-    </div>
-    <div>
-      <h3>Footer Col 2</h3>
-      <p>Center-aligned footer info...</p>
-    </div>
-    <div>
-      <h3>Footer Col 3</h3>
-      <p>Left-aligned footer text...</p>
-    </div>
-  </footer>
-  <div class="footer-bottom-text">This is the line of text at the very bottom of the footer</div>
 </div>
 
 <button class="back-to-top" id="backToTop" aria-label="Back to top">
@@ -335,198 +241,31 @@ main {
   </svg>
 </button>
 
-<div class="bottom-divider"></div>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
   const tray = document.getElementById('contentTray');
   const trayToggle = document.getElementById('trayToggle');
-  const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
-  const pageWrapper = document.getElementById('pageWrapper');
-  const iconTooltip = document.getElementById('iconTooltip');
   const heroLogo = document.getElementById('heroLogo');
-  
-  // Hero interpolation:
-  // We'll define a scroll range [0,100]. At 0: hero large & centered,
-  // at 100: hero small & top. After t>0.5, remove Y&E. After t>0.5 show back-to-top, divider already shows via CSS.
-  const maxScroll = 100;
-  function updateHero() {
-    const sy = window.scrollY;
-    const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    // Interpolate scale from 1 at top to about 0.375 when fully scrolled
-    const scale = 1 - 0.625 * t; // 1 to ~0.375
-    // Interpolate vertical position:
-    // at t=0: hero centered screen => top:50% translateY(-50%)
-    // at t=1: hero in title bar => top:30px from top of screen (approx center of 60px bar)
-    // Let's linearly move from top 50% of viewport (which is window.innerHeight/2)
-    // to top:30px. We'll do position:fixed; left:50% always, and just translate Y.
-    const startY = window.innerHeight/2;
-    const endY = 60/2 + 30; // about 60px bar, hero half size plus a bit offset. Let's just pick 30px offset.
-    // Actually, let's just blend position. We'll keep hero fixed center horizontally:
-    // We'll use translate to center horizontally: translateX(-50%)
-    // For vertical: translateY(-50%) means at scale=1 top is window center.
-    // We'll just linearly move from center of screen to the top bar center line:
-    const currentY = startY + (endY - startY)*t;
+  // Handle Back to Top Button and Scrolling
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY > 0;
+    body.classList.toggle('scrolled', scrolled);
 
-    // Apply transforms
-    // We'll keep hero fixed at left:50%, position:fixed; and just move vertically and scale.
-    // To do this, we must set heroLogo.style.position='fixed', heroLogo.style.left='50%'
-    // and heroLogo.style.top=`${currentY}px` and transform: translate(-50%,-50%) scale(...) 
-    heroLogo.style.position = 'fixed';
-    heroLogo.style.left = '50%';
-    heroLogo.style.top = currentY + 'px';
-    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
-
-    // Remove Y & E after t>0.5
-    if (t > 0.5) {
-      body.classList.add('scrolled');
-    } else {
-      body.classList.remove('scrolled');
-    }
-
-    // Back-to-top button after t>0.5 handled by 'scrolled' class and JS if needed:
-    // Actually we are adding backToTop show only on scrolled. Let's just rely on scrolled class for Y&E.
-    // Back-to-top we had done previously. Let's do it again:
-    if (t > 0.5) {
-      backToTop.classList.add('show');
-    } else {
-      backToTop.classList.remove('show');
-    }
-
-    requestAnimationFrame(updateHero);
-  }
-  requestAnimationFrame(updateHero);
-
-  // Back to top
-  backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Back-to-top button visibility
+    backToTop.style.display = scrolled ? 'flex' : 'none';
   });
 
   // Toggle the drawer
   trayToggle.addEventListener('click', () => {
-    if (tray.style.display === 'block') {
-      // Close drawer
-      tray.style.display = 'none';
-      pageWrapper.classList.remove('page-down');
-    } else {
-      // Open drawer
-      tray.style.display = 'block';
-      pageWrapper.classList.add('page-down');
-    }
+    tray.style.display = tray.style.display === 'block' ? 'none' : 'block';
   });
 
-  // Toggle dark/light mode
-  themeToggle.addEventListener('click', () => {
-    if (body.classList.contains('dark-mode')) {
-      body.classList.remove('dark-mode');
-      body.style.setProperty('--bg-color', '#ffffff');
-      body.style.setProperty('--text-color', '#000000');
-      body.style.setProperty('--footer-bg', '#dddddd');
-      body.style.setProperty('--drawer-bg', '#f0f0f0');
-      body.style.setProperty('--tooltip-bg', '#ccc');
-    } else {
-      body.classList.add('dark-mode');
-      body.style.setProperty('--bg-color', '#121212');
-      body.style.setProperty('--text-color', '#ffffff');
-      body.style.setProperty('--footer-bg', '#1c1c1c');
-      body.style.setProperty('--drawer-bg', '#0f0f0f');
-      body.style.setProperty('--tooltip-bg', '#333333');
-    }
-  });
-
-  // Icon tooltips
-  const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
-  iconLinks.forEach(iconLink => {
-    iconLink.addEventListener('mouseenter', () => {
-      const tooltipText = iconLink.getAttribute('data-tooltip');
-      iconTooltip.textContent = tooltipText;
-      iconTooltip.style.opacity = '1';
-
-      // Position tooltip above the icon
-      const rect = iconLink.getBoundingClientRect();
-      const tooltipRect = iconTooltip.getBoundingClientRect();
-
-      let top = rect.top - tooltipRect.height - 8;
-      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
-
-      // Clamp tooltip positions
-      if (top < 0) top = rect.bottom + 8; 
-      if (left < 0) left = 0;
-      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
-      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
-
-      iconTooltip.style.top = `${top}px`;
-      iconTooltip.style.left = `${left}px`;
-      iconTooltip.style.opacity = '1';
-    });
-
-    iconLink.addEventListener('mouseleave', () => {
-      iconTooltip.style.opacity = '0';
-      iconTooltip.style.top = '-9999px';
-      iconTooltip.style.left = '-9999px';
-    });
-  });
-
-  // Show divider as soon as we start scrolling
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 0) {
-      body.classList.add('scrolled');
-    } else {
-      body.classList.remove('scrolled');
-    }
-  });
-
-  // Rotating image gallery (placeholder data)
-  const galleryData = [
-    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
-    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
-    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
-    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
-  ];
-
-  const galleryTitle = document.getElementById('galleryTitle');
-  const galleryDesc = document.getElementById('galleryDesc');
-  const galleryImage = document.getElementById('galleryImage');
-  const galleryNav = document.getElementById('galleryNav');
-
-  let currentIndex = 0;
-
-  function updateGallery() {
-    const item = galleryData[currentIndex];
-    galleryTitle.textContent = item.title;
-    galleryDesc.textContent = item.description;
-    galleryImage.src = item.image;
-
-    let navString = ".";
-    for (let i=0; i<galleryData.length; i++) {
-      if (i === currentIndex) {
-        navString += "O";
-      } else {
-        navString += "o";
-      }
-    }
-    navString += ".";
-    galleryNav.textContent = navString;
-  }
-
-  updateGallery();
-
-  galleryNav.addEventListener('click', (e) => {
-    const clickX = e.clientX;
-    const rect = galleryNav.getBoundingClientRect();
-    const charWidth = rect.width / galleryNav.textContent.length;
-    const charIndex = Math.floor((clickX - rect.left) / charWidth);
-
-    // navString: first char '.' => index 0
-    // slides start at index 1
-    const clickedSlide = charIndex - 1; 
-    if (clickedSlide >= 0 && clickedSlide < galleryData.length && clickedSlide !== currentIndex) {
-      currentIndex = clickedSlide;
-      updateGallery();
-    }
+  // Back to top functionality
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
 </script>
