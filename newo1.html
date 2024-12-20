@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>KYZER</title>
 <style>
 * {
@@ -21,7 +21,6 @@ body {
   background: var(--bg-color, #121212);
   color: var(--text-color, #ffffff);
   padding: 0 20px;
-  position: relative;
 }
 
 :root {
@@ -30,29 +29,45 @@ body {
   --footer-bg: #1c1c1c;
   --drawer-bg: #0f0f0f;
   --tooltip-bg: #333333;
-  --r-color: #ffffff;
+  --r-color: #ffffff; /* R color in dark mode */
 }
 
 /* Title Bar */
 .title-bar {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0; left:0;
   width: 100%;
   height: 60px;
   background: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 5px rgba(0,0,0,0.5);
   z-index: 1000;
 }
 
-/* Drawer toggle button */
-.drawer-toggle {
+/* Hero Logo:
+   We'll do letter coloring directly via tspan fills.
+   K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R uses var(--r-color).
+*/
+.hero-logo {
+  font-weight: bold;
+  white-space: nowrap;
+}
+.remove-on-scroll {
+  transition: opacity 0.3s ease;
+}
+
+/* Remove Y and E when scrolled */
+body.scrolled .remove-on-scroll {
+  display: none;
+}
+
+/* Tray toggle button */
+.tray-toggle {
   position: absolute;
-  right: 10px;
   top: 50%;
+  right: 20px;
   transform: translateY(-50%);
   background: none;
   border: none;
@@ -61,18 +76,7 @@ body {
   color: var(--text-color);
 }
 
-/* Hero Logo */
-.hero-logo {
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-/* Remove Y and E when scrolled */
-body.scrolled .remove-on-scroll {
-  display: none;
-}
-
-/* Drawer with upward shadow */
+/* Drawer with upward shadow at its bottom */
 .content-tray {
   position: fixed;
   top: 60px;
@@ -82,14 +86,14 @@ body.scrolled .remove-on-scroll {
   padding: 20px 0;
   display: none;
   z-index: 500;
-  box-shadow: inset 0 10px 20px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5); /* Upward shadow */
 }
 
 .page-down {
   margin-top: 260px;
 }
 
-/* Drawer Icons */
+/* Icons in drawer */
 .icon-links {
   display: flex;
   flex-direction: row;
@@ -98,41 +102,106 @@ body.scrolled .remove-on-scroll {
   gap: 40px;
 }
 
+.icon-links a {
+  position: relative;
+}
+
 .icon-links .icon {
   width: 40px;
   height: 40px;
   fill: var(--text-color);
 }
 
-/* Sticky Divider */
+/* Tooltip for icons */
+.tooltip {
+  position: fixed;
+  background: var(--tooltip-bg);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  z-index: 2000;
+}
+
+/* Page Wrapper */
+#pageWrapper {
+  position: relative;
+  margin-top: 60px; 
+  transition: margin-top 0.3s ease;
+}
+
+/* Content Divider (Upward shadow at top of main content)
+   position sticky after scroll to show a shadow line */
 .content-divider {
   position: sticky;
-  top: 100vh;
-  height: 2px;
-  background: #ffffff;
+  top: 60px; 
+  height: 0;
+  margin-bottom: 20px;
   width: 100%;
+  box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
   z-index: 900;
-  box-shadow: 0 -10px 20px -10px rgba(0, 0, 0, 0.5); /* Upward shadow */
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
-body.scrolled .content-divider {
-  opacity: 1;
-}
-
-/* Main Content */
+/* Main content: increased top padding so we must scroll to see welcome */
 main {
   padding-top: 1000px;
   padding-bottom: 300px;
-  text-align: center; /* Ensure content is centered */
 }
 
+/* Sections */
 .text-section {
   margin: 60px 0;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.text-section.two-columns {
+  display: flex;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 60px auto;
+}
+
+.text-section.two-columns > div {
+  flex: 1;
+  margin: 0 20px;
+}
+.text-section.two-columns > div:first-child {
+  margin-left: 0;
+}
+.text-section.two-columns > div:last-child {
+  margin-right: 0;
+}
+
+/* Rotating image gallery */
+.gallery {
+  max-width: 600px;
+  margin: 60px auto;
+  text-align: center;
+}
+.gallery-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 10px;
+}
+.gallery-title {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+.gallery-desc {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.gallery-nav {
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
 }
 
 /* Footer */
@@ -142,7 +211,18 @@ main {
   padding: 50px 20px;
   background: var(--footer-bg);
 }
-
+.triple-footer > div {
+  flex: 1;
+}
+.triple-footer > div:nth-child(1) {
+  text-align: right;
+}
+.triple-footer > div:nth-child(2) {
+  text-align: center;
+}
+.triple-footer > div:nth-child(3) {
+  text-align: left;
+}
 .footer-bottom-text {
   text-align: center;
   padding: 20px 0;
@@ -159,17 +239,15 @@ main {
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  display: none;
+  display: none; 
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1001;
 }
-
 .back-to-top.show {
   display: flex;
 }
-
 .back-to-top svg {
   width: 20px;
   height: 20px;
@@ -179,35 +257,15 @@ main {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-
-/* Mouse Trail Shapes */
-.trail-shape {
-  position: absolute;
-  pointer-events: none;
-  animation: shrink-fade 2s ease-out forwards;
-}
-
-@keyframes shrink-fade {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(20px) scale(0);
-  }
-}
 </style>
 </head>
 <body class="dark-mode" style="--r-color: #ffffff;">
 
 <header class="title-bar">
-  <!-- Drawer toggle button -->
-  <button class="drawer-toggle" id="drawerToggle" aria-label="Open Menu">☰</button>
-
-  <!-- Hero logo with colored letters -->
+  <!-- Hero logo with colored letters:
+       K(Cyan), Y(Magenta), Z(Yellow), E(Grey #888), R(var(--r-color)) -->
   <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
-    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold">
+    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="64">
       <tspan fill="#00FFFF">K</tspan>
       <tspan class="remove-on-scroll" fill="#FF00FF">Y</tspan>
       <tspan fill="#FFFF00">Z</tspan>
@@ -215,33 +273,66 @@ main {
       <tspan fill="var(--r-color)">R</tspan>
     </text>
   </svg>
+  <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
 </header>
 
 <div class="content-tray" id="contentTray">
   <nav class="icon-links">
-    <a href="#"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#"><svg class="icon"><rect x="6" y="6" width="12" height="12"/></svg></a>
-    <a href="#"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
-    <a href="#"><svg class="icon"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
-    <a href="#"><svg class="icon"><polygon points="12,2 22,22 2,22"/></svg></a>
+    <a href="#" data-tooltip="Icon 1: Placeholder"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Icon 2: Placeholder"><svg class="icon"><rect x="6" y="6" width="12" height="12"/></svg></a>
+    <a href="#" id="themeToggle" data-tooltip="Toggle Theme"><svg class="icon"><circle cx="12" cy="12" r="10"/></svg></a>
+    <a href="#" data-tooltip="Icon 4: Placeholder"><svg class="icon"><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg></a>
+    <a href="#" data-tooltip="Icon 5: Placeholder"><svg class="icon"><polygon points="12,2 22,22 2,22"/></svg></a>
   </nav>
 </div>
 
-<div class="content-divider"></div>
+<div class="tooltip" id="iconTooltip"></div>
 
-<main>
-  <section class="text-section single-column">
-    <h1>Welcome Content</h1>
-    <p>Scroll to see KYZER become KZR and observe other visual effects.</p>
-  </section>
-</main>
+<div id="pageWrapper">
+  <!-- Content divider with upward shadow at the top of main content -->
+  <div class="content-divider"></div>
+  <main>
+    <section class="text-section single-column">
+      <h1>Welcome to Our Playground</h1>
+      <p>Scroll down to see "KYZER" become "KZR" as it moves into the title bar (Y&E removed halfway). The back-to-top button appears after you scroll. The content is shifted way down, so you must scroll to reach here. Also note the upward shadow line at the top once main content scrolls into view.</p>
+    </section>
 
-<footer class="triple-footer">
-  <div>Footer Content Left</div>
-  <div>Footer Content Center</div>
-  <div>Footer Content Right</div>
-</footer>
-<div class="footer-bottom-text">Footer bottom line of text</div>
+    <section class="text-section two-columns">
+      <div>
+        <h2>Column 1 Heading</h2>
+        <p>First column content. Click the menu (☰) to open the drawer and hover icons for tooltips.</p>
+      </div>
+      <div>
+        <h2>Column 2 Heading</h2>
+        <p>Use the theme icon to toggle dark/light mode. Columns are evenly spaced now.</p>
+      </div>
+    </section>
+
+    <!-- Rotating Image Gallery -->
+    <section class="gallery" id="gallerySection">
+      <div class="gallery-title" id="galleryTitle"></div>
+      <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
+      <div class="gallery-desc" id="galleryDesc"></div>
+      <div class="gallery-nav" id="galleryNav"></div>
+    </section>
+  </main>
+
+  <footer class="triple-footer">
+    <div>
+      <h3>Footer Col 1</h3>
+      <p>Right-aligned footer content...</p>
+    </div>
+    <div>
+      <h3>Footer Col 2</h3>
+      <p>Center-aligned footer info...</p>
+    </div>
+    <div>
+      <h3>Footer Col 3</h3>
+      <p>Left-aligned footer text...</p>
+    </div>
+  </footer>
+  <div class="footer-bottom-text">This is the line of text at the very bottom of the footer</div>
+</div>
 
 <button class="back-to-top" id="backToTop" aria-label="Back to top">
   <svg viewBox="0 0 24 24">
@@ -252,9 +343,11 @@ main {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
+  const tray = document.getElementById('contentTray');
+  const trayToggle = document.getElementById('trayToggle');
+  const themeToggle = document.getElementById('themeToggle');
   const backToTop = document.getElementById('backToTop');
-  const contentTray = document.getElementById('contentTray');
-  const drawerToggle = document.getElementById('drawerToggle');
+  const iconTooltip = document.getElementById('iconTooltip');
   const heroLogo = document.getElementById('heroLogo');
 
   // Hero interpolation
@@ -263,81 +356,161 @@ document.addEventListener('DOMContentLoaded', () => {
     const sy = window.scrollY;
     const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    const startScale = 0.8 * window.innerWidth / heroLogo.getBoundingClientRect().width;
-    const endScale = 0.85 * 60 / heroLogo.getBoundingClientRect().height;
-    const scale = startScale + (endScale - startScale) * t;
+    // Scale from 1 (large) to ~0.375 (small)
+    const scale = 1 - 0.625 * t;
+    // Move from center screen to title bar area:
+    const startY = window.innerHeight / 2; 
+    const endY = 60/2 + 30; 
+    const currentY = startY + (endY - startY)*t;
 
-    const startY = window.innerHeight / 2;
-    const endY = 30;
-    const currentY = startY + (endY - startY) * t;
-
-    heroLogo.style.transform = `translate(-50%, -50%) scale(${scale})`;
     heroLogo.style.position = 'fixed';
     heroLogo.style.left = '50%';
-    heroLogo.style.top = `${currentY}px`;
+    heroLogo.style.top = currentY + 'px';
+    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
 
-    if (t > 0.5) body.classList.add('scrolled');
-    else body.classList.remove('scrolled');
+    if (t > 0.5) {
+      body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
+    }
+
+    // Back-to-top after t>0.5
+    if (t > 0.5) {
+      backToTop.classList.add('show');
+    } else {
+      backToTop.classList.remove('show');
+    }
 
     requestAnimationFrame(updateHero);
   }
   requestAnimationFrame(updateHero);
 
-  // Drawer toggle
-  drawerToggle.addEventListener('click', () => {
-    if (contentTray.style.display === 'block') {
-      contentTray.style.display = 'none';
-    } else {
-      contentTray.style.display = 'block';
-    }
-  });
-
-  // Back to top button
+  // Back to top
   backToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Mouse trail effect
-  const trailColorsDark = ['#00FFFF', '#FF00FF', '#FFFF00', '#FFFFFF'];
-  const trailColorsLight = ['#00FFFF', '#FF00FF', '#FFFF00', '#000000'];
-  const shapes = ['circle', 'triangle', 'square'];
-
-  document.addEventListener('mousemove', (e) => {
-    const trail = document.createElement('div');
-    trail.className = 'trail-shape';
-
-    const color = body.classList.contains('dark-mode') ? 
-                  trailColorsDark[Math.floor(Math.random() * trailColorsDark.length)] : 
-                  trailColorsLight[Math.floor(Math.random() * trailColorsLight.length)];
-
-    const shape = shapes[Math.floor(Math.random() * shapes.length)];
-    const rotation = Math.random() * 360;
-    const size = Math.random() * 20 + 10;
-    const isFilled = Math.random() > 0.5;
-
-    trail.style.width = `${size}px`;
-    trail.style.height = `${size}px`;
-    trail.style.backgroundColor = isFilled && shape !== 'triangle' ? color : 'transparent';
-    trail.style.border = `2px solid ${color}`;
-    trail.style.borderRadius = shape === 'circle' ? '50%' : '0';
-    trail.style.transform = `translate(${e.pageX}px, ${e.pageY}px) rotate(${rotation}deg)`;
-    trail.style.position = 'absolute';
-    trail.style.left = `${e.pageX}px`;
-    trail.style.top = `${e.pageY}px`;
-
-    if (shape === 'triangle') {
-      trail.style.width = '0';
-      trail.style.height = '0';
-      trail.style.borderLeft = `${size / 2}px solid transparent`;
-      trail.style.borderRight = `${size / 2}px solid transparent`;
-      trail.style.borderBottom = `${size}px solid ${color}`;
+  // Toggle the drawer
+  trayToggle.addEventListener('click', () => {
+    if (tray.style.display === 'block') {
+      // Close
+      tray.style.display = 'none';
+      document.getElementById('pageWrapper').classList.remove('page-down');
+    } else {
+      // Open
+      tray.style.display = 'block';
+      document.getElementById('pageWrapper').classList.add('page-down');
     }
+  });
 
-    document.body.appendChild(trail);
+  // Toggle dark/light mode
+  themeToggle.addEventListener('click', () => {
+    if (body.classList.contains('dark-mode')) {
+      body.classList.remove('dark-mode');
+      body.style.setProperty('--bg-color', '#ffffff');
+      body.style.setProperty('--text-color', '#000000');
+      body.style.setProperty('--footer-bg', '#dddddd');
+      body.style.setProperty('--drawer-bg', '#f0f0f0');
+      body.style.setProperty('--tooltip-bg', '#ccc');
+      body.style.setProperty('--r-color', '#000000');
+    } else {
+      body.classList.add('dark-mode');
+      body.style.setProperty('--bg-color', '#121212');
+      body.style.setProperty('--text-color', '#ffffff');
+      body.style.setProperty('--footer-bg', '#1c1c1c');
+      body.style.setProperty('--drawer-bg', '#0f0f0f');
+      body.style.setProperty('--tooltip-bg', '#333333');
+      body.style.setProperty('--r-color', '#ffffff');
+    }
+  });
 
-    setTimeout(() => {
-      trail.remove();
-    }, 2000);
+  // Icon tooltips
+  const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
+  iconLinks.forEach(iconLink => {
+    iconLink.addEventListener('mouseenter', () => {
+      const tooltipText = iconLink.getAttribute('data-tooltip');
+      iconTooltip.textContent = tooltipText;
+      iconTooltip.style.opacity = '1';
+
+      // Position tooltip
+      const rect = iconLink.getBoundingClientRect();
+      const tooltipRect = iconTooltip.getBoundingClientRect();
+
+      let top = rect.top - tooltipRect.height - 8;
+      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
+
+      if (top < 0) top = rect.bottom + 8; 
+      if (left < 0) left = 0;
+      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
+      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
+
+      iconTooltip.style.top = `${top}px`;
+      iconTooltip.style.left = `${left}px`;
+      iconTooltip.style.opacity = '1';
+    });
+
+    iconLink.addEventListener('mouseleave', () => {
+      iconTooltip.style.opacity = '0';
+      iconTooltip.style.top = '-9999px';
+      iconTooltip.style.left = '-9999px';
+    });
+  });
+
+  // Rotating image gallery
+  const galleryData = [
+    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
+    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
+    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
+    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
+  ];
+
+  const galleryTitle = document.getElementById('galleryTitle');
+  const galleryDesc = document.getElementById('galleryDesc');
+  const galleryImage = document.getElementById('galleryImage');
+  const galleryNav = document.getElementById('galleryNav');
+
+  let currentIndex = 0;
+
+  function updateGallery() {
+    const item = galleryData[currentIndex];
+    galleryTitle.textContent = item.title;
+    galleryDesc.textContent = item.description;
+    galleryImage.src = item.image;
+
+    let navString = ".";
+    for (let i=0; i<galleryData.length; i++) {
+      if (i === currentIndex) {
+        navString += "O";
+      } else {
+        navString += "o";
+      }
+    }
+    navString += ".";
+    galleryNav.textContent = navString;
+  }
+
+  updateGallery();
+
+  galleryNav.addEventListener('click', (e) => {
+    const clickX = e.clientX;
+    const rect = galleryNav.getBoundingClientRect();
+    const charWidth = rect.width / galleryNav.textContent.length;
+    const charIndex = Math.floor((clickX - rect.left) / charWidth);
+
+    const clickedSlide = charIndex - 1; 
+    if (clickedSlide >= 0 && clickedSlide < galleryData.length && clickedSlide !== currentIndex) {
+      currentIndex = clickedSlide;
+      updateGallery();
+    }
+  });
+
+  // Show divider/shadow on scroll
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 0) {
+      body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
+    }
   });
 });
 </script>
