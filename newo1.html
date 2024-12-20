@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>KYZER</title>
 <style>
+* {
+  box-sizing: border-box;
+}
 html, body {
   margin: 0;
   padding: 0;
@@ -14,7 +17,12 @@ html, body {
   color: #ffffff;
 }
 
-/* Dark mode by default */
+body {
+  background: var(--bg-color, #121212);
+  color: var(--text-color, #ffffff);
+  padding: 0 20px; /* padding on left and right */
+}
+
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
@@ -23,15 +31,11 @@ html, body {
   --tooltip-bg: #333333;
 }
 
-body {
-  background: var(--bg-color);
-  color: var(--text-color);
-}
-
 /* Title Bar */
 .title-bar {
   position: fixed;
   top: 0;
+  left:0;
   width: 100%;
   height: 60px;
   background: var(--bg-color);
@@ -42,10 +46,20 @@ body {
   z-index: 1000;
 }
 
-/* Hero Logo (interpolated) */
+/* Hero Logo:
+   We will control position & scale in JS.
+   By default it's just a large text. We'll remove Y&E when scrolled by CSS. */
 .hero-logo {
   font-weight: bold;
   white-space: nowrap;
+}
+.remove-on-scroll {
+  transition: opacity 0.3s ease;
+}
+
+/* When scrolled, remove Y and E */
+body.scrolled .remove-on-scroll {
+  display: none;
 }
 
 /* Tray toggle button */
@@ -74,7 +88,7 @@ body {
 }
 
 .page-down {
-  margin-top: 260px;
+  margin-top: 260px; /* pushed down when drawer open */
 }
 
 /* Icons in drawer */
@@ -121,8 +135,7 @@ body {
 /* Hard divider at bottom of screen */
 .bottom-divider {
   position: fixed;
-  bottom: 0;
-  left: 0;
+  bottom: 0; left:0;
   width: 100%;
   height: 2px;
   background: #ffffff;
@@ -130,8 +143,6 @@ body {
   transition: opacity 0.3s ease;
   z-index: 1500;
 }
-
-/* Once we scroll, show the divider */
 body.scrolled .bottom-divider {
   opacity: 1;
 }
@@ -150,16 +161,16 @@ main {
   margin-right: auto;
 }
 
-/* Two columns evenly spaced */
 .text-section.two-columns {
   display: flex;
   justify-content: space-between;
   max-width: 900px;
   margin: 60px auto;
 }
+
 .text-section.two-columns > div {
   flex: 1;
-  margin: 0 20px; 
+  margin: 0 20px;
 }
 .text-section.two-columns > div:first-child {
   margin-left: 0;
@@ -252,8 +263,9 @@ main {
 <body class="dark-mode">
 
 <header class="title-bar">
+  <!-- Hero logo letters: Y and E have remove-on-scroll class -->
   <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
-    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold">
+    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold" font-size="64">
       K<tspan class="remove-on-scroll">Y</tspan>Z<tspan class="remove-on-scroll">E</tspan>R
     </text>
   </svg>
@@ -276,8 +288,8 @@ main {
   <main>
     <section class="text-section single-column">
       <h1>Welcome to Our Playground</h1>
-      <p>Scroll slightly and "KYZER" will become "KZR" as it moves into the title bar. The back-to-top button appears after you scroll. Also note the hard divider line at the bottom of the screen appears once you start scrolling.</p>
-      <p>Some filler content to ensure scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum nec varius metus, ut dignissim arcu...</p>
+      <p>Scroll slightly and "KYZER" will become "KZR" as it moves into the title bar and removes Y&E. The back-to-top button appears after you scroll. The bottom divider line appears as soon as you start scrolling.</p>
+      <p>Filler content to ensure scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum nec varius metus...</p>
     </section>
 
     <section class="text-section two-columns">
@@ -335,34 +347,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageWrapper = document.getElementById('pageWrapper');
   const iconTooltip = document.getElementById('iconTooltip');
   const heroLogo = document.getElementById('heroLogo');
-
-  // Hero Logo Interpolation
-  // We'll define a scroll range [0, 100] after which hero is fully "scrolled"
-  let heroMaxScroll = 100;
+  
+  // Hero interpolation:
+  // We'll define a scroll range [0,100]. At 0: hero large & centered,
+  // at 100: hero small & top. After t>0.5, remove Y&E. After t>0.5 show back-to-top, divider already shows via CSS.
+  const maxScroll = 100;
   function updateHero() {
     const sy = window.scrollY;
-    const t = Math.min(Math.max(sy / heroMaxScroll, 0), 1); 
-    // t=0 at top (KYZER large center), t=1 fully in title bar as KZR
+    const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    // Interpolate scale and position:
-    // At t=0: scale ~1.0 (64px font), at t=1: scale smaller (24px font about 24/64 ~0.375 scale)
-    // We can just linearly scale font or apply transform scale.
-    // We'll do transform: scale and vertical translate.
-    // But since we changed display modes, let's just scale and slightly translate.
-    const startScale = 1;
-    const endScale = 0.375;
-    const scale = startScale + (endScale - startScale)*t;
+    // Interpolate scale from 1 at top to about 0.375 when fully scrolled
+    const scale = 1 - 0.625 * t; // 1 to ~0.375
+    // Interpolate vertical position:
+    // at t=0: hero centered screen => top:50% translateY(-50%)
+    // at t=1: hero in title bar => top:30px from top of screen (approx center of 60px bar)
+    // Let's linearly move from top 50% of viewport (which is window.innerHeight/2)
+    // to top:30px. We'll do position:fixed; left:50% always, and just translate Y.
+    const startY = window.innerHeight/2;
+    const endY = 60/2 + 30; // about 60px bar, hero half size plus a bit offset. Let's just pick 30px offset.
+    // Actually, let's just blend position. We'll keep hero fixed center horizontally:
+    // We'll use translate to center horizontally: translateX(-50%)
+    // For vertical: translateY(-50%) means at scale=1 top is window center.
+    // We'll just linearly move from center of screen to the top bar center line:
+    const currentY = startY + (endY - startY)*t;
 
-    heroLogo.style.transform = `scale(${scale})`;
+    // Apply transforms
+    // We'll keep hero fixed at left:50%, position:fixed; and just move vertically and scale.
+    // To do this, we must set heroLogo.style.position='fixed', heroLogo.style.left='50%'
+    // and heroLogo.style.top=`${currentY}px` and transform: translate(-50%,-50%) scale(...) 
+    heroLogo.style.position = 'fixed';
+    heroLogo.style.left = '50%';
+    heroLogo.style.top = currentY + 'px';
+    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
 
-    // For hiding Y and E at t>0.5, we already have a CSS class:
+    // Remove Y & E after t>0.5
     if (t > 0.5) {
       body.classList.add('scrolled');
     } else {
       body.classList.remove('scrolled');
     }
 
-    // Back-to-top button appear after t>0.5 as well
+    // Back-to-top button after t>0.5 handled by 'scrolled' class and JS if needed:
+    // Actually we are adding backToTop show only on scrolled. Let's just rely on scrolled class for Y&E.
+    // Back-to-top we had done previously. Let's do it again:
     if (t > 0.5) {
       backToTop.classList.add('show');
     } else {
@@ -452,9 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Rotating image gallery
-  const galleryDataUrl = 'https://raw.githubusercontent.com/user/repo/branch/gallery.json'; 
-  // Placeholder: We'll simulate with static data here
+  // Rotating image gallery (placeholder data)
   const galleryData = [
     {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
     {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
@@ -475,11 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
     galleryDesc.textContent = item.description;
     galleryImage.src = item.image;
 
-    // Create nav pattern like .oOo. for current slide
-    // currentIndex is the slide, total = galleryData.length
-    // We can represent something like: '.' at start if not at first, 'o' for slides before current, 'O' for current, 'o' for after, '.' at end if not at last
-    // We'll just show all slides in a linear pattern: For i in slides:
-    // '.' at start and end always, 'O' is current, 'o' others
     let navString = ".";
     for (let i=0; i<galleryData.length; i++) {
       if (i === currentIndex) {
@@ -489,27 +509,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     navString += ".";
-
     galleryNav.textContent = navString;
   }
 
   updateGallery();
 
-  // Click handling on nav (based on position of 'o')
-  // We'll handle left/right by clicking on 'o' near the ends:
   galleryNav.addEventListener('click', (e) => {
     const clickX = e.clientX;
     const rect = galleryNav.getBoundingClientRect();
     const charWidth = rect.width / galleryNav.textContent.length;
     const charIndex = Math.floor((clickX - rect.left) / charWidth);
 
-    // '.' at start is charIndex=0, '.' at end is last char
-    // slides start at charIndex=1 to charIndex=galleryData.length
-    // If user clicks on an 'o' charIndex and it's < currentIndex+1, move left, if > currentIndex+1, move right
-    // currentIndex+1 because navString starts with a '.'
-    const startIndex = 1;
-    const clickedSlide = charIndex - startIndex;
-
+    // navString: first char '.' => index 0
+    // slides start at index 1
+    const clickedSlide = charIndex - 1; 
     if (clickedSlide >= 0 && clickedSlide < galleryData.length && clickedSlide !== currentIndex) {
       currentIndex = clickedSlide;
       updateGallery();
