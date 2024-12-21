@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools Collection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tool-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .tool-card:hover {
+            transform: translateY(-2px);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tools Collection</h1>
+    <div class="tools-container" id="toolsContainer"></div>
+
+    <script>
+        async function loadTools() {
+            const toolsContainer = document.getElementById('toolsContainer');
+            
+            try {
+                // Fetch the list of HTML files in the tools directory
+                const response = await fetch('tools/');
+                const text = await response.text();
+                
+                // Create a temporary element to parse the directory listing
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const links = Array.from(doc.getElementsByTagName('a'));
+                
+                // Filter for HTML files
+                const htmlFiles = links
+                    .map(link => link.href)
+                    .filter(href => href.endsWith('.html'));
+                
+                // Load each tool's HTML
+                for (const file of htmlFiles) {
+                    const toolResponse = await fetch(file);
+                    const toolHtml = await toolResponse.text();
+                    
+                    // Create a card for the tool
+                    const card = document.createElement('div');
+                    card.className = 'tool-card';
+                    card.innerHTML = toolHtml;
+                    
+                    toolsContainer.appendChild(card);
+                }
+            } catch (error) {
+                console.error('Error loading tools:', error);
+                toolsContainer.innerHTML = '<p>Error loading tools. Please try again later.</p>';
+            }
+        }
+
+        // Load tools when the page loads
+        window.addEventListener('load', loadTools);
+    </script>
+</body>
+</html>
