@@ -3,495 +3,708 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Hallo</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<title>KYZER</title>
 <style>
-  body {
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
-                 Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    color: #fff;
     overflow-x: hidden;
-    background: linear-gradient(135deg, #1a2a6c, #2d3436, #0f2027);
-    background-size: 400% 400%;
-    animation: bgShift 20s ease infinite;
-    position: relative;
+    font-family: sans-serif;
+    background: #121212;
+    color: #ffffff;
   }
-
-  @keyframes bgShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  
+  body {
+    background: var(--bg-color, #121212);
+    color: var(--text-color, #ffffff);
+    padding: 0;
   }
-
-  /* Hero section */
-  .hero {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    z-index: 2;
+  
+  :root {
+    --bg-color: #121212;
+    --text-color: #ffffff;
+    --footer-bg: #1c1c1c;
+    --drawer-bg: #0f0f0f;
+    --tooltip-bg: #333333;
+    --r-color: #ffffff;
+    --bottom-text-bg: #0f0f0f;
   }
-
-  #physics-world {
+  
+  /* Title Bar */
+  .title-bar {
     position: fixed;
-    top: 0;
+    top: 0; left:0;
+    width: 100%;
+    height: 60px;
+    background: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  
+  /* Hero Logo */
+  .hero-logo {
+    font-weight: bold;
+    white-space: nowrap;
+    width: 80vw;
+  }
+  .remove-on-scroll {
+    transition: opacity 0.3s ease;
+  }
+  
+  body.scrolled .remove-on-scroll {
+    display: none;
+  }
+  
+  .tray-toggle {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+  }
+  
+  .content-tray {
+    position: fixed;
+    top: 60px;
     left: 0;
     width: 100%;
-    height: 100%;
-    z-index: 1;
-    pointer-events: none;
+    background: var(--drawer-bg);
+    padding: 20px 0;
+    display: none;
+    z-index: 500;
+    box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
   }
-
-  h1 {
-    font-size: 4rem;
-    margin: 0;
-    letter-spacing: 0.05em;
-    opacity: 0;
-    animation: fadeSlide 1.5s forwards;
-    z-index: 2;
+  
+  .page-down {
+    margin-top: 260px;
   }
-
-  h2 {
-    font-size: 1.2rem;
-    font-weight: 300;
-    margin-top: 1rem;
-    margin-bottom: 3rem;
-    opacity: 0;
-    animation: fadeSlide 1.5s 0.5s forwards;
-    z-index: 2;
-  }
-
-  @keyframes fadeSlide {
-    0% {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .links {
+  
+  .icon-links {
     display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
+    flex-direction: row;
     justify-content: center;
-    opacity: 0;
-    animation: fadeSlide 1.5s 1s forwards;
-    z-index: 2;
+    align-items: center;
+    gap: 40px;
   }
-
-  .links a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 1rem;
-    font-weight: 400;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid transparent;
-    transition: all 0.3s ease;
-  }
-
-  .links a:hover {
-    border-bottom: 1px solid #fff;
-  }
-
-  /* Content sections */
-  .content {
+  
+  .icon-links a {
     position: relative;
-    padding: 100px 20px;
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: left;
-    line-height: 1.6;
-    color: #fff;
-    z-index: 2;
   }
-
-  .content h3 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+  
+  .icon-links .icon {
+    width: 40px;
+    height: 40px;
+    fill: var(--text-color);
   }
-
-  /* Additional bottom section */
-  .bottom-section {
-    position: relative;
-    padding: 100px 20px;
-    max-width: 600px;
-    margin: 0 auto 200px auto;
-    text-align: left;
-    line-height: 1.6;
-    color: #fff;
-    z-index: 2;
-  }
-
-  .bottom-section h3 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  /* Back to top button */
-  .back-to-top {
+  
+  .tooltip {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(255,255,255,0.8);
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-    color: #000;
-    font-size: 1.5rem;
-    line-height: 50px;
+    background: var(--tooltip-bg);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    z-index: 2000;
+  }
+  
+  #pageWrapper {
+    position: relative;
+    margin-top: 60px; 
+    transition: margin-top 0.3s ease;
+    z-index: 1;
+  }
+  
+  .content-divider {
+    position: fixed;
+    top: calc(100vh + 60px);
+    height: 0;
+    margin-bottom: 20px;
+    width: 100%;
+    box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
+    z-index: 900;
+  }
+  
+  main {
+    padding-top: 800px; /* Reduced from 1000px */
+    padding-bottom: 200px; /* Reduced from 300px */
+  }
+  
+  /* Updated text sections with padding */
+  .text-section {
+    margin: 60px auto;
+    max-width: 600px;
+    padding: 0 20px;
+  }
+  
+  .text-section.two-columns {
+    display: flex;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 0 20px;
+  }
+  
+  .text-section.two-columns > div {
+    flex: 1;
+    margin: 0 20px;
+  }
+  .text-section.two-columns > div:first-child {
+    margin-left: 0;
+  }
+  .text-section.two-columns > div:last-child {
+    margin-right: 0;
+  }
+  
+  /* Updated Gallery Styles */
+  .gallery {
+    margin: 60px auto;
+    padding: 0;
     text-align: center;
-    z-index: 1000;
-    transition: background 0.3s;
-  }
-
-  .back-to-top:hover {
-    background: rgba(255,255,255,1);
-  }
-
-  /* Navi styles */
-  .navi {
-    position: fixed;
-    pointer-events: none;
-    z-index: 999;
-  }
-
-  .navi-orb {
-    width: 12px;
-    height: 12px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #fff, 0 0 20px #fff;
     position: relative;
+    max-width: 600px;
   }
+  .gallery-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 10px;
+  }
+.gallery-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  text-align: left;
+  max-width: calc(100% - 20px);
+  color: white !important;
+}
+.gallery-title {
+  font-size: 20px;
+  margin-bottom: 5px;
+  color: white !important;
+}
+.gallery-desc {
+  font-size: 14px;
+  margin: 0;
+  color: white !important;
+}
+.gallery-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  height: 24px;
+  position: relative;
+}
+.nav-dot {
+  border: 2px solid var(--text-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: absolute;
+}
+.nav-dot.small {
+  width: 8px;
+  height: 8px;
+}
+.nav-dot.medium {
+  width: 16px;
+  height: 16px;
+}
+.nav-dot.large {
+  width: 24px;
+  height: 24px;
+  background: var(--text-color);
+  left: 50%;
+  transform: translateX(-50%);
+}
 
-  .navi-wing {
-    position: absolute;
-    width: 15px;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 50% 50% 0 50%;
-    transform-origin: 100% 50%;
-    animation: wingFlap 0.2s ease-in-out infinite alternate;
-  }
+/* CMYK Shapes */
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(10px, -10px) rotate(5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
 
-  .navi-wing.left {
-    left: -14px;
-    transform: rotate(-30deg);
-  }
+.cmyk-shape {
+  position: fixed;
+  pointer-events: none;
+  opacity: 0;
+  animation: float 6s infinite ease-in-out;
+  z-index: 0;
+  transition: opacity 1s ease;
+}
 
-  .navi-wing.right {
-    right: -14px;
-    transform: rotate(30deg) scaleX(-1);
-  }
+/* Updated Footer Styles */
+.triple-footer {
+  display: flex;
+  gap: 20px;
+  padding: 50px 0;
+  background: var(--footer-bg);
+  width: 100%;
+  box-shadow: 0 -5px 10px rgba(0,0,0,0.3);
+  margin-bottom: 0;
+}
+.triple-footer > div {
+  flex: 1;
+  padding: 0 20px;
+}
+.triple-footer > div:nth-child(1) {
+  text-align: right;
+}
+.triple-footer > div:nth-child(2) {
+  text-align: center;
+}
+.triple-footer > div:nth-child(3) {
+  text-align: left;
+}
+.footer-bottom-text {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 14px;
+  background: var(--bottom-text-bg);
+  width: 100%;
+  box-shadow: inset 0 15px 15px -15px rgba(0,0,0,0.5);
+}
 
-  .sparkle {
-    position: absolute;
-    width: 3px;
-    height: 3px;
-    background: #fff;
-    border-radius: 50%;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  @keyframes wingFlap {
-    0% { transform: rotate(-30deg); }
-    100% { transform: rotate(-10deg); }
-  }
-
-  @keyframes sparkleFloat {
-    0% {
-      transform: translate(0, 0) scale(1);
-      opacity: 0.8;
-    }
-    100% {
-      transform: translate(var(--tx), var(--ty)) scale(0);
-      opacity: 0;
-    }
-  }
-
-  @media (max-width: 600px) {
-    h1 {
-      font-size: 2.5rem;
-    }
-  }
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg-color);
+  border: 1px solid var(--text-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: none; 
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+}
+.back-to-top.show {
+  display: flex;
+}
+.back-to-top svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--text-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 </style>
 </head>
-<body>
-<canvas id="physics-world"></canvas>
 
-<div class="hero">
-  <h1>Hallo, I'm derKyzer</h1>
-  <h2>Exploring ideas and crafting experiences</h2>
-  <div class="links">
-    <a href="https://github.com/derkyzer" target="_blank" rel="noopener noreferrer">
-      My GitHub
+<body class="dark-mode" style="--r-color: #ffffff;">
+
+<header class="title-bar">
+  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
+    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="84">
+      <tspan fill="#00FFFF">K</tspan>
+      <tspan class="remove-on-scroll" fill="#FF00FF">Y</tspan>
+      <tspan fill="#FFFF00">Z</tspan>
+      <tspan class="remove-on-scroll" fill="#888888">E</tspan>
+      <tspan fill="var(--r-color)">R</tspan>
+    </text>
+  </svg>
+  <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
+</header>
+
+<div class="content-tray" id="contentTray">
+  <nav class="icon-links">
+    <a href="/projects.html" data-tooltip="GitHub Projects">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#ff9a9e" />
+            <stop offset="1" stop-color="#fad0c4" />
+          </linearGradient>
+        </defs>
+        <rect fill="url(#gradient0)" height="40" width="80" x="20" y="25"></rect>
+        <rect fill="url(#gradient0)" height="10" width="40" x="40" y="10"></rect>
+      </svg>
     </a>
-    <a href="./snake.html">Play Snake</a>
-    <a href="./projects.html">Projects</a>
-    <a href="./newo1.html">Home vo1</a>
-    <a href="./htmlconversion.html">🔊</a>
-    <a href="./somethingalright.html">😵‍💫</a>
-    <a href="./stripped.html">⛿</a>
-    
-  </div>
+    <a href="/blog.html" data-tooltip="Development Blog">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#a18cd1" />
+            <stop offset="1" stop-color="#fbc2eb" />
+          </linearGradient>
+        </defs>
+        <rect fill="url(#gradient1)" height="60" width="50" x="50" y="40"></rect>
+        <line stroke="white" stroke-width="4" x1="50" x2="100" y1="70" y2="70"></line>
+      </svg>
+    </a>
+    <a href="#" id="themeToggle" data-tooltip="Toggle Theme">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient2" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#f6d365" />
+            <stop offset="1" stop-color="#fda085" />
+          </linearGradient>
+        </defs>
+        <circle cx="80" cy="80" fill="url(#gradient2)" r="25"></circle>
+        <path d="M100 100 A10 10 0 1 1 120 100 A10 10 0 1 1 100 100 Z" fill="url(#gradient2)"></path>
+      </svg>
+    </a>
+    <a href="/tools.html" data-tooltip="Tools">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient3" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#84fab0" />
+            <stop offset="1" stop-color="#8fd3f4" />
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#gradient3)" points="80,80 76.3157894736842,84.21052631578948 76.52631578947368,89.47368421052632 71.05263157894737,89.21052631578948 68.42105263157895,94.73684210526316 65.78947368421052,89.21052631578948 60.315789473684205,89.47368421052632 60.526315789473685,84.21052631578948 56.8421052631579,80 60.526315789473685,75.78947368421052 60.315789473684205,70.52631578947368 65.78947368421052,70.78947368421052 68.42105263157895,65.26315789473684 71.05263157894737,70.78947368421052 76.52631578947368,70.52631578947368 76.3157894736842,75.78947368421052"></polygon>
+        <circle cx="68.42105263157895" cy="80" fill="white" r="4"></circle>
+      </svg>
+    </a>
+    <a href="/contact.html" data-tooltip="Socials">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient4" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#d4fc79" />
+            <stop offset="1" stop-color="#96e6a1" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="80" cy="80" rx="30" ry="20" fill="url(#gradient4)"></ellipse>
+        <circle cx="70" cy="75" r="5" fill="white"></circle>
+        <circle cx="90" cy="75" r="5" fill="white"></circle>
+        <circle cx="80" cy="85" r="5" fill="white"></circle>
+        <line x1="70" y1="75" x2="90" y2="75" stroke="white" stroke-width="2"></line>
+        <line x1="70" y1="75" x2="80" y2="85" stroke="white" stroke-width="2"></line>
+        <line x1="80" y1="85" x2="90" y2="75" stroke="white" stroke-width="2"></line>
+      </svg>
+    </a>
+  </nav>
 </div>
 
-<div class="content">
-  <h3>About My Work</h3>
-  <p>
-    Here's some placeholder text to give you a reason to scroll. As you move
-    through this page, notice how the shapes float and interact with each other.
-    Try scrolling to see them react!
-  </p>
-  <p>
-    The shapes add depth and interest without distracting from the content.
-    Keep scrolling to see more features. There's also a convenient back-to-top
-    button in the bottom right corner.
-  </p>
+<div class="tooltip" id="iconTooltip"></div>
+
+<div id="pageWrapper">
+  <div class="content-divider"></div>
+  <main>
+    <section class="text-section single-column">
+      <h1>Welcome to Our Playground</h1>
+      <p>Scroll down to see "KYZER" become "KZR" as it moves into the title bar (Y&E removed halfway). The back-to-top button appears after you scroll. The content is shifted way down, so you must scroll to reach here. Also note the upward shadow line at the top once main content scrolls into view.</p>
+    </section>
+
+    <section class="text-section two-columns">
+      <div>
+        <h2>Column 1 Heading</h2>
+        <p>First column content. Click the menu (☰) to open the drawer and hover icons for tooltips.</p>
+      </div>
+      <div>
+        <h2>Column 2 Heading</h2>
+        <p>Use the theme icon to toggle dark/light mode. Columns are evenly spaced now.</p>
+      </div>
+    </section>
+
+    <!-- Rotating Image Gallery -->
+    <section class="gallery" id="gallerySection">
+      <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
+      <div class="gallery-info">
+        <div class="gallery-title" id="galleryTitle"></div>
+        <div class="gallery-desc" id="galleryDesc"></div>
+      </div>
+      <div class="gallery-nav" id="galleryNav">
+        <div class="nav-container" id="navContainer"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="triple-footer">
+    <div>
+      <h3>Footer Col 1</h3>
+      <p>Right-aligned footer content...</p>
+    </div>
+    <div>
+      <h3>Footer Col 2</h3>
+      <p>Center-aligned footer info...</p>
+    </div>
+    <div>
+      <h3>Footer Col 3</h3>
+      <p>Left-aligned footer text...</p>
+    </div>
+  </footer>
+  <div class="footer-bottom-text">This is the line of text at the very bottom of the footer</div>
 </div>
 
-<div class="bottom-section">
-  <h3>More Content Below</h3>
-  <p>
-    This is another section at the bottom of the page. 
-    Add whatever information you'd like here.
-  </p>
-  <p>
-    Notice as you scroll back up, you can use the back-to-top button to 
-    smoothly return to the top.
-  </p>
-</div>
-
-<button class="back-to-top" id="backToTop">↑</button>
-
-<div class="navi">
-  <div class="navi-wing left"></div>
-  <div class="navi-orb"></div>
-  <div class="navi-wing right"></div>
-</div>
+<button class="back-to-top" id="backToTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
 
 <script>
-// Matter.js setup
-const Engine = Matter.Engine,
-      Render = Matter.Render,
-      Runner = Matter.Runner,
-      Bodies = Matter.Bodies,
-      Body = Matter.Body,
-      Composite = Matter.Composite;
+document.addEventListener('DOMContentLoaded', () => {
+  const body = document.body;
+  const tray = document.getElementById('contentTray');
+  const trayToggle = document.getElementById('trayToggle');
+  const themeToggle = document.getElementById('themeToggle');
+  const backToTop = document.getElementById('backToTop');
+  const iconTooltip = document.getElementById('iconTooltip');
+  const heroLogo = document.getElementById('heroLogo');
 
-// Create engine and world
-const engine = Engine.create({
-  gravity: { x: 0, y: 0 }
-});
-const world = engine.world;
-
-// Create renderer
-const canvas = document.getElementById('physics-world');
-const render = Render.create({
-  canvas: canvas,
-  engine: engine,
-  options: {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    wireframes: false,
-    background: 'transparent'
-  }
-});
-
-// Create boundaries
-const wallThickness = 50;
-const walls = [
-  Bodies.rectangle(window.innerWidth/2, -wallThickness/2, window.innerWidth, wallThickness, { isStatic: true }), // Top
-  Bodies.rectangle(window.innerWidth/2, window.innerHeight + wallThickness/2, window.innerWidth, wallThickness, { isStatic: true }), // Bottom
-  Bodies.rectangle(-wallThickness/2, window.innerHeight/2, wallThickness, window.innerHeight, { isStatic: true }), // Left
-  Bodies.rectangle(window.innerWidth + wallThickness/2, window.innerHeight/2, wallThickness, window.innerHeight, { isStatic: true }) // Right
-];
-Composite.add(world, walls);
-
-// Function to create shapes
-function createShape(type, x, y) {
-  let body;
-  const options = {
-    render: {
-      fillStyle: `rgba(255, 255, 255, ${0.15 + Math.random() * 0.15})`,
-      strokeStyle: 'rgba(255, 255, 255, 0.1)',
-      lineWidth: 1
-    },
-    frictionAir: 0.02,
-    restitution: 0.8,
-    density: 0.001
-  };
-
-  switch(type) {
-    case 'circle':
-      const radius = 40 + Math.random() * 80;
-      body = Bodies.circle(x, y, radius, options);
-      break;
-    case 'square':
-      const size = 60 + Math.random() * 100;
-      body = Bodies.rectangle(x, y, size, size, options);
-      break;
-    case 'triangle':
-      const width = 80 + Math.random() * 120;
-      body = Bodies.polygon(x, y, 3, width/2, options);
-      break;
-  }
-
-  return body;
-}
-
-// Create multiple shapes
-const shapes = [];
-const shapeTypes = ['circle', 'square', 'triangle'];
-for(let i = 0; i < 15; i++) {
-  const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
-  const x = Math.random() * window.innerWidth;
-  const y = Math.random() * window.innerHeight;
-  shapes.push(createShape(type, x, y));
-}
-Composite.add(world, shapes);
-
-// Add gentle force to shapes periodically
-setInterval(() => {
-  shapes.forEach(shape => {
-    const force = {
-      x: (Math.random() - 0.5) * 0.0005,
-      y: (Math.random() - 0.5) * 0.0005
-    };
-    Body.applyForce(shape, shape.position, force);
-  });
-}, 1000);
-
-// Handle scroll interaction
-let lastScrollY = window.scrollY;
-document.addEventListener('scroll', () => {
-  const scrollDelta = window.scrollY - lastScrollY;
-  lastScrollY = window.scrollY;
-  
-  shapes.forEach(shape => {
-    // Apply force based on scroll direction
-    Body.applyForce(shape, shape.position, {
-      x: 0,
-      y: scrollDelta * 0.0001
-    });
-
-    // Fade based on scroll position
-    const fadePoint = 400;
-    const opacity = Math.max(1 - (window.scrollY / fadePoint), 0);
-    shape.render.opacity = opacity * 0.3;
-  });
-});
-
-// Handle touch/mouse movement
-let lastTouchX = 0;
-let lastTouchY = 0;
-
-document.addEventListener('touchmove', (e) => {
-  const touch = e.touches[0];
-  const deltaX = touch.clientX - lastTouchX;
-  const deltaY = touch.clientY - lastTouchY;
-  
-  shapes.forEach(shape => {
-    const dx = shape.position.x - touch.clientX;
-    const dy = shape.position.y - touch.clientY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  // Create CMYK shapes with respawn functionality
+  function createShape(shape, index) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'cmyk-shape');
+    svg.setAttribute('width', '40');
+    svg.setAttribute('height', '40');
+    svg.setAttribute('viewBox', '0 0 40 40');
     
-    if (distance < 100) {
-      Body.applyForce(shape, shape.position, {
-        x: deltaX * 0.0001,
-        y: deltaY * 0.0001
-      });
+    let element;
+    if (shape.type === 'circle') {
+      element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      element.setAttribute('cx', '20');
+      element.setAttribute('cy', '20');
+      element.setAttribute('r', '15');
+    } else if (shape.type === 'rect') {
+      element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      element.setAttribute('x', '5');
+      element.setAttribute('y', '5');
+      element.setAttribute('width', '30');
+      element.setAttribute('height', '30');
+    } else {
+      element = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      element.setAttribute('points', '20,5 35,35 5,35');
+    }
+
+    if (shape.fill) {
+      element.setAttribute('fill', shape.color);
+      element.setAttribute('stroke', 'none');
+    } else {
+      element.setAttribute('fill', 'none');
+      element.setAttribute('stroke', shape.color);
+      element.setAttribute('stroke-width', '2');
+    }
+
+    svg.appendChild(element);
+    document.body.appendChild(svg);
+
+    function respawnShape() {
+      const x = Math.random() * (window.innerWidth - 100);
+      const y = Math.random() * (window.innerHeight - 100);
+      svg.style.opacity = '0';
+      
+      setTimeout(() => {
+        svg.style.left = x + 'px';
+        svg.style.top = y + 'px';
+        svg.style.opacity = '0.3';
+      }, 1000);
+
+      // Schedule next respawn
+      setTimeout(respawnShape, Math.random() * 5000 + 5000); // Random time between 5-10 seconds
+    }
+
+    // Initial spawn with delay
+    setTimeout(() => {
+      respawnShape();
+    }, index * 500);
+  }
+
+  const shapes = [
+    { type: 'circle', color: '#00FFFF', fill: true },
+    { type: 'circle', color: '#00FFFF', fill: false },
+    { type: 'rect', color: '#FF00FF', fill: true },
+    { type: 'rect', color: '#FF00FF', fill: false },
+    { type: 'polygon', color: '#FFFF00', fill: true },
+    { type: 'polygon', color: '#FFFF00', fill: false }
+  ];
+
+  shapes.forEach((shape, index) => createShape(shape, index));
+
+  // Previous code unchanged until end
+  const maxScroll = 100;
+  function updateHero() {
+    const sy = window.scrollY;
+    const t = Math.min(Math.max(sy / maxScroll, 0), 1);
+
+    const scale = 1.5 - 1 * t;
+    
+    const startY = window.innerHeight / 2;
+    const endY = 60/2;
+    const currentY = startY + (endY - startY)*t;
+
+    const containerWidth = Math.min(500, window.innerWidth * 0.8);
+    const width = window.innerWidth * 0.8 * (1 - t) + containerWidth * t;
+
+    heroLogo.style.position = 'fixed';
+    heroLogo.style.left = '50%';
+    heroLogo.style.top = currentY + 'px';
+    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
+    heroLogo.style.width = `${width}px`;
+
+    if (t > 0.5) {
+      body.classList.add('scrolled');
+      backToTop.classList.add('show');
+    } else {
+      body.classList.remove('scrolled');
+      backToTop.classList.remove('show');
+    }
+
+    requestAnimationFrame(updateHero);
+  }
+  requestAnimationFrame(updateHero);
+
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  trayToggle.addEventListener('click', () => {
+    if (tray.style.display === 'block') {
+      tray.style.display = 'none';
+      document.getElementById('pageWrapper').classList.remove('page-down');
+    } else {
+      tray.style.display = 'block';
+      document.getElementById('pageWrapper').classList.add('page-down');
     }
   });
-  
-  lastTouchX = touch.clientX;
-  lastTouchY = touch.clientY;
-});
 
-// Navi animation
-const navi = document.querySelector('.navi');
-const leftWing = document.querySelector('.navi-wing.left');
-const rightWing = document.querySelector('.navi-wing.right');
-let naviX = window.innerWidth / 2;
-let naviY = window.innerHeight / 2;
-let targetX = naviX;
-let targetY = naviY;
-let sparkles = [];
+  themeToggle.addEventListener('click', () => {
+    if (body.classList.contains('dark-mode')) {
+      body.classList.remove('dark-mode');
+      body.style.setProperty('--bg-color', '#ffffff');
+      body.style.setProperty('--text-color', '#000000');
+      body.style.setProperty('--footer-bg', '#dddddd');
+      body.style.setProperty('--drawer-bg', '#f0f0f0');
+      body.style.setProperty('--tooltip-bg', '#ccc');
+      body.style.setProperty('--r-color', '#000000');
+      body.style.setProperty('--bottom-text-bg', '#cccccc');
+    } else {
+      body.classList.add('dark-mode');
+      body.style.setProperty('--bg-color', '#121212');
+      body.style.setProperty('--text-color', '#ffffff');
+      body.style.setProperty('--footer-bg', '#1c1c1c');
+      body.style.setProperty('--drawer-bg', '#0f0f0f');
+      body.style.setProperty('--tooltip-bg', '#333333');
+      body.style.setProperty('--r-color', '#ffffff');
+      body.style.setProperty('--bottom-text-bg', '#0f0f0f');
+    }
+  });
 
-function createSparkle() {
-  const sparkle = document.createElement('div');
-  sparkle.className = 'sparkle';
-  sparkle.style.left = '6px';
-  sparkle.style.top = '6px';
-  
-  const angle = Math.random() * Math.PI * 2;
-  const distance = 20 + Math.random() * 30;
-  const tx = Math.cos(angle) * distance;
-  const ty = Math.sin(angle) * distance;
-  
-  sparkle.style.setProperty('--tx', `${tx}px`);
-  sparkle.style.setProperty('--ty', `${ty}px`);
-  sparkle.style.animation = 'sparkleFloat 1s ease-out forwards';
-  
-  navi.appendChild(sparkle);
-  setTimeout(() => sparkle.remove(), 1000);
-}
+  const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
+  iconLinks.forEach(iconLink => {
+    iconLink.addEventListener('mouseenter', () => {
+      const tooltipText = iconLink.getAttribute('data-tooltip');
+      iconTooltip.textContent = tooltipText;
+      iconTooltip.style.opacity = '1';
 
-function updateNavi() {
-  // Update target position
-  const time = Date.now() * 0.001;
-  targetX = window.innerWidth * (0.3 + 0.4 * (Math.sin(time * 0.5) + 1) / 2);
-  targetY = window.innerHeight * (0.3 + 0.4 * (Math.cos(time * 0.7) + 1) / 2) + window.scrollY;
-  
-  // Smooth movement
-  naviX += (targetX - naviX) * 0.05;
-  naviY += (targetY - naviY) * 0.05;
-  
-  navi.style.transform = `translate(${naviX}px, ${naviY}px)`;
-  
-  // Create sparkles
-  if (Math.random() < 0.3) createSparkle();
-  
-  requestAnimationFrame(updateNavi);
-}
+      const rect = iconLink.getBoundingClientRect();
+      const tooltipRect = iconTooltip.getBoundingClientRect();
 
-// Run the engine and animations
-Runner.run(engine);
-Render.run(render);
-updateNavi();
+      let top = rect.top - tooltipRect.height - 8;
+      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
 
-// Handle window resize
-window.addEventListener('resize', () => {
-  render.canvas.width = window.innerWidth;
-  render.canvas.height = window.innerHeight;
-  Render.setPixelRatio(render, window.devicePixelRatio);
-  
-  // Update wall positions
-  Body.setPosition(walls[0], { x: window.innerWidth/2, y: -wallThickness/2 });
-  Body.setPosition(walls[1], { x: window.innerWidth/2, y: window.innerHeight + wallThickness/2 });
-  Body.setPosition(walls[2], { x: -wallThickness/2, y: window.innerHeight/2 });
-  Body.setPosition(walls[3], { x: window.innerWidth + wallThickness/2, y: window.innerHeight/2 });
-});
+      if (top < 0) top = rect.bottom + 8; 
+      if (left < 0) left = 0;
+      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
+      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
 
-// Back to top button
-const backToTop = document.getElementById('backToTop');
-backToTop.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+      iconTooltip.style.top = `${top}px`;
+      iconTooltip.style.left = `${left}px`;
+      iconTooltip.style.opacity = '1';
+    });
+
+    iconLink.addEventListener('mouseleave', () => {
+      iconTooltip.style.opacity = '0';
+      iconTooltip.style.top = '-9999px';
+      iconTooltip.style.left = '-9999px';
+    });
+  });
+
+  // Gallery Code
+  const galleryData = [
+    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
+    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
+    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
+    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
+  ];
+
+  const galleryTitle = document.getElementById('galleryTitle');
+  const galleryDesc = document.getElementById('galleryDesc');
+  const galleryImage = document.getElementById('galleryImage');
+  const galleryNav = document.getElementById('galleryNav');
+  const navContainer = document.getElementById('navContainer');
+
+  let currentIndex = 0;
+
+  function updateGallery() {
+    const item = galleryData[currentIndex];
+    galleryTitle.textContent = item.title;
+    galleryDesc.textContent = item.description;
+    galleryImage.src = item.image;
+
+    galleryNav.innerHTML = '';
+    
+    const centerDot = document.createElement('div');
+    centerDot.className = 'nav-dot large';
+    galleryNav.appendChild(centerDot);
+
+    const dotSpacing = 30;
+
+    for (let i = currentIndex - 1; i >= Math.max(0, currentIndex - 2); i--) {
+      const dot = document.createElement('div');
+      const distance = currentIndex - i;
+      dot.className = `nav-dot ${distance === 1 ? 'medium' : 'small'}`;
+      
+      const offset = distance * dotSpacing;
+      dot.style.left = `calc(50% - ${offset}px)`;
+      dot.style.transform = 'translateX(-50%)';
+      
+      dot.addEventListener('click', () => {
+        currentIndex = i;
+        updateGallery();
+      });
+      galleryNav.appendChild(dot);
+    }
+
+    for (let i = currentIndex + 1; i < Math.min(galleryData.length, currentIndex + 3); i++) {
+      const dot = document.createElement('div');
+      const distance = i - currentIndex;
+      dot.className = `nav-dot ${distance === 1 ? 'medium' : 'small'}`;
+      
+      const offset = distance * dotSpacing;
+      dot.style.left = `calc(50% + ${offset}px)`;
+      dot.style.transform = 'translateX(-50%)';
+      
+      dot.addEventListener('click', () => {
+        currentIndex = i;
+        updateGallery();
+      });
+      galleryNav.appendChild(dot);
+    }
+  }
+
+  updateGallery();
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 0) {
+      body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
+    }
+  });
 });
 </script>
-
 </body>
 </html>
