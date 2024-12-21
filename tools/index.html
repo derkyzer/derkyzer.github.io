@@ -33,6 +33,10 @@
             cursor: pointer;
             text-decoration: none;
             color: inherit;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .tool-card:hover {
@@ -45,6 +49,8 @@
             margin: 0;
             color: #333;
             word-break: break-word;
+            text-align: center;
+            text-transform: capitalize;
         }
 
         h1 {
@@ -58,64 +64,87 @@
             padding: 40px;
             font-size: 1.2em;
             color: #666;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 600px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Tools</h1>
-        <div class="tools-grid" id="toolsGrid">
-            <div class="no-tools">Loading tools...</div>
-        </div>
+        <div class="tools-grid" id="toolsGrid"></div>
     </div>
 
     <script>
-        async function listTools() {
-            const toolsGrid = document.getElementById('toolsGrid');
-            
+        function createToolCard(name) {
+            const displayName = name
+                .replace('.html', '')
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+
+            const card = document.createElement('a');
+            card.href = `./${name}`;
+            card.className = 'tool-card';
+            card.innerHTML = `<h2 class="tool-name">${displayName}</h2>`;
+            return card;
+        }
+
+        async function checkFileExists(filename) {
             try {
-                // Get the list of files in the current directory
-                const response = await fetch('.');
-                const text = await response.text();
-                
-                // Create a temporary element to parse the HTML
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                
-                // Find all links that end with .html but aren't index.html
-                const tools = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.endsWith('.html') && !a.href.endsWith('index.html'))
-                    .map(a => ({
-                        name: a.textContent.replace('.html', '').split('/').pop(),
-                        path: a.href
-                    }));
+                const response = await fetch(filename, { method: 'HEAD' });
+                return response.ok;
+            } catch {
+                return false;
+            }
+        }
 
-                // Clear loading message
-                toolsGrid.innerHTML = '';
-                
-                if (tools.length === 0) {
-                    toolsGrid.innerHTML = '<div class="no-tools">No tools found</div>';
-                    return;
+        async function displayTools() {
+            const toolsGrid = document.getElementById('toolsGrid');
+            const foundTools = [];
+
+            // Get the current URL path
+            const path = window.location.pathname;
+            const toolsPath = path.substring(0, path.lastIndexOf('/') + 1);
+
+            // Function to add a tool if it exists
+            async function tryAddTool(filename) {
+                const exists = await checkFileExists(filename);
+                if (exists && filename !== 'index.html') {
+                    foundTools.push(filename);
                 }
+            }
 
-                // Create cards for each tool
-                tools.forEach(tool => {
-                    const card = document.createElement('a');
-                    card.href = tool.path;
-                    card.className = 'tool-card';
-                    card.innerHTML = `
-                        <h2 class="tool-name">${tool.name.replace(/-/g, ' ')}</h2>
-                    `;
-                    toolsGrid.appendChild(card);
+            // Clear any existing content
+            toolsGrid.innerHTML = '<div class="no-tools">Loading tools...</div>';
+
+            // Try to find HTML files
+            const files = document.querySelectorAll('a');
+            const promises = Array.from(files)
+                .filter(a => a.href.endsWith('.html'))
+                .map(a => a.href.split('/').pop())
+                .map(filename => tryAddTool(filename));
+
+            // Wait for all checks to complete
+            await Promise.all(promises);
+
+            // Display the tools
+            toolsGrid.innerHTML = '';
+            if (foundTools.length === 0) {
+                toolsGrid.innerHTML = '<div class="no-tools">No tools found. Add .html files to this directory to see them here!</div>';
+            } else {
+                foundTools.sort().forEach(tool => {
+                    toolsGrid.appendChild(createToolCard(tool));
                 });
-            } catch (error) {
-                console.error('Error loading tools:', error);
-                toolsGrid.innerHTML = '<div class="no-tools">Error loading tools</div>';
             }
         }
 
         // Load tools when the page loads
-        window.addEventListener('load', listTools);
+        window.addEventListener('load', displayTools);
     </script>
 </body>
 </html>
