@@ -1,15 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tools - derkyzer.github.io</title>
     <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --card-bg: white;
+            --text-color: #333;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --card-shadow-hover: 0 4px 8px rgba(0,0,0,0.2);
+            --folder-color: #888;
+            --folder-hover: #666;
+        }
+
+        .dark {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            --card-shadow-hover: 0 4px 8px rgba(0,0,0,0.4);
+            --folder-color: #888;
+            --folder-hover: #aaa;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background: #f0f0f0;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s;
         }
 
         .container {
@@ -17,46 +39,146 @@
             margin: 0 auto;
         }
 
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .theme-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #666;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .tools-container {
             padding: 20px 0;
         }
 
+        .folder {
+            margin-bottom: 20px;
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: var(--folder-color);
+            transition: color 0.2s;
+        }
+
+        .folder-header:hover {
+            color: var(--folder-hover);
+        }
+
+        .folder-name {
+            font-size: 1.1em;
+            margin-left: 5px;
+        }
+
+        .folder-icon {
+            transition: transform 0.3s;
+        }
+
+        .folder.collapsed .folder-icon {
+            transform: rotate(-90deg);
+        }
+
+        .folder.collapsed .folder-content {
+            display: none;
+        }
+
+        .folder-content {
+            margin-left: 20px;
+        }
+
         .tool-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 20px;
+            box-shadow: var(--card-shadow);
             transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
-            min-height: 100px;
+            height: 70px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            margin-bottom: 10px;
         }
 
         .tool-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .tool-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
         }
 
         .tool-name {
-            font-size: 1.5em;
+            font-size: 1.2em;
             margin: 0;
-            color: #333;
-            word-break: break-word;
-            text-align: center;
+            color: var(--text-color);
             text-transform: capitalize;
         }
 
+        .tool-date {
+            font-size: 0.85em;
+            color: #888;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
         h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            margin: 0;
+            color: var(--text-color);
         }
 
         .no-tools {
@@ -64,87 +186,240 @@
             padding: 40px;
             font-size: 1.2em;
             color: #666;
-            grid-column: 1 / -1;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #666;
+            border-radius: 50%;
+            border-top: 3px solid var(--text-color);
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 600px) {
-            .tools-grid {
-                grid-template-columns: 1fr;
+            .folder-content {
+                margin-left: 10px;
+            }
+            .tool-date {
+                font-size: 0.8em;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Tools</h1>
-        <div class="tools-grid" id="toolsGrid"></div>
+        <div class="header">
+            <h1>Tools</h1>
+            <label class="theme-switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="tools-container" id="toolsContainer">
+            <div class="no-tools">
+                <div class="loading"></div>
+                Loading tools...
+            </div>
+        </div>
     </div>
 
     <script>
-        function createToolCard(name) {
-            const displayName = name
-                .replace('.html', '')
-                .replace(/-/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase());
+        // Theme switcher
+        const themeToggle = document.querySelector('.theme-switch input');
+        const html = document.documentElement;
 
-            const card = document.createElement('a');
-            card.href = `./${name}`;
-            card.className = 'tool-card';
-            card.innerHTML = `<h2 class="tool-name">${displayName}</h2>`;
-            return card;
-        }
+        themeToggle.addEventListener('change', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
 
-        async function checkFileExists(filename) {
-            try {
-                const response = await fetch(filename, { method: 'HEAD' });
-                return response.ok;
-            } catch {
-                return false;
-            }
-        }
+        // Load saved theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        html.classList.toggle('dark', savedTheme === 'dark');
+        themeToggle.checked = savedTheme === 'dark';
 
-        async function displayTools() {
-            const toolsGrid = document.getElementById('toolsGrid');
-            const foundTools = [];
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const day = 24 * 60 * 60 * 1000;
 
-            // Get the current URL path
-            const path = window.location.pathname;
-            const toolsPath = path.substring(0, path.lastIndexOf('/') + 1);
-
-            // Function to add a tool if it exists
-            async function tryAddTool(filename) {
-                const exists = await checkFileExists(filename);
-                if (exists && filename !== 'index.html') {
-                    foundTools.push(filename);
-                }
-            }
-
-            // Clear any existing content
-            toolsGrid.innerHTML = '<div class="no-tools">Loading tools...</div>';
-
-            // Try to find HTML files
-            const files = document.querySelectorAll('a');
-            const promises = Array.from(files)
-                .filter(a => a.href.endsWith('.html'))
-                .map(a => a.href.split('/').pop())
-                .map(filename => tryAddTool(filename));
-
-            // Wait for all checks to complete
-            await Promise.all(promises);
-
-            // Display the tools
-            toolsGrid.innerHTML = '';
-            if (foundTools.length === 0) {
-                toolsGrid.innerHTML = '<div class="no-tools">No tools found. Add .html files to this directory to see them here!</div>';
+            if (diff < day) {
+                return 'Today';
+            } else if (diff < 2 * day) {
+                return 'Yesterday';
+            } else if (diff < 7 * day) {
+                return `${Math.floor(diff / day)}d ago`;
             } else {
-                foundTools.sort().forEach(tool => {
-                    toolsGrid.appendChild(createToolCard(tool));
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
                 });
             }
         }
 
-        // Load tools when the page loads
-        window.addEventListener('load', displayTools);
+        function createFolderStructure(tools) {
+            const structure = {};
+            
+            tools.forEach(tool => {
+                const parts = tool.path.split('/');
+                let current = structure;
+                
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!current[parts[i]]) {
+                        current[parts[i]] = {
+                            type: 'folder',
+                            items: {}
+                        };
+                    }
+                    current = current[parts[i]].items;
+                }
+                
+                const fileName = parts[parts.length - 1];
+                if (fileName !== 'index.html') {
+                    current[fileName] = {
+                        type: 'file',
+                        ...tool
+                    };
+                }
+            });
+            
+            return structure;
+        }
+
+        function createFolderElement(name, isRoot = false) {
+            const folder = document.createElement('div');
+            folder.className = 'folder';
+            
+            const header = document.createElement('div');
+            header.className = 'folder-header';
+            header.innerHTML = `
+                <span class="folder-icon">▼</span>
+                <span class="folder-name">${name}</span>
+            `;
+            
+            const content = document.createElement('div');
+            content.className = 'folder-content';
+            
+            if (!isRoot) {
+                folder.appendChild(header);
+                header.addEventListener('click', () => {
+                    folder.classList.toggle('collapsed');
+                });
+            }
+            
+            folder.appendChild(content);
+            return { folder, content };
+        }
+
+        function renderStructure(structure, container, path = '') {
+            Object.entries(structure)
+                .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
+                .forEach(([name, item]) => {
+                    if (item.type === 'folder') {
+                        const { folder, content } = createFolderElement(name);
+                        container.appendChild(folder);
+                        renderStructure(item.items, content, `${path}${name}/`);
+                    } else if (item.type === 'file') {
+                        const displayName = name
+                            .replace('.html', '')
+                            .replace(/-/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase());
+
+                        const card = document.createElement('a');
+                        card.href = `./${path}${name}`;
+                        card.className = 'tool-card';
+                        card.innerHTML = `
+                            <div class="tool-info">
+                                <h2 class="tool-name">${displayName}</h2>
+                            </div>
+                            <span class="tool-date">${formatDate(item.date)}</span>
+                        `;
+                        container.appendChild(card);
+                    }
+                });
+        }
+
+        async function fetchTools() {
+            const toolsContainer = document.getElementById('toolsContainer');
+            
+            try {
+                const response = await fetch('https://api.github.com/repos/derkyzer/derkyzer.github.io/contents/tools');
+                const files = await response.json();
+
+                // Recursively fetch all files in subdirectories
+                async function fetchDirectory(path) {
+                    const response = await fetch(`https://api.github.com/repos/derkyzer/derkyzer.github.io/contents/${path}`);
+                    const items = await response.json();
+                    
+                    let results = [];
+                    for (const item of items) {
+                        if (item.type === 'dir') {
+                            const subItems = await fetchDirectory(item.path);
+                            results = results.concat(subItems);
+                        } else if (item.name.endsWith('.html')) {
+                            results.push({
+                                name: item.name,
+                                path: item.path.replace('tools/', ''),
+                                sha: item.sha
+                            });
+                        }
+                    }
+                    return results;
+                }
+
+                const tools = await fetchDirectory('tools');
+                const toolsWithDates = await Promise.all(tools
+                    .filter(tool => tool.name !== 'index.html')
+                    .map(async tool => {
+                        try {
+                            const commitResponse = await fetch(`https://api.github.com/repos/derkyzer/derkyzer.github.io/commits?path=tools/${tool.path}&page=1&per_page=1`);
+                            const commits = await commitResponse.json();
+                            return {
+                                ...tool,
+                                date: commits[0]?.commit?.author?.date || new Date().toISOString()
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching commit info for ${tool.name}:`, error);
+                            return {
+                                ...tool,
+                                date: new Date().toISOString()
+                            };
+                        }
+                    }));
+
+                toolsContainer.innerHTML = '';
+
+                if (toolsWithDates.length === 0) {
+                    toolsContainer.innerHTML = '<div class="no-tools">No tools found. Add .html files to the tools directory!</div>';
+                    return;
+                }
+
+                const structure = createFolderStructure(toolsWithDates);
+                const { folder, content } = createFolderElement('', true);
+                toolsContainer.appendChild(folder);
+                renderStructure(structure, content);
+
+            } catch (error) {
+                console.error('Error loading tools:', error);
+                toolsContainer.innerHTML = `
+                    <div class="no-tools">
+                        Error loading tools. Please try refreshing the page.
+                    </div>
+                `;
+            }
+        }
+
+        window.addEventListener('load', fetchTools);
     </script>
 </body>
 </html>
