@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Ring</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1a1a;
+            overflow: hidden;
+            perspective: 1200px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .ring-container {
+            position: absolute;
+            width: 75vw;
+            height: 75vw;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-out;
+            transform: translate(-50%, -50%) rotateX(60deg);
+            animation: rotate 30s linear infinite;
+            left: 50%;
+            top: 50%;
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotateX(60deg) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotateX(60deg) rotate(360deg); }
+        }
+
+        .social-icon {
+            position: absolute;
+            width: calc(75vw * 0.15);
+            height: calc(75vw * 0.15);
+            left: 50%;
+            top: 50%;
+            margin: calc(-75vw * 0.075);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            transform-origin: center;
+            transform-style: preserve-3d;
+        }
+
+        .social-icon svg {
+            width: 65%;
+            height: 65%;
+            fill: white;
+            transition: all 0.3s ease;
+            transform: translateZ(1px);
+        }
+
+        .social-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.2) translateZ(20px);
+        }
+
+        .hover-name {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotateX(-60deg);
+            color: white;
+            font-size: min(5vw, 3em);
+            font-weight: bold;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+        }
+
+        .hover-name.visible {
+            opacity: 1;
+        }
+
+        .background-icons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .background-icons.visible {
+            opacity: 0.1;
+        }
+
+        .falling-icon {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            fill: white;
+            opacity: 0.3;
+            transform: translateY(-100%) translateX(var(--startX));
+            animation: fall 10s linear infinite;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100%) translateX(var(--startX)) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(100vh) translateX(var(--endX)) rotateX(720deg) rotateY(720deg) rotateZ(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Email Form Styles */
+        .email-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2a2a2a;
+            padding: 2rem;
+            border-radius: 10px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .email-form.visible {
+            display: block;
+        }
+
+        .email-form input,
+        .email-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: white;
+            border-radius: 4px;
+        }
+
+        .email-form button {
+            background: #3a3a3a;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .email-form button:hover {
+            background: #4a4a4a;
+        }
+
+        .close-form {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="ring-container">
+        <!-- Social icons will be added here via JavaScript -->
+    </div>
+    <div class="hover-name"></div>
+    <div class="background-icons"></div>
+
+    <!-- Email Form -->
+    <form class="email-form" action="https://formspree.io/f/movvaeeq" method="POST">
+        <button type="button" class="close-form">&times;</button>
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="email" name="email" placeholder="Your Email" required>
+        <textarea name="message" placeholder="Your Message" rows="4" required></textarea>
+        <button type="submit">Send Message</button>
+    </form>
+
+    <script>
+        const socialIcons = [
+            {
+                name: 'Steam',
+                svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12c0 4.6 2.7 8.6 6.6 10.5l2.3-4.6c-0.9-0.4-1.5-1.3-1.5-2.4 0-1.4 1.1-2.5 2.5-2.5 0.5 0 0.9 0.1 1.3 0.4l4.2-6.1c0-1.4 1.1-2.5 2.5-2.5 1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5c-0.5 0-0.9-0.1-1.3-0.4l-4.2 6.1c0 0.2 0 0.3 0 0.5 0 1.4-1.1 2.5-2.5 2.5-1.1 0-2.1-0.7-2.4-1.7L5.2 21C7.2 22.9 9.5 24 12 24c6.6 0 12-5.4 12-12S18.6 0 12 0z"/></svg>',
+                url: 'https://steamcommunity.com/id/derkyzer'
+            },
+            {
+                name: 'Discord',
+                svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>',
+                url: 'https://discord.com/users/derkyzer'
+            },
+            {
+                name: 'X',
+                svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>',
+                url: 'https://twitter.com/derkyzer'
+            },
+            {
+                name: 'YouTube',
+                svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
+                url: 'https://youtube.com/@derkyzer'
+            },
+            {
+                name: 'Email',
+                svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>'
+            }
+        ];
+
+        const ringContainer = document.querySelector('.ring-container');
+        const hoverName = document.querySelector('.hover-name');
+        const emailForm = document.querySelector('.email-form');
+        const backgroundIcons = document.querySelector('.background-icons');
+        let rotation = 0;
+
+        // Calculate radius based on container size
+        const updateRadius = () => {
+            return ringContainer.offsetWidth * 0.35; // 35% of container width
+        };
+
+        let radius = updateRadius();
+
+        // Create falling background icons
+        const createFallingIcon = (iconSvg) => {
+            const div = document.createElement('div');
+            div.className = 'falling-icon';
+            div.innerHTML = iconSvg;
+            const startX = Math.random() * 100;
+            const endX = startX + (Math.random() * 40 - 20); // Drift left or right by up to 20%
+            div.style.setProperty('--startX', `${startX}vw`);
+            div.style.setProperty('--endX', `${endX}vw`);
+            div.style.animationDelay = `${Math.random() * 5}s`;
+            return div;
+        };
+
+        // Create and position social icons in a ring
+        socialIcons.forEach((icon, index) => {
+            const angle = (index / socialIcons.length) * Math.PI * 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+
+            const div = document.createElement('div');
+            div.className = 'social-icon';
+            div.innerHTML = icon.svg;
+            
+            // Calculate the rotation to face the screen
+            const rotationX = -Math.atan2(y, radius) * (180 / Math.PI);
+            const rotationY = Math.atan2(x, radius) * (180 / Math.PI);
+            
+            div.style.transform = `translate(${x}px, ${y}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            div.dataset.name = icon.name;
+            
+            // Click handler
+            div.addEventListener('click', () => {
+                if (icon.url) {
+                    window.open(icon.url, '_blank');
+                } else if (icon.name === 'Email') {
+                    emailForm.classList.add('visible');
+                }
+            });
+            
+            // Hover effects
+            div.addEventListener('mouseenter', () => {
+                hoverName.textContent = icon.name;
+                hoverName.classList.add('visible');
+                
+                // Clear existing falling icons
+                backgroundIcons.innerHTML = '';
+                
+                // Create and append all icons before showing them
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < 20; i++) {
+                    fragment.appendChild(createFallingIcon(icon.svg));
+                }
+                backgroundIcons.appendChild(fragment);
+                
+                // Show icons after they're all positioned
+                requestAnimationFrame(() => {
+                    backgroundIcons.classList.add('visible');
+                });
+            });
+            
+            div.addEventListener('mouseleave', () => {
+                hoverName.classList.remove('visible');
+                backgroundIcons.classList.remove('visible');
+            });
+            
+            ringContainer.appendChild(div);
+        });
+
+        // Close email form
+        document.querySelector('.close-form').addEventListener('click', () => {
+            emailForm.classList.remove('visible');
+        });
+
+        // Mouse wheel rotation
+        window.addEventListener('wheel', (e) => {
+            rotation += e.deltaY * 0.1;
+            ringContainer.style.transform = `translate(-50%, -50%) rotateX(60deg) rotate(${rotation}deg)`;
+            
+            // Update each icon's rotation to maintain screen-facing orientation
+            document.querySelectorAll('.social-icon').forEach((icon, index) => {
+                const angle = ((index / socialIcons.length) * Math.PI * 2) + (rotation * Math.PI / 180);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                const rotationX = -Math.atan2(y, radius) * (180 / Math.PI);
+                const rotationY = Math.atan2(x, radius) * (180 / Math.PI);
+                
+                icon.style.transform = `translate(${x}px, ${y}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            });
+        });
+
+        // Update sizes on window resize
+        window.addEventListener('resize', () => {
+            radius = updateRadius();
+            
+            document.querySelectorAll('.social-icon').forEach((icon, index) => {
+                const angle = ((index / socialIcons.length) * Math.PI * 2) + (rotation * Math.PI / 180);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                const rotationX = -Math.atan2(y, radius) * (180 / Math.PI);
+                const rotationY = Math.atan2(x, radius) * (180 / Math.PI);
+                
+                icon.style.transform = `translate(${x}px, ${y}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            });
+        });
+    </script>
+</body>
+</html>
