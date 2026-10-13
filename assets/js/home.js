@@ -107,9 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const glyphE = document.getElementById('glyphE');
   const glyphB = document.getElementById('glyphB');
 
+  // Top bar scroll fade-in functionality (preserved, disabled by default for instant accessibility)
+  const ENABLE_HEADER_SCROLL_FADE = false;
+
   function getTargetSnapPoint() {
     const heroSection = document.querySelector('.hero-section');
-    return heroSection ? Math.max(40, heroSection.offsetTop - 80) : Math.max(40, window.innerHeight - 80);
+    return heroSection ? Math.max(40, heroSection.offsetTop - 70) : Math.max(40, window.innerHeight - 140);
   }
 
   function updateHero() {
@@ -118,16 +121,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxScroll = Math.max(100, snapPoint);
     const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    const startY = window.innerHeight / 2;
+    // Frame hero text centered above the peeking content fold (~140px peek)
+    const peekOffset = 140;
+    const availableHeroHeight = Math.max(200, window.innerHeight - peekOffset);
+    const startY = availableHeroHeight / 2;
     const endY = 60 / 2;
     const currentY = startY + (endY - startY) * t;
 
-    const containerWidth = Math.min(360, window.innerWidth * 0.7);
-    const startWidth = Math.min(680, window.innerWidth * 0.85);
+    // Proportional hero text width scaling with viewport width (even larger, ultra prominent presence)
+    const containerWidth = Math.min(340, window.innerWidth * 0.7);
+    const startWidth = Math.min(1800, Math.max(380, window.innerWidth * 0.94));
     const width = startWidth * (1 - t) + containerWidth * t;
 
-    const baseScale = Math.min(1.25, (window.innerWidth * 0.9) / startWidth);
-    const scale = baseScale * (1 - t) + 0.5 * t;
+    const baseScale = Math.min(1.75, Math.max(1.2, (window.innerWidth * 0.94) / 480));
+    const scale = baseScale * (1 - t) + 0.52 * t;
 
     heroLogo.style.position = 'fixed';
     heroLogo.style.left = '50%';
@@ -143,10 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
       glyphB.style.opacity = weberFade.toFixed(2);
     }
 
-    if (t > 0.08 || sy > 20) {
-      body.classList.add('scrolled');
+    if (ENABLE_HEADER_SCROLL_FADE) {
+      body.classList.add('enable-header-scroll-fade');
+      if (t > 0.08 || sy > 20) {
+        body.classList.add('scrolled');
+      } else {
+        body.classList.remove('scrolled');
+      }
     } else {
-      body.classList.remove('scrolled');
+      body.classList.remove('enable-header-scroll-fade');
+      body.classList.add('scrolled');
     }
 
     if (sy > 300) {

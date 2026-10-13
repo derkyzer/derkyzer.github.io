@@ -1,14 +1,30 @@
-  /* Title Bar */
+  /* WebGL Grid Canvas */
+  .grid-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    display: block;
+  }
+
+  body.has-webgl-grid {
+    background-image: none;
+  }
+
+  /* Title Bar (Accessible without scrolling; scroll-fade mechanism retained) */
   .title-bar {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 60px;
-    background: transparent;
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-    border-bottom: 1px solid transparent;
+    background: var(--header-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--panel-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -16,6 +32,15 @@
     transition: background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
   }
 
+  /* Preserved scroll fade-in functionality (disabled by default) */
+  body.enable-header-scroll-fade:not(.scrolled) .title-bar {
+    background: transparent;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    border-bottom: 1px solid transparent;
+  }
+
+  body.enable-header-scroll-fade.scrolled .title-bar,
   body.scrolled .title-bar {
     background: var(--header-bg);
     backdrop-filter: blur(8px);
@@ -37,23 +62,30 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    pointer-events: none;
-    opacity: 0;
+    pointer-events: auto;
+    opacity: 1;
     transition: opacity 0.3s ease;
   }
 
+  body.enable-header-scroll-fade:not(.scrolled) .nav-colophon-tag {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.enable-header-scroll-fade.scrolled .nav-colophon-tag,
   body.scrolled .nav-colophon-tag {
     opacity: 1;
+    pointer-events: auto;
   }
 
 
   .nav-colophon-tag .pip-grid {
     display: inline-flex;
-    gap: 3px;
+    gap: 4px;
   }
   .nav-colophon-tag .pip-grid span {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     display: inline-block;
   }
 
@@ -62,7 +94,7 @@
   .hero-logo {
     font-weight: 700;
     white-space: nowrap;
-    width: 80vw;
+    width: 95vw;
     cursor: default;
     user-select: none;
   }
@@ -86,20 +118,26 @@
     transform: translateY(-50%);
     background: transparent;
     border: 1px solid var(--panel-border);
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: var(--text-color);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
+    font-size: 20px;
     transition: all 0.2s ease, opacity 0.3s ease;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  body.enable-header-scroll-fade:not(.scrolled) .tray-toggle {
     opacity: 0;
     pointer-events: none;
   }
 
+  body.enable-header-scroll-fade.scrolled .tray-toggle,
   body.scrolled .tray-toggle {
     opacity: 1;
     pointer-events: auto;
@@ -113,7 +151,7 @@
   }
 
 
-  /* Content Tray / Drawer */
+  /* Content Tray / Drawer (Smooth slide-down pull-out drawer) */
   .content-tray {
     position: fixed;
     top: 60px;
@@ -121,15 +159,26 @@
     width: 100%;
     background: var(--drawer-bg);
     border-bottom: 1px solid var(--panel-border);
-    padding: 24px 0;
-    display: none;
+    padding: 32px 0;
     z-index: 500;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.35s ease;
+  }
+
+  .content-tray.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
   }
 
 
   .page-down {
-    margin-top: 140px;
+    margin-top: 160px;
   }
 
 
@@ -138,13 +187,13 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 32px;
+    gap: 36px;
   }
 
 
   .icon-links a {
     position: relative;
-    padding: 10px;
+    padding: 14px;
     border: 1px solid transparent;
     transition: all 0.2s ease;
     display: flex;
@@ -155,14 +204,14 @@
 
   .icon-links a:hover {
     border-color: var(--panel-border-bright);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.04);
     filter: drop-shadow(-1px 0 0 var(--cyan)) drop-shadow(1px 0 0 var(--magenta));
   }
 
 
   .icon-links .icon {
-    width: 36px;
-    height: 36px;
+    width: 58px;
+    height: 58px;
     fill: var(--text-color);
   }
 
@@ -202,15 +251,25 @@
     z-index: 900;
   }
 
+  body.subpage .content-divider {
+    display: none;
+  }
+
 
   main {
-    padding-top: 100vh;
-    padding-top: 100dvh;
+    padding-top: calc(100vh - 140px);
+    padding-top: calc(100dvh - 140px);
     padding-bottom: 120px;
     max-width: 960px;
     margin: 0 auto;
     padding-left: 20px;
     padding-right: 20px;
+  }
+
+  /* Subpages: Immediate visibility without 100vh offset */
+  body.subpage main,
+  main.subpage-content {
+    padding-top: 80px;
   }
 
 
@@ -473,13 +532,113 @@
     gap: 8px;
   }
 
+  /* Subpage CMYK 3-Rectangle Morphing Brand Logo */
+  .subpage-brand-kyzer {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 3px;
+    line-height: 1;
+    transition: background 0.2s ease;
+  }
+
+  .subpage-brand-kyzer:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .subpage-brand-kyzer .morph-slot {
+    position: relative;
+    width: 12px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 5px;
+  }
+
+  .subpage-brand-kyzer .swatch-rect {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .subpage-brand-kyzer .swatch-rect.rect-cyan {
+    background: #00FFFF;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+  }
+  .subpage-brand-kyzer .swatch-rect.rect-magenta {
+    background: #FF00FF;
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.3);
+  }
+  .subpage-brand-kyzer .swatch-rect.rect-yellow {
+    background: #FFFF00;
+    box-shadow: 0 0 8px rgba(255, 255, 0, 0.3);
+  }
+
+  .subpage-brand-kyzer .morph-char {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1;
+    opacity: 0;
+    transform: scale(0.4) rotate(-10deg);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .subpage-brand-kyzer .morph-char.char-k { color: #00FFFF; }
+  .subpage-brand-kyzer .morph-char.char-y { color: #FF00FF; }
+  .subpage-brand-kyzer .morph-char.char-z { color: #FFFF00; }
+
+  .subpage-brand-kyzer .morph-suffix {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transform: translateX(-8px);
+    transition: opacity 0.35s ease 0.05s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, max-width 0.35s ease;
+    pointer-events: none;
+  }
+
+  .subpage-brand-kyzer .morph-suffix .char-e { color: var(--weber-e2); }
+  .subpage-brand-kyzer .morph-suffix .char-r { color: var(--weber-r); }
+
+  /* On Hover: Rectangles shrink & morph into KYZ, ER glides and fades in */
+  .subpage-brand-kyzer:hover .swatch-rect {
+    opacity: 0;
+    transform: scale(0.2) rotate(45deg);
+  }
+
+  .subpage-brand-kyzer:hover .morph-char {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+
+  .subpage-brand-kyzer:hover .morph-suffix {
+    opacity: 1;
+    max-width: 32px;
+    transform: translateX(0);
+  }
+
   .subpage .tray-toggle {
     opacity: 1;
     pointer-events: auto;
   }
 
   .subpage-hero {
-    margin: 80px auto 30px auto;
+    margin: 16px auto 30px auto;
     padding: 24px 28px;
     border: 1px solid var(--panel-border);
     background: var(--panel-bg);
