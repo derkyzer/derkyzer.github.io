@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KYZER // Transmission Log & Dev Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/theme.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<style>
+  /* Blog Specific Tactical Layout */
+  .transmissions-feed {
+    display: grid;
+    gap: 28px;
+    margin-top: 24px;
+  }
+
+  .dispatch-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 24px;
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .dispatch-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--panel-border-bright);
+  }
+
+  .dispatch-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 8px 0 12px 0;
+    color: var(--heading-color);
+    letter-spacing: -0.01em;
+  }
+
+  .dispatch-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .dispatch-title a:hover {
+    color: var(--cyan);
+  }
+
+  .dispatch-excerpt {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--body-text);
+    margin-bottom: 20px;
+  }
+
+  .dispatch-excerpt img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 12px 0;
+    border: 1px solid var(--panel-border);
+  }
+
+  .dispatch-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--panel-border);
+  }
+
+  .dispatch-meta-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .dispatch-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--magenta);
+    text-decoration: none;
+    padding: 6px 14px;
+    border: 1px solid var(--magenta);
+    background: rgba(255, 0, 255, 0.04);
+    transition: all 0.2s ease;
+  }
+
+  .dispatch-link:hover {
+    background: var(--magenta);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(255, 0, 255, 0.4);
+  }
+
+  .direct-subscribe-strip {
+    margin-top: 32px;
+    padding: 20px;
+    background: var(--panel-bg-alt);
+    border: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+</style>
+</head>
+
+<body class="dark-mode subpage">
+
+<!-- Calibrated Title Bar -->
+<header class="title-bar">
+  <div class="nav-colophon-tag">
+    <div class="pip-grid">
+      <span style="background: var(--cyan);"></span>
+      <span style="background: var(--magenta);"></span>
+      <span style="background: var(--yellow);"></span>
+    </div>
+    <a href="../" class="mono" style="color:inherit; text-decoration:none;">
+      <span>SYS.BENCH // KYZER</span>
+    </a>
+  </div>
+
+  <div class="subpage-title-center mono" style="font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase;">
+    MOD.02 // TRANSMISSION LOG
+  </div>
+
+  <button class="tray-toggle chroma-hover" id="trayToggle" aria-label="Open Navigation Drawer">☰</button>
+</header>
+
+<!-- Drawer Tray -->
+<div class="content-tray" id="contentTray">
+  <nav class="icon-links">
+    <a href="../projects/" data-tooltip="Projects // GitHub">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#00FFFF" />
+            <stop offset="1" stop-color="#FF00FF" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient0)" stroke-width="6" height="50" width="80" x="40" y="55"></rect>
+        <line stroke="url(#gradient0)" stroke-width="6" x1="55" x2="105" y1="40" y2="40"></line>
+        <circle cx="80" cy="80" fill="#00FFFF" r="8"></circle>
+      </svg>
+    </a>
+    <a href="../blog/" data-tooltip="Dev Notes // Blog" style="border-bottom: 2px solid var(--magenta);">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#FF00FF" />
+            <stop offset="1" stop-color="#FFFF00" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient1)" stroke-width="6" height="70" width="60" x="50" y="45"></rect>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
+      </svg>
+    </a>
+    <a href="#" id="themeToggle" data-tooltip="Calibrate Theme">
+      <svg class="icon" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" fill="none" stroke="#FFFF00" stroke-width="6" r="30"></circle>
+        <circle cx="80" cy="80" fill="#00FFFF" r="14"></circle>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
+      </svg>
+    </a>
+    <a href="../tools/" data-tooltip="Interactive Scripts & Tools">
+      <svg class="icon" viewBox="0 0 160 160">
+        <polygon fill="none" stroke="#00FFFF" stroke-width="6" points="80,45 115,115 45,115"></polygon>
+        <circle cx="80" cy="90" fill="#FF00FF" r="10"></circle>
+      </svg>
+    </a>
+    <a href="../contact/" data-tooltip="Socials & Comms">
+      <svg class="icon" viewBox="0 0 160 160">
+        <rect fill="none" stroke="#FFFF00" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
+        <polyline fill="none" stroke="#00FFFF" stroke-width="5" points="45,55 80,85 115,55"></polyline>
+      </svg>
+    </a>
+  </nav>
+</div>
+
+<div class="tooltip" id="iconTooltip"></div>
+
+<div id="pageWrapper">
+  <div class="content-divider"></div>
+
+  <main class="subpage-content">
+    <!-- Subpage Hero Module Header -->
+    <section class="subpage-hero glow-container">
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+      
+      <div class="subpage-badge">
+        <span class="pip pip-magenta"></span>
+        <span>MOD.02 // FIELD LOG & DEV TRANSMISSIONS</span>
+      </div>
+      
+      <h1 class="subpage-title chroma-hover">
+        SUBSTACK FIELD LOG & ESSAYS
+      </h1>
+      <p class="subpage-desc">
+        Live telemetry feed synchronized with <strong style="color: var(--magenta);">derkyzer.substack.com</strong>. Exploring electronics fabrication, mechanical engineering, reverse engineering, and creative computing.
+      </p>
+    </section>
+
+    <!-- Transmissions Feed Container -->
+    <div id="transmissionsFeed" class="transmissions-feed">
+      <div class="loading-panel tech-panel" style="text-align: center; padding: 60px 20px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
+        <span class="pip pip-magenta" style="margin-right: 8px;"></span>
+        INITIALIZING SUBSTACK RSS INGESTION NODE...
+      </div>
+    </div>
+
+    <!-- Direct Substack Node Strip -->
+    <section class="direct-subscribe-strip tech-panel glow-container">
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+      <div>
+        <div class="mono" style="font-size: 11px; color: var(--yellow); margin-bottom: 4px;">// DIRECT PUBLICATION NODE</div>
+        <div style="font-size: 15px; font-weight: 600; color: var(--heading-color);">KYZER on Substack</div>
+      </div>
+      <a href="https://derkyzer.substack.com" target="_blank" rel="noopener noreferrer" class="dispatch-link" style="border-color: var(--yellow); color: var(--yellow);">
+        <span>OPEN SUBSTACK TERMINAL ↗</span>
+      </a>
+    </section>
+  </main>
+
+  <!-- Industrial Triple Footer -->
+  <footer class="triple-footer">
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--cyan);"></span>
+        <span>SPECIFICATIONS</span>
+      </h3>
+      <p>Precision CMYK tactical design system calibrated for high-density hardware telemetry and electronic systems documentation.</p>
+    </div>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--magenta);"></span>
+        <span>TELEMETRY</span>
+      </h3>
+      <p>Status: SYS.ONLINE<br>Substack: derkyzer.substack.com<br>Host: GitHub Pages (derkyzer.com)</p>
+    </div>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--yellow);"></span>
+        <span>NAVIGATION</span>
+      </h3>
+      <p>
+        <a href="../" style="color: var(--text-color); text-decoration: none;">// ROOT TERMINAL</a><br>
+        <a href="../projects/" style="color: var(--text-color); text-decoration: none;">// HARDWARE REPOSITORIES</a><br>
+        <a href="../tools/" style="color: var(--text-color); text-decoration: none;">// INTERACTIVE TOOLS</a><br>
+        <a href="../contact/" style="color: var(--text-color); text-decoration: none;">// COMMS UPLINK</a>
+      </p>
+    </div>
+  </footer>
+</div>
+
+<button class="back-to-top chroma-hover" id="backToTop" aria-label="Back to Top">
+  <svg viewBox="0 0 24 24">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+
+<script src="../assets/js/core.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const substackUrl = 'https://derkyzer.substack.com';
+  const feedContainer = document.getElementById('transmissionsFeed');
+
+  function formatDate(dateStr) {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      }).toUpperCase();
+    } catch {
+      return dateStr;
+    }
+  }
+
+  function cleanExcerpt(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    // Strip script or iframe if any
+    tmp.querySelectorAll('script, style, iframe').forEach(el => el.remove());
+    let text = tmp.textContent || tmp.innerText || '';
+    if (text.length > 280) {
+      text = text.substring(0, 280) + '...';
+    }
+    return text;
+  }
+
+  async function loadFeed() {
+    try {
+      const rssUrl = `${substackUrl}/feed`;
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+
+      if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
+        feedContainer.innerHTML = '';
+        data.items.forEach((item, idx) => {
+          const card = document.createElement('article');
+          card.className = 'dispatch-card tech-panel glow-container';
+          const dispatchId = String(idx + 1).padStart(2, '0');
+          const dateStr = formatDate(item.pubDate);
+          const excerpt = cleanExcerpt(item.description);
+
+          card.innerHTML = `
+            <div class="bracket-tl"></div>
+            <div class="bracket-tr"></div>
+            <div class="bracket-bl"></div>
+            <div class="bracket-br"></div>
+
+            <div class="panel-header" style="margin-bottom: 14px;">
+              <span class="pip pip-magenta"></span>
+              <span class="title">LOG.ENTRY // ${dispatchId}</span>
+              <div class="panel-meta">
+                <span class="coord">TIMESTAMP: ${dateStr}</span>
+              </div>
+            </div>
+
+            <h2 class="dispatch-title chroma-hover">
+              <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+            </h2>
+
+            <div class="dispatch-excerpt">${excerpt}</div>
+
+            <div class="dispatch-footer">
+              <span class="dispatch-meta-tag">// NODE: SUBSTACK RSS</span>
+              <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="dispatch-link">
+                <span>DECODE DISPATCH ↗</span>
+              </a>
+            </div>
+          `;
+          feedContainer.appendChild(card);
+        });
+      } else {
+        throw new Error('Invalid feed status');
+      }
+    } catch (err) {
+      console.warn('Substack RSS load error:', err);
+      feedContainer.innerHTML = `
+        <div class="tech-panel" style="padding: 32px; text-align: center; border-color: var(--yellow);">
+          <div class="mono" style="color: var(--yellow); margin-bottom: 8px;">// TELEMETRY UPLINK CAUTION</div>
+          <p style="margin: 0 0 16px 0; color: var(--body-text);">Direct Substack feed ingestion is currently restricted or in offline state.</p>
+          <a href="${substackUrl}" target="_blank" rel="noopener noreferrer" class="dispatch-link" style="border-color: var(--yellow); color: var(--yellow);">
+            <span>ACCESS ARCHIVE DIRECTLY AT DERKYZER.SUBSTACK.COM ↗</span>
+          </a>
+        </div>
+      `;
+    }
+  }
+
+  loadFeed();
+});
+</script>
+</body>
+</html>

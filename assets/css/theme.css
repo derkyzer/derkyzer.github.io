@@ -1,0 +1,220 @@
+  :root {
+    --bg-color: #121212;
+    --panel-bg: #161616;
+    --panel-bg-alt: #1c1c1c;
+    --panel-border: #262626;
+    --panel-border-bright: #3a3a3a;
+    --heading-color: #ffffff;
+    --body-text: #d4d4d4;
+    --text-color: #f0f0f0;
+    --text-secondary: #aaaaaa;
+    --text-muted: #888888;
+    --text-dim: #5a5a5a;
+    --footer-bg: #111111;
+    --drawer-bg: #0d0d0d;
+    --tooltip-bg: #222222;
+    --r-color: #ffffff;
+    --bottom-text-bg: #0a0a0a;
+    --grid-color: rgba(255, 255, 255, 0.025);
+    --header-bg: rgba(18, 18, 18, 0.94);
+   
+    /* Calibrated Pure CMYK Accents */
+    --cyan: #00FFFF;
+    --magenta: #FF00FF;
+    --yellow: #FFFF00;
+    --key-black: #050505;
+
+
+    /* WEBER Stepped Luminance (Dark Mode: getting lighter to the right, capped) */
+    --weber-w: #4c4c4c; /* Distinct from #121212 */
+    --weber-e1: #707070;
+    --weber-b: #9a9a9a;
+    --weber-e2: #c4c4c4;
+    --weber-r: #ffffff;
+  }
+
+
+  body:not(.dark-mode) {
+    --bg-color: #f4f4f0;
+    --panel-bg: #ffffff;
+    --panel-bg-alt: #f0f0ea;
+    --panel-border: #cfcfc5;
+    --panel-border-bright: #a8a89c;
+    --heading-color: #050505;
+    --body-text: #1a1a1a;
+    --text-color: #111111;
+    --text-secondary: #2c2c2c;
+    --text-muted: #4e4e4e;
+    --text-dim: #707070;
+    --footer-bg: #e6e6e0;
+    --drawer-bg: #ffffff;
+    --tooltip-bg: #deded6;
+    --r-color: #050505;
+    --bottom-text-bg: #deded6;
+    --grid-color: rgba(0, 0, 0, 0.05);
+    --header-bg: rgba(244, 244, 240, 0.95);
+
+
+    /* CMYK Accents tuned for high-contrast on light background */
+    --cyan: #008282;
+    --magenta: #b50085;
+    --yellow: #8f6e00;
+
+
+    /* WEBER Stepped Luminance (Light Mode: getting darker to the right, capped) */
+    --weber-w: #b2b2aa; /* Distinct from #f4f4f0 */
+    --weber-e1: #8a8a80;
+    --weber-b: #626258;
+    --weber-e2: #383832;
+    --weber-r: #050505;
+  }
+
+
+  * {
+    box-sizing: border-box;
+  }
+
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+  }
+
+
+  /* Monospace Utilities */
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+
+  /* Chromatic aberration hover effect on interactive text */
+  .chroma-hover {
+    transition: text-shadow 0.15s ease, color 0.15s ease;
+  }
+  .chroma-hover:hover {
+    text-shadow: -1px 0 var(--cyan), 1px 0 var(--magenta);
+  }
+
+
+  /* Voltage Flicker for K, Y, Z */
+  @keyframes voltageStartup {
+    0% { opacity: 0.1; }
+    15% { opacity: 0.95; }
+    25% { opacity: 0.2; }
+    40% { opacity: 1; filter: drop-shadow(0 0 6px currentColor); }
+    55% { opacity: 0.35; }
+    70% { opacity: 0.95; }
+    85% { opacity: 0.7; }
+    100% { opacity: 1; filter: none; }
+  }
+
+
+  @keyframes microVoltageBlink {
+    0% { opacity: 1; }
+    45% { opacity: 1; }
+    48% { opacity: 0.3; filter: drop-shadow(-1px 0 2px currentColor); }
+    52% { opacity: 0.9; }
+    54% { opacity: 0.2; }
+    58% { opacity: 1; filter: none; }
+    100% { opacity: 1; }
+  }
+
+
+  .voltage-startup {
+    animation: voltageStartup 0.45s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+  }
+
+
+  .voltage-blink {
+    animation: microVoltageBlink 0.35s ease forwards;
+  }
+
+
+  /* Misregistration on Hover for K, Y, Z */
+  #heroLogo:hover .glyph-k {
+    transform: translate(-1.8px, -0.5px);
+    filter: drop-shadow(-1.5px 0 0 var(--cyan)) drop-shadow(1.5px 0 0 var(--magenta));
+  }
+  #heroLogo:hover .glyph-y {
+    transform: translate(1.8px, 0.5px);
+    filter: drop-shadow(1.5px 0 0 var(--magenta)) drop-shadow(-1.5px 0 0 var(--cyan));
+  }
+  #heroLogo:hover .glyph-z {
+    transform: translate(-1.2px, 0.8px);
+    filter: drop-shadow(-1.5px 0 0 var(--yellow)) drop-shadow(1.5px 0 0 var(--cyan));
+  }
+
+
+  .glyph-k, .glyph-y, .glyph-z, .glyph-shared-e, .glyph-shared-r, .glyph-web-w, .glyph-web-e, .glyph-web-b {
+    transition: transform 0.2s ease, filter 0.2s ease, opacity 0.3s ease;
+  }
+
+
+  /* Shifting multi-color glowing borders on hovered containers */
+  @keyframes multiGlowShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+
+  .glow-container {
+    position: relative;
+    transition: box-shadow 0.3s ease;
+  }
+
+
+  .glow-container:hover {
+    box-shadow:
+      0 0 20px rgba(0, 255, 255, 0.15),
+      0 0 35px rgba(255, 0, 255, 0.12),
+      0 0 50px rgba(255, 255, 0, 0.08);
+  }
+
+
+  .glow-container .glow-border-layer {
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    border-radius: 2px;
+    padding: 2px;
+    background: linear-gradient(
+      115deg,
+      #00ffff,
+      #ff00ff,
+      #ffff00,
+      #00ffff,
+      #ff00ff
+    );
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 2;
+  }
+
+
+  .glow-container:hover .glow-border-layer {
+    opacity: 0.85;
+    animation: multiGlowShift 4s ease infinite;
+  }
+
+

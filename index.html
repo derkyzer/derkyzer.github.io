@@ -3,709 +3,343 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>KYZER</title>
-<style>
-  * {
-    box-sizing: border-box;
-  }
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    font-family: sans-serif;
-    background: #121212;
-    color: #ffffff;
-  }
-  
-  body {
-    background: var(--bg-color, #121212);
-    color: var(--text-color, #ffffff);
-    padding: 0;
-  }
-  
-  :root {
-    --bg-color: #121212;
-    --text-color: #ffffff;
-    --footer-bg: #1c1c1c;
-    --drawer-bg: #0f0f0f;
-    --tooltip-bg: #333333;
-    --r-color: #ffffff;
-    --bottom-text-bg: #0f0f0f;
-  }
-  
-  /* Title Bar */
-  .title-bar {
-    position: fixed;
-    top: 0; left:0;
-    width: 100%;
-    height: 60px;
-    background: var(--bg-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-    z-index: 1000;
-  }
-  
-  /* Hero Logo */
-  .hero-logo {
-    font-weight: bold;
-    white-space: nowrap;
-    width: 80vw;
-  }
-  .remove-on-scroll {
-    transition: opacity 0.3s ease;
-  }
-  
-  body.scrolled .remove-on-scroll {
-    display: none;
-  }
-  
-  .tray-toggle {
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: var(--text-color);
-  }
-  
-  .content-tray {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    background: var(--drawer-bg);
-    padding: 20px 0;
-    display: none;
-    z-index: 500;
-    box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
-  }
-  
-  .page-down {
-    margin-top: 260px;
-  }
-  
-  .icon-links {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-  }
-  
-  .icon-links a {
-    position: relative;
-  }
-  
-  .icon-links .icon {
-    width: 40px;
-    height: 40px;
-    fill: var(--text-color);
-  }
-  
-  .tooltip {
-    position: fixed;
-    background: var(--tooltip-bg);
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 14px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    white-space: nowrap;
-    z-index: 2000;
-  }
-  
-  #pageWrapper {
-    position: relative;
-    margin-top: 60px; 
-    transition: margin-top 0.3s ease;
-    z-index: 1;
-  }
-  
-  .content-divider {
-    position: fixed;
-    top: calc(100vh + 60px);
-    height: 0;
-    margin-bottom: 20px;
-    width: 100%;
-    box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.5);
-    z-index: 900;
-  }
-  
-  main {
-    padding-top: 800px; /* Reduced from 1000px */
-    padding-bottom: 200px; /* Reduced from 300px */
-  }
-  
-  /* Updated text sections with padding */
-  .text-section {
-    margin: 60px auto;
-    max-width: 600px;
-    padding: 0 20px;
-  }
-  
-  .text-section.two-columns {
-    display: flex;
-    justify-content: space-between;
-    max-width: 900px;
-    margin: 60px auto;
-    padding: 0 20px;
-  }
-  
-  .text-section.two-columns > div {
-    flex: 1;
-    margin: 0 20px;
-  }
-  .text-section.two-columns > div:first-child {
-    margin-left: 0;
-  }
-  .text-section.two-columns > div:last-child {
-    margin-right: 0;
-  }
-  
-  /* Updated Gallery Styles */
-  .gallery {
-    margin: 60px auto;
-    padding: 0;
-    text-align: center;
-    position: relative;
-    max-width: 600px;
-  }
-  .gallery-img {
-    width: 100%;
-    height: auto;
-    display: block;
-    margin-bottom: 10px;
-  }
-.gallery-info {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 10px;
-  text-align: left;
-  max-width: calc(100% - 20px);
-  color: white !important;
-}
-.gallery-title {
-  font-size: 20px;
-  margin-bottom: 5px;
-  color: white !important;
-}
-.gallery-desc {
-  font-size: 14px;
-  margin: 0;
-  color: white !important;
-}
-.gallery-nav {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-  height: 24px;
-  position: relative;
-}
-.nav-dot {
-  border: 2px solid var(--text-color);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: absolute;
-}
-.nav-dot.small {
-  width: 8px;
-  height: 8px;
-}
-.nav-dot.medium {
-  width: 16px;
-  height: 16px;
-}
-.nav-dot.large {
-  width: 24px;
-  height: 24px;
-  background: var(--text-color);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-/* CMYK Shapes */
-@keyframes float {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(10px, -10px) rotate(5deg); }
-  100% { transform: translate(0, 0) rotate(0deg); }
-}
-
-.cmyk-shape {
-  position: fixed;
-  pointer-events: none;
-  opacity: 0;
-  animation: float 6s infinite ease-in-out;
-  z-index: 0;
-  transition: opacity 1s ease;
-}
-
-/* Updated Footer Styles */
-.triple-footer {
-  display: flex;
-  gap: 20px;
-  padding: 50px 0;
-  background: var(--footer-bg);
-  width: 100%;
-  box-shadow: 0 -5px 10px rgba(0,0,0,0.3);
-  margin-bottom: 0;
-}
-.triple-footer > div {
-  flex: 1;
-  padding: 0 20px;
-}
-.triple-footer > div:nth-child(1) {
-  text-align: right;
-}
-.triple-footer > div:nth-child(2) {
-  text-align: center;
-}
-.triple-footer > div:nth-child(3) {
-  text-align: left;
-}
-.footer-bottom-text {
-  text-align: center;
-  padding: 20px 0;
-  font-size: 14px;
-  background: var(--bottom-text-bg);
-  width: 100%;
-  box-shadow: inset 0 15px 15px -15px rgba(0,0,0,0.5);
-}
-
-.back-to-top {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--bg-color);
-  border: 1px solid var(--text-color);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: none; 
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 1001;
-}
-.back-to-top.show {
-  display: flex;
-}
-.back-to-top svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: var(--text-color);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-</style>
+<title>KYZER // Electronics Engineering Technician & Creative Technologist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/theme.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/home.css">
 </head>
 
-<body class="dark-mode" style="--r-color: #ffffff;">
 
+<body class="dark-mode">
+
+
+<!-- Calibrated Title Bar -->
 <header class="title-bar">
-  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100">
-    <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="84">
-      <tspan fill="#00FFFF">K</tspan>
-      <tspan class="remove-on-scroll" fill="#FF00FF">Y</tspan>
-      <tspan fill="#FFFF00">Z</tspan>
-      <tspan class="remove-on-scroll" fill="#888888">E</tspan>
-      <tspan fill="var(--r-color)">R</tspan>
-    </text>
+  <div class="nav-colophon-tag">
+    <div class="pip-grid">
+      <span style="background: var(--cyan);"></span>
+      <span style="background: var(--magenta);"></span>
+      <span style="background: var(--yellow);"></span>
+    </div>
+    <span>SYS.BENCH // 24PX</span>
+  </div>
+
+
+  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100" aria-label="KYZER WEBER Logo">
+    <g font-family="'JetBrains Mono', 'Inter', monospace" font-weight="700" font-size="82" letter-spacing="0">
+      <!-- WEBER Stepped Luminance Underlay (Slots 1, 2, 3) -->
+      <text x="164" y="70" text-anchor="middle" class="glyph-web-w" id="glyphW" fill="var(--weber-w)" opacity="1">W</text>
+      <text x="232" y="70" text-anchor="middle" class="glyph-web-e" id="glyphE" fill="var(--weber-e1)" opacity="1">E</text>
+      <text x="300" y="70" text-anchor="middle" class="glyph-web-b" id="glyphB" fill="var(--weber-b)" opacity="1">B</text>
+
+
+      <!-- Orbital Ellipse Back Section -->
+      <ellipse cx="300" cy="58" rx="34" ry="14" transform="rotate(-22 300 58)" fill="none" stroke="rgba(255, 255, 0, 0.35)" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+
+      <!-- KYZ CMY Overlay (Slots 1, 2, 3) -->
+      <text x="164" y="70" text-anchor="middle" class="glyph-k voltage-startup" id="glyphK" fill="#00FFFF">K</text>
+      <text x="232" y="70" text-anchor="middle" class="glyph-y voltage-startup" id="glyphY" fill="#FF00FF">Y</text>
+      <text x="300" y="70" text-anchor="middle" class="glyph-z voltage-startup" id="glyphZ" fill="#FFFF00">Z</text>
+
+
+      <!-- Satellite Pip Orbiting Z -->
+      <g transform="rotate(-22 300 58)">
+        <circle r="3" fill="#FFFF00">
+          <animateMotion dur="7s" repeatCount="indefinite" path="M 300,44 a 34,14 0 1,0 0.1,0 Z" />
+        </circle>
+      </g>
+
+
+      <!-- Shared ER Suffix (Slots 4, 5) -->
+      <text x="368" y="70" text-anchor="middle" class="glyph-shared-e" id="glyphSharedE" fill="var(--weber-e2)">E</text>
+      <text x="436" y="70" text-anchor="middle" class="glyph-shared-r" id="glyphSharedR" fill="var(--weber-r)">R</text>
+    </g>
   </svg>
-  <button class="tray-toggle" id="trayToggle" aria-label="Open Menu">☰</button>
+  <button class="tray-toggle chroma-hover" id="trayToggle" aria-label="Open Navigation Drawer">☰</button>
 </header>
 
+
+<!-- Drawer Tray -->
 <div class="content-tray" id="contentTray">
   <nav class="icon-links">
-    <a href="/projects" data-tooltip="GitHub Projects">
+    <a href="projects/" data-tooltip="Projects // GitHub">
       <svg class="icon" viewBox="0 0 160 160">
         <defs>
           <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#ff9a9e" />
-            <stop offset="1" stop-color="#fad0c4" />
+            <stop offset="0" stop-color="#00FFFF" />
+            <stop offset="1" stop-color="#FF00FF" />
           </linearGradient>
         </defs>
-        <rect fill="url(#gradient0)" height="40" width="80" x="20" y="25"></rect>
-        <rect fill="url(#gradient0)" height="10" width="40" x="40" y="10"></rect>
+        <rect fill="none" stroke="url(#gradient0)" stroke-width="6" height="50" width="80" x="40" y="55"></rect>
+        <line stroke="url(#gradient0)" stroke-width="6" x1="55" x2="105" y1="40" y2="40"></line>
+        <circle cx="80" cy="80" fill="#00FFFF" r="8"></circle>
       </svg>
     </a>
-    <a href="/blog" data-tooltip="Development Blog">
+    <a href="blog/" data-tooltip="Dev Notes // Blog">
       <svg class="icon" viewBox="0 0 160 160">
         <defs>
           <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#a18cd1" />
-            <stop offset="1" stop-color="#fbc2eb" />
+            <stop offset="0" stop-color="#FF00FF" />
+            <stop offset="1" stop-color="#FFFF00" />
           </linearGradient>
         </defs>
-        <rect fill="url(#gradient1)" height="60" width="50" x="50" y="40"></rect>
-        <line stroke="white" stroke-width="4" x1="50" x2="100" y1="70" y2="70"></line>
+        <rect fill="none" stroke="url(#gradient1)" stroke-width="6" height="70" width="60" x="50" y="45"></rect>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
       </svg>
     </a>
-    <a href="#" id="themeToggle" data-tooltip="Toggle Theme">
+    <a href="#" id="themeToggle" data-tooltip="Calibrate Theme">
       <svg class="icon" viewBox="0 0 160 160">
-        <defs>
-          <linearGradient id="gradient2" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#f6d365" />
-            <stop offset="1" stop-color="#fda085" />
-          </linearGradient>
-        </defs>
-        <circle cx="80" cy="80" fill="url(#gradient2)" r="25"></circle>
-        <path d="M100 100 A10 10 0 1 1 120 100 A10 10 0 1 1 100 100 Z" fill="url(#gradient2)"></path>
+        <circle cx="80" cy="80" fill="none" stroke="#FFFF00" stroke-width="6" r="30"></circle>
+        <circle cx="80" cy="80" fill="#00FFFF" r="14"></circle>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
       </svg>
     </a>
-    <a href="/tools" data-tooltip="Tools">
+    <a href="tools/" data-tooltip="Interactive Scripts & Tools">
       <svg class="icon" viewBox="0 0 160 160">
-        <defs>
-          <linearGradient id="gradient3" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#84fab0" />
-            <stop offset="1" stop-color="#8fd3f4" />
-          </linearGradient>
-        </defs>
-        <polygon fill="url(#gradient3)" points="80,80 76.3157894736842,84.21052631578948 76.52631578947368,89.47368421052632 71.05263157894737,89.21052631578948 68.42105263157895,94.73684210526316 65.78947368421052,89.21052631578948 60.315789473684205,89.47368421052632 60.526315789473685,84.21052631578948 56.8421052631579,80 60.526315789473685,75.78947368421052 60.315789473684205,70.52631578947368 65.78947368421052,70.78947368421052 68.42105263157895,65.26315789473684 71.05263157894737,70.78947368421052 76.52631578947368,70.52631578947368 76.3157894736842,75.78947368421052"></polygon>
-        <circle cx="68.42105263157895" cy="80" fill="white" r="4"></circle>
+        <polygon fill="none" stroke="#00FFFF" stroke-width="6" points="80,45 115,115 45,115"></polygon>
+        <circle cx="80" cy="90" fill="#FF00FF" r="10"></circle>
       </svg>
     </a>
-    <a href="/contact" data-tooltip="Socials">
+    <a href="contact/" data-tooltip="Socials & Comms">
       <svg class="icon" viewBox="0 0 160 160">
-        <defs>
-          <linearGradient id="gradient4" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#d4fc79" />
-            <stop offset="1" stop-color="#96e6a1" />
-          </linearGradient>
-        </defs>
-        <ellipse cx="80" cy="80" rx="30" ry="20" fill="url(#gradient4)"></ellipse>
-        <circle cx="70" cy="75" r="5" fill="white"></circle>
-        <circle cx="90" cy="75" r="5" fill="white"></circle>
-        <circle cx="80" cy="85" r="5" fill="white"></circle>
-        <line x1="70" y1="75" x2="90" y2="75" stroke="white" stroke-width="2"></line>
-        <line x1="70" y1="75" x2="80" y2="85" stroke="white" stroke-width="2"></line>
-        <line x1="80" y1="85" x2="90" y2="75" stroke="white" stroke-width="2"></line>
+        <rect fill="none" stroke="#FFFF00" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
+        <polyline fill="none" stroke="#00FFFF" stroke-width="5" points="45,55 80,85 115,55"></polyline>
       </svg>
     </a>
   </nav>
 </div>
 
+
 <div class="tooltip" id="iconTooltip"></div>
+
 
 <div id="pageWrapper">
   <div class="content-divider"></div>
   <main>
-    <section class="text-section single-column">
-      <h1>Hi, Welcome, Hello</h1>
-      <p>This site is a space for my experiments and projects. I design experiences, create tools, and try to explore ideas in a more intuitive and engaging way. Dive in to see what I'm working on or connect through my socials.</p>
+    <!-- Hero / Introductory Section -->
+    <section class="tech-panel glow-container hero-section">
+      <div class="glow-border-layer"></div>
+      <span class="bracket-tr"></span>
+      <span class="bracket-bl"></span>
+      <div class="panel-meta">
+        <span class="pip pip-cyan"></span>
+        <span>MOD.00 // INIT</span>
+        <span class="coord">LOC.REF // 34.7304° N, 86.5861° W</span>
+      </div>
+
+
+      <div class="hero-tagline chroma-hover">Electronics Engineering Technician &amp; Creative Technologist</div>
+      <h1 class="hero-title chroma-hover">Hi, Welcome, Hello.</h1>
+      <p class="hero-copy">
+        This site is a space for my experiments and projects. I design experiences, create tools, and explore ideas in an intuitive, visual way. By day, I work with precision electronics and study Electrical Engineering; off the clock, I build custom tools, write creative code, design game mechanics, and craft story-driven audio.
+      </p>
+
+
+      <div class="colophon-strip">
+        <span class="colophon-label">STACK //</span>
+        <span class="colophon-item">Python</span>
+        <span class="colophon-sep">•</span>
+        <span class="colophon-item">Custom Graphic Pipelines</span>
+        <span class="colophon-sep">•</span>
+        <span class="colophon-item">MATLAB &amp; Numerical Modeling</span>
+        <span class="colophon-sep">•</span>
+        <span class="colophon-item">UI/UX</span>
+        <span class="colophon-sep">•</span>
+        <span class="colophon-item">Audio Production</span>
+      </div>
     </section>
 
-    <section class="text-section two-columns">
-      <div>
-        <h2>Projects & Tools</h2>
-        <p>Check out some of the tools I've created or contributed to, designed to make life a bit easier or more fun.</p>
+
+    <!-- Dual Columns: MOD.01 // LOGIC & MOD.02 // KINETIC -->
+    <section class="dual-columns" id="mod01Anchor">
+      <!-- Column 1: MOD.01 // LOGIC -->
+      <div class="tech-panel glow-container column-panel">
+        <div class="glow-border-layer"></div>
+        <span class="bracket-tr"></span>
+        <span class="bracket-bl"></span>
+        <div class="panel-meta">
+          <span class="pip pip-cyan"></span>
+          <span>MOD.01 // LOGIC</span>
+          <span class="coord">CHAN_A // CRAFT</span>
+        </div>
+        <h2 class="chroma-hover">Craft</h2>
+        <p>
+          Most software is built for passive consumption. I prefer to build useful toys with moving parts. Exploring through creation, I learn to understand the mechanics of the problems I take on. I like pushing math, code, and interface design past static screens—building my own visual engines, tools, and responsive layouts to turn raw logic into interactive systems. To me, they aren’t separate disciplines, they’re just the materials.
+        </p>
       </div>
-      <div>
-        <h2>What's Next</h2>
-        <p>I'm exploring website development, interactive storrytelling, and music production. It's a work in progress, but this site will grow as I do.</p>
+
+
+      <!-- Column 2: MOD.02 // KINETIC -->
+      <div class="tech-panel glow-container column-panel">
+        <div class="glow-border-layer"></div>
+        <span class="bracket-tr"></span>
+        <span class="bracket-bl"></span>
+        <div class="panel-meta">
+          <span class="pip pip-magenta"></span>
+          <span>MOD.02 // KINETIC</span>
+          <span class="coord">CHAN_B // CURRENTS</span>
+        </div>
+        <h2 class="chroma-hover">Currents</h2>
+        <p>
+          I treat life outside the terminal with the same hands-on curiosity. I've been experimenting with designing game mechanics and writing stories through the use of music. But when it's time to recalibrate, I unplug entirely through physical momentum under a barbell, on technical trails, kicking up dust on backroads, or decompressing on late-night FPS sessions. I love to balance the abstract work with the visceral.
+        </p>
       </div>
     </section>
 
-    <!-- Rotating Image Gallery -->
-    <section class="gallery" id="gallerySection">
-      <img class="gallery-img" id="galleryImage" alt="Gallery Image" />
-      <div class="gallery-info">
-        <div class="gallery-title" id="galleryTitle"></div>
-        <div class="gallery-desc" id="galleryDesc"></div>
+
+    <!-- Interactive Technical Asset Viewer Section (MOD.03 // ARTIFACTS) -->
+    <section class="gallery-container glow-container" id="mod03Gallery">
+      <div class="glow-border-layer"></div>
+      <div class="gallery-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="pip pip-yellow"></span>
+          <span>MOD.03 // ARTIFACTS // ASSET MANIFEST</span>
+        </div>
+        <div id="galleryCount" class="coord">FIG. 01 / 04</div>
       </div>
+
+
+      <div class="gallery-viewport">
+        <img class="gallery-img-elem" id="galleryImage" alt="Asset manifest specimen" />
+      </div>
+
+
+      <div class="gallery-info-strip">
+        <div class="gallery-title mono" id="galleryTitle">FIG. 01 // VECTOR TRACING &amp; CONTOUR SYNTHESIS</div>
+        <div class="gallery-desc" id="galleryDesc">Precision algorithmic edge extraction and spline rasterization pipeline.</div>
+      </div>
+
+
       <div class="gallery-nav" id="galleryNav">
-        <div class="nav-container" id="navContainer"></div>
+        <!-- Interactive Step Buttons -->
+        <button class="nav-step-btn active" data-index="0">01 // TRACE</button>
+        <button class="nav-step-btn" data-index="1">02 // DSP</button>
+        <button class="nav-step-btn" data-index="2">03 // BENCH</button>
+        <button class="nav-step-btn" data-index="3">04 // RECON</button>
+      </div>
+    </section>
+
+
+    <!-- MOD.04 // TRANSMISSION (Field Log & Live Audio Node) -->
+    <section class="transmission-container glow-container" id="mod04Transmission">
+      <div class="glow-border-layer"></div>
+      <div class="transmission-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="pip pip-cyan"></span>
+          <span>MOD.04 // TRANSMISSION // FIELD LOG &amp; LIVE AUDIO NODE</span>
+        </div>
+        <span class="coord">CHAN_RF // 44.1 KHZ</span>
+      </div>
+
+
+      <div class="transmission-body">
+        <div class="waveform-box">
+          <div class="waveform-meta">
+            <span>OSC_01 // HARMONIC SYNTHESIZER</span>
+            <span id="audioStatusText">STATE: STANDBY</span>
+          </div>
+          <canvas id="waveformCanvas" class="waveform-canvas" width="400" height="80"></canvas>
+          <div class="waveform-meta">
+            <span>RES: 1024 FFT</span>
+            <span id="telemetryHz">FREQ: 220.0 HZ</span>
+          </div>
+        </div>
+
+
+        <div class="telemetry-card">
+          <div class="telemetry-row">
+            <span>STATUS</span>
+            <span style="color: var(--cyan);">RUNNING BENCH CYCLES</span>
+          </div>
+          <div class="telemetry-row magenta-edge">
+            <span>MODE</span>
+            <span style="color: var(--magenta);">CREATIVE SANDBOX</span>
+          </div>
+          <div class="telemetry-row yellow-edge">
+            <span>SYS_HEALTH</span>
+            <span style="color: var(--yellow);">STABLE // NOMINAL</span>
+          </div>
+          <button id="audioToggleBtn" class="audio-ctrl-btn">
+            <span>▶ TEST OSCILLATOR TONE</span>
+          </button>
+        </div>
       </div>
     </section>
   </main>
 
+
+  <!-- Tactical Industrial Tri-Column Footer -->
   <footer class="triple-footer">
-    <h2>Some of my favorite people...</h2>
-    <div>
-      <h3>Footer Col 1</h3>
-      <p>Right-aligned footer content...</p>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--cyan);"></span>
+        <span>SYS.STACK</span>
+      </h3>
+      <ul>
+        <li><span class="idx">[01]</span> Python &amp; Data Pipeline Architecture</li>
+        <li><span class="idx">[02]</span> Vector Image Tracing &amp; Spline Engines</li>
+        <li><span class="idx">[03]</span> MATLAB &amp; Numerical Modeling</li>
+        <li><span class="idx">[04]</span> Professional Audio DAWs &amp; DSP Nodes</li>
+        <li><span class="idx">[05]</span> KiCAD Circuit Layout &amp; Bench EDA</li>
+        <li><span class="idx">[06]</span> UI/UX Interactive Systems &amp; GLSL</li>
+      </ul>
     </div>
-    <div>
-      <h3>Footer Col 2</h3>
-      <p>Center-aligned footer info...</p>
+
+
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--magenta);"></span>
+        <span>LOC.ORIGIN</span>
+      </h3>
+      <p><strong style="color: #ffffff;">COORDINATES:</strong> 34.7304° N, 86.5861° W</p>
+      <p><strong style="color: #ffffff;">REGION:</strong> Southeast US // Huntsville, AL</p>
+      <p><strong style="color: #ffffff;">OPERATOR:</strong> KYZER WEBER</p>
+      <p><strong style="color: #ffffff;">STATION:</strong> BENCH MANIFEST // ACTIVE</p>
     </div>
-    <div>
-      <h3>Footer Col 3</h3>
-      <p>Left-aligned footer text...</p>
+
+
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--yellow);"></span>
+        <span>COMMS</span>
+      </h3>
+      <ul>
+        <li><a href="projects/" class="chroma-hover" style="color: #aaaaaa; text-decoration: none;">GitHub Repositories</a></li>
+        <li><a href="blog/" class="chroma-hover" style="color: #aaaaaa; text-decoration: none;">Development Blog &amp; Notes</a></li>
+        <li><a href="tools/" class="chroma-hover" style="color: #aaaaaa; text-decoration: none;">Interactive Graphic Tools</a></li>
+        <li><a href="contact/" class="chroma-hover" style="color: #aaaaaa; text-decoration: none;">Social Channels &amp; Email</a></li>
+        <li><span class="idx">[KEY]</span> PGP: 74B2 E77A 57F1 496C</li>
+      </ul>
     </div>
   </footer>
-  <div class="footer-bottom-text">Thanks for visting. Stay connected through my socials!</div>
+
+
+  <div class="footer-bottom-text">
+    KYZER WEBER © 2026 // ALL RIGHTS RESERVED // BENCH MANIFEST VERIFIED
+  </div>
 </div>
 
-<button class="back-to-top" id="backToTop" aria-label="Back to top">
+
+<button class="back-to-top" id="backToTop" aria-label="Return to top of page">
   <svg viewBox="0 0 24 24">
     <path d="M12 19V5M5 12l7-7 7 7"/>
   </svg>
 </button>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const body = document.body;
-  const tray = document.getElementById('contentTray');
-  const trayToggle = document.getElementById('trayToggle');
-  const themeToggle = document.getElementById('themeToggle');
-  const backToTop = document.getElementById('backToTop');
-  const iconTooltip = document.getElementById('iconTooltip');
-  const heroLogo = document.getElementById('heroLogo');
 
-  // Create CMYK shapes with respawn functionality
-  function createShape(shape, index) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'cmyk-shape');
-    svg.setAttribute('width', '40');
-    svg.setAttribute('height', '40');
-    svg.setAttribute('viewBox', '0 0 40 40');
-    
-    let element;
-    if (shape.type === 'circle') {
-      element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      element.setAttribute('cx', '20');
-      element.setAttribute('cy', '20');
-      element.setAttribute('r', '15');
-    } else if (shape.type === 'rect') {
-      element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      element.setAttribute('x', '5');
-      element.setAttribute('y', '5');
-      element.setAttribute('width', '30');
-      element.setAttribute('height', '30');
-    } else {
-      element = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      element.setAttribute('points', '20,5 35,35 5,35');
-    }
-
-    if (shape.fill) {
-      element.setAttribute('fill', shape.color);
-      element.setAttribute('stroke', 'none');
-    } else {
-      element.setAttribute('fill', 'none');
-      element.setAttribute('stroke', shape.color);
-      element.setAttribute('stroke-width', '2');
-    }
-
-    svg.appendChild(element);
-    document.body.appendChild(svg);
-
-    function respawnShape() {
-      const x = Math.random() * (window.innerWidth - 100);
-      const y = Math.random() * (window.innerHeight - 100);
-      svg.style.opacity = '0';
-      
-      setTimeout(() => {
-        svg.style.left = x + 'px';
-        svg.style.top = y + 'px';
-        svg.style.opacity = '0.3';
-      }, 1000);
-
-      // Schedule next respawn
-      setTimeout(respawnShape, Math.random() * 5000 + 5000); // Random time between 5-10 seconds
-    }
-
-    // Initial spawn with delay
-    setTimeout(() => {
-      respawnShape();
-    }, index * 500);
-  }
-
-  const shapes = [
-    { type: 'circle', color: '#00FFFF', fill: true },
-    { type: 'circle', color: '#00FFFF', fill: false },
-    { type: 'rect', color: '#FF00FF', fill: true },
-    { type: 'rect', color: '#FF00FF', fill: false },
-    { type: 'polygon', color: '#FFFF00', fill: true },
-    { type: 'polygon', color: '#FFFF00', fill: false }
-  ];
-
-  shapes.forEach((shape, index) => createShape(shape, index));
-
-  // Previous code unchanged until end
-  const maxScroll = 100;
-  function updateHero() {
-    const sy = window.scrollY;
-    const t = Math.min(Math.max(sy / maxScroll, 0), 1);
-
-    const scale = 1.5 - 1 * t;
-    
-    const startY = window.innerHeight / 2;
-    const endY = 60/2;
-    const currentY = startY + (endY - startY)*t;
-
-    const containerWidth = Math.min(500, window.innerWidth * 0.8);
-    const width = window.innerWidth * 0.8 * (1 - t) + containerWidth * t;
-
-    heroLogo.style.position = 'fixed';
-    heroLogo.style.left = '50%';
-    heroLogo.style.top = currentY + 'px';
-    heroLogo.style.transform = `translate(-50%,-50%) scale(${scale})`;
-    heroLogo.style.width = `${width}px`;
-
-    if (t > 0.5) {
-      body.classList.add('scrolled');
-      backToTop.classList.add('show');
-    } else {
-      body.classList.remove('scrolled');
-      backToTop.classList.remove('show');
-    }
-
-    requestAnimationFrame(updateHero);
-  }
-  requestAnimationFrame(updateHero);
-
-  backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
-  trayToggle.addEventListener('click', () => {
-    if (tray.style.display === 'block') {
-      tray.style.display = 'none';
-      document.getElementById('pageWrapper').classList.remove('page-down');
-    } else {
-      tray.style.display = 'block';
-      document.getElementById('pageWrapper').classList.add('page-down');
-    }
-  });
-
-  themeToggle.addEventListener('click', () => {
-    if (body.classList.contains('dark-mode')) {
-      body.classList.remove('dark-mode');
-      body.style.setProperty('--bg-color', '#ffffff');
-      body.style.setProperty('--text-color', '#000000');
-      body.style.setProperty('--footer-bg', '#dddddd');
-      body.style.setProperty('--drawer-bg', '#f0f0f0');
-      body.style.setProperty('--tooltip-bg', '#ccc');
-      body.style.setProperty('--r-color', '#000000');
-      body.style.setProperty('--bottom-text-bg', '#cccccc');
-    } else {
-      body.classList.add('dark-mode');
-      body.style.setProperty('--bg-color', '#121212');
-      body.style.setProperty('--text-color', '#ffffff');
-      body.style.setProperty('--footer-bg', '#1c1c1c');
-      body.style.setProperty('--drawer-bg', '#0f0f0f');
-      body.style.setProperty('--tooltip-bg', '#333333');
-      body.style.setProperty('--r-color', '#ffffff');
-      body.style.setProperty('--bottom-text-bg', '#0f0f0f');
-    }
-  });
-
-  const iconLinks = document.querySelectorAll('.icon-links a[data-tooltip]');
-  iconLinks.forEach(iconLink => {
-    iconLink.addEventListener('mouseenter', () => {
-      const tooltipText = iconLink.getAttribute('data-tooltip');
-      iconTooltip.textContent = tooltipText;
-      iconTooltip.style.opacity = '1';
-
-      const rect = iconLink.getBoundingClientRect();
-      const tooltipRect = iconTooltip.getBoundingClientRect();
-
-      let top = rect.top - tooltipRect.height - 8;
-      let left = rect.left + (rect.width/2) - (tooltipRect.width/2);
-
-      if (top < 0) top = rect.bottom + 8; 
-      if (left < 0) left = 0;
-      if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 10;
-      if (top + tooltipRect.height > window.innerHeight) top = window.innerHeight - tooltipRect.height - 10;
-
-      iconTooltip.style.top = `${top}px`;
-      iconTooltip.style.left = `${left}px`;
-      iconTooltip.style.opacity = '1';
-    });
-
-    iconLink.addEventListener('mouseleave', () => {
-      iconTooltip.style.opacity = '0';
-      iconTooltip.style.top = '-9999px';
-      iconTooltip.style.left = '-9999px';
-    });
-  });
-
-  // Gallery Code
-  const galleryData = [
-    {title: "Image 1", description: "First image description", image: "https://via.placeholder.com/600x400?text=Image+1"},
-    {title: "Image 2", description: "Second image description", image: "https://via.placeholder.com/600x400?text=Image+2"},
-    {title: "Image 3", description: "Third image description", image: "https://via.placeholder.com/600x400?text=Image+3"},
-    {title: "Image 4", description: "Fourth image description", image: "https://via.placeholder.com/600x400?text=Image+4"},
-  ];
-
-  const galleryTitle = document.getElementById('galleryTitle');
-  const galleryDesc = document.getElementById('galleryDesc');
-  const galleryImage = document.getElementById('galleryImage');
-  const galleryNav = document.getElementById('galleryNav');
-  const navContainer = document.getElementById('navContainer');
-
-  let currentIndex = 0;
-
-  function updateGallery() {
-    const item = galleryData[currentIndex];
-    galleryTitle.textContent = item.title;
-    galleryDesc.textContent = item.description;
-    galleryImage.src = item.image;
-
-    galleryNav.innerHTML = '';
-    
-    const centerDot = document.createElement('div');
-    centerDot.className = 'nav-dot large';
-    galleryNav.appendChild(centerDot);
-
-    const dotSpacing = 30;
-
-    for (let i = currentIndex - 1; i >= Math.max(0, currentIndex - 2); i--) {
-      const dot = document.createElement('div');
-      const distance = currentIndex - i;
-      dot.className = `nav-dot ${distance === 1 ? 'medium' : 'small'}`;
-      
-      const offset = distance * dotSpacing;
-      dot.style.left = `calc(50% - ${offset}px)`;
-      dot.style.transform = 'translateX(-50%)';
-      
-      dot.addEventListener('click', () => {
-        currentIndex = i;
-        updateGallery();
-      });
-      galleryNav.appendChild(dot);
-    }
-
-    for (let i = currentIndex + 1; i < Math.min(galleryData.length, currentIndex + 3); i++) {
-      const dot = document.createElement('div');
-      const distance = i - currentIndex;
-      dot.className = `nav-dot ${distance === 1 ? 'medium' : 'small'}`;
-      
-      const offset = distance * dotSpacing;
-      dot.style.left = `calc(50% + ${offset}px)`;
-      dot.style.transform = 'translateX(-50%)';
-      
-      dot.addEventListener('click', () => {
-        currentIndex = i;
-        updateGallery();
-      });
-      galleryNav.appendChild(dot);
-    }
-  }
-
-  updateGallery();
-
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 0) {
-      body.classList.add('scrolled');
-    } else {
-      body.classList.remove('scrolled');
-    }
-  });
-});
-</script>
+<script src="assets/js/core.js" defer></script>
+<script src="assets/js/home.js" defer></script>
 </body>
 </html>
+
+
+

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KYZER // Communications & Social Array</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/theme.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<style>
+  /* Contact / Comms Specific Tactical Layout */
+  .comms-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .comms-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* 3D Radar Stage */
+  .radar-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 24px;
+    position: relative;
+    min-height: 440px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .radar-viewport {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    perspective: 1000px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .radar-ring {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 1px dashed var(--panel-border-bright);
+    transform-style: preserve-3d;
+    transform: rotateX(60deg);
+    animation: ringRotate 24s linear infinite;
+  }
+
+  @keyframes ringRotate {
+    from { transform: rotateX(60deg) rotateZ(0deg); }
+    to { transform: rotateX(60deg) rotateZ(360deg); }
+  }
+
+  .radar-crosshair {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.2;
+    background:
+      radial-gradient(circle, transparent 30%, var(--panel-border) 31%, transparent 32%),
+      radial-gradient(circle, transparent 60%, var(--panel-border) 61%, transparent 62%),
+      linear-gradient(var(--panel-border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--panel-border) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px;
+    background-position: center;
+  }
+
+  .radar-node {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    left: 50%;
+    top: 50%;
+    margin: -22px;
+    background: var(--panel-bg-alt);
+    border: 1px solid var(--panel-border-bright);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transform-style: preserve-3d;
+  }
+
+  .radar-node:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 16px rgba(0, 255, 255, 0.4);
+    transform: scale(1.25);
+  }
+
+  .radar-node svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-color);
+    transition: fill 0.2s ease;
+  }
+
+  .radar-node:hover svg {
+    fill: var(--cyan);
+  }
+
+  .target-readout {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px dashed var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .target-active-name {
+    color: var(--cyan);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  /* Formspree Terminal Form */
+  .uplink-form-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 24px;
+    position: relative;
+  }
+
+  .terminal-input-group {
+    margin-bottom: 18px;
+  }
+
+  .terminal-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .terminal-input,
+  .terminal-textarea {
+    width: 100%;
+    background: var(--panel-bg-alt);
+    border: 1px solid var(--panel-border);
+    color: var(--text-color);
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    border-radius: 0;
+  }
+
+  .terminal-input:focus,
+  .terminal-textarea:focus {
+    outline: none;
+    border-color: var(--yellow);
+    box-shadow: 0 0 12px rgba(255, 255, 0, 0.2);
+  }
+
+  .terminal-textarea {
+    resize: vertical;
+    min-height: 110px;
+  }
+
+  .terminal-submit-btn {
+    width: 100%;
+    background: rgba(255, 255, 0, 0.08);
+    border: 1px solid var(--yellow);
+    color: var(--yellow);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .terminal-submit-btn:hover {
+    background: var(--yellow);
+    color: #000;
+    box-shadow: 0 0 16px rgba(255, 255, 0, 0.4);
+  }
+
+  /* Quick Channel Rack */
+  .channels-rack {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .channel-pill {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .channel-pill:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: translateY(-2px);
+  }
+
+  .channel-pill svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+</style>
+</head>
+
+<body class="dark-mode subpage">
+
+<!-- Calibrated Title Bar -->
+<header class="title-bar">
+  <div class="nav-colophon-tag">
+    <div class="pip-grid">
+      <span style="background: var(--cyan);"></span>
+      <span style="background: var(--magenta);"></span>
+      <span style="background: var(--yellow);"></span>
+    </div>
+    <a href="../" class="mono" style="color:inherit; text-decoration:none;">
+      <span>SYS.BENCH // KYZER</span>
+    </a>
+  </div>
+
+  <div class="subpage-title-center mono" style="font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase;">
+    MOD.03 // COMMS ARRAY
+  </div>
+
+  <button class="tray-toggle chroma-hover" id="trayToggle" aria-label="Open Navigation Drawer">☰</button>
+</header>
+
+<!-- Drawer Tray -->
+<div class="content-tray" id="contentTray">
+  <nav class="icon-links">
+    <a href="../projects/" data-tooltip="Projects // GitHub">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#00FFFF" />
+            <stop offset="1" stop-color="#FF00FF" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient0)" stroke-width="6" height="50" width="80" x="40" y="55"></rect>
+        <line stroke="url(#gradient0)" stroke-width="6" x1="55" x2="105" y1="40" y2="40"></line>
+        <circle cx="80" cy="80" fill="#00FFFF" r="8"></circle>
+      </svg>
+    </a>
+    <a href="../blog/" data-tooltip="Dev Notes // Blog">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#FF00FF" />
+            <stop offset="1" stop-color="#FFFF00" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient1)" stroke-width="6" height="70" width="60" x="50" y="45"></rect>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
+      </svg>
+    </a>
+    <a href="#" id="themeToggle" data-tooltip="Calibrate Theme">
+      <svg class="icon" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" fill="none" stroke="#FFFF00" stroke-width="6" r="30"></circle>
+        <circle cx="80" cy="80" fill="#00FFFF" r="14"></circle>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
+      </svg>
+    </a>
+    <a href="../tools/" data-tooltip="Interactive Scripts & Tools">
+      <svg class="icon" viewBox="0 0 160 160">
+        <polygon fill="none" stroke="#00FFFF" stroke-width="6" points="80,45 115,115 45,115"></polygon>
+        <circle cx="80" cy="90" fill="#FF00FF" r="10"></circle>
+      </svg>
+    </a>
+    <a href="../contact/" data-tooltip="Socials & Comms" style="border-bottom: 2px solid var(--yellow);">
+      <svg class="icon" viewBox="0 0 160 160">
+        <rect fill="none" stroke="#FFFF00" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
+        <polyline fill="none" stroke="#00FFFF" stroke-width="5" points="45,55 80,85 115,55"></polyline>
+      </svg>
+    </a>
+  </nav>
+</div>
+
+<div class="tooltip" id="iconTooltip"></div>
+
+<div id="pageWrapper">
+  <div class="content-divider"></div>
+
+  <main class="subpage-content">
+    <!-- Subpage Hero Module Header -->
+    <section class="subpage-hero glow-container">
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+      
+      <div class="subpage-badge">
+        <span class="pip pip-yellow"></span>
+        <span>MOD.03 // COMMUNICATIONS RADAR & TRANSMISSIONS</span>
+      </div>
+      
+      <h1 class="subpage-title chroma-hover">
+        SIGNAL UPLINK & DIRECT CHANNELS
+      </h1>
+      <p class="subpage-desc">
+        Connect through active telemetry channels, social networks, or transmit a direct encoded message through the comms console below.
+      </p>
+    </section>
+
+    <!-- Communications Console Layout -->
+    <div class="comms-layout">
+      <!-- 3D Signal Radar Stage -->
+      <section class="radar-panel tech-panel glow-container">
+        <div class="bracket-tl"></div>
+        <div class="bracket-tr"></div>
+        <div class="bracket-bl"></div>
+        <div class="bracket-br"></div>
+
+        <div class="panel-header" style="margin-bottom: 12px;">
+          <span class="pip pip-cyan"></span>
+          <span class="title">RADAR // 3D SOCIAL RING</span>
+          <div class="panel-meta">
+            <span class="coord">AZIMUTH: 360°</span>
+          </div>
+        </div>
+
+        <div class="radar-viewport" id="radarViewport">
+          <div class="radar-crosshair"></div>
+          <div class="radar-ring" id="radarRing"></div>
+        </div>
+
+        <div class="target-readout">
+          <span>TARGET LOCK:</span>
+          <span class="target-active-name" id="targetName">READY // ROTATING</span>
+          <span>FREQ: 144.200 MHZ</span>
+        </div>
+      </section>
+
+      <!-- Terminal Transmission Form -->
+      <section class="uplink-form-panel tech-panel glow-container">
+        <div class="bracket-tl"></div>
+        <div class="bracket-tr"></div>
+        <div class="bracket-bl"></div>
+        <div class="bracket-br"></div>
+
+        <div class="panel-header" style="margin-bottom: 16px;">
+          <span class="pip pip-yellow"></span>
+          <span class="title">DIRECT UPLINK // FORMSPREE CONSOLE</span>
+          <div class="panel-meta">
+            <span class="coord">SECURE FORM</span>
+          </div>
+        </div>
+
+        <form action="https://formspree.io/f/movvaeeq" method="POST" id="contactForm">
+          <div class="terminal-input-group">
+            <label class="terminal-label" for="senderName">// IDENTIFIER / SENDER NAME</label>
+            <input type="text" id="senderName" name="name" class="terminal-input" placeholder="Operator name or callsign..." required>
+          </div>
+
+          <div class="terminal-input-group">
+            <label class="terminal-label" for="senderEmail">// TRANSMISSION RETURN ADDRESS (EMAIL)</label>
+            <input type="email" id="senderEmail" name="email" class="terminal-input" placeholder="operator@domain.com" required>
+          </div>
+
+          <div class="terminal-input-group">
+            <label class="terminal-label" for="senderMessage">// DISPATCH PAYLOAD / MESSAGE</label>
+            <textarea id="senderMessage" name="message" class="terminal-textarea" placeholder="Input technical specs, inquiry, or transmission details..." required></textarea>
+          </div>
+
+          <button type="submit" class="terminal-submit-btn">
+            <span>TRANSMIT DISPATCH [ SEND ]</span>
+            <span>↗</span>
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Quick Channel Array -->
+    <section style="margin-top: 36px;">
+      <div class="panel-header" style="margin-bottom: 12px;">
+        <span class="pip pip-cyan"></span>
+        <span class="title">STATION RELAY // INSTANT CHANNELS</span>
+      </div>
+      <div class="channels-rack">
+        <a href="https://discord.com/users/derkyzer" target="_blank" rel="noopener noreferrer" class="channel-pill glow-container">
+          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          <span>DISCORD</span>
+        </a>
+        <a href="https://twitter.com/derkyzer" target="_blank" rel="noopener noreferrer" class="channel-pill glow-container">
+          <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+          <span>X / TWITTER</span>
+        </a>
+        <a href="https://youtube.com/@derkyzer" target="_blank" rel="noopener noreferrer" class="channel-pill glow-container">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          <span>YOUTUBE</span>
+        </a>
+        <a href="https://steamcommunity.com/id/derkyzer" target="_blank" rel="noopener noreferrer" class="channel-pill glow-container">
+          <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12c0 4.6 2.7 8.6 6.6 10.5l2.3-4.6c-0.9-0.4-1.5-1.3-1.5-2.4 0-1.4 1.1-2.5 2.5-2.5 0.5 0 0.9 0.1 1.3 0.4l4.2-6.1c0-1.4 1.1-2.5 2.5-2.5 1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5c-0.5 0-0.9-0.1-1.3-0.4l-4.2 6.1c0 0.2 0 0.3 0 0.5 0 1.4-1.1 2.5-2.5 2.5-1.1 0-2.1-0.7-2.4-1.7L5.2 21C7.2 22.9 9.5 24 12 24c6.6 0 12-5.4 12-12S18.6 0 12 0z"/></svg>
+          <span>STEAM</span>
+        </a>
+        <a href="mailto:contact@derkyzer.com" class="channel-pill glow-container" onclick="document.getElementById('senderEmail').focus(); return false;">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          <span>DIRECT FORM</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Industrial Triple Footer -->
+  <footer class="triple-footer">
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--cyan);"></span>
+        <span>SPECIFICATIONS</span>
+      </h3>
+      <p>Precision CMYK tactical design system calibrated for high-density hardware telemetry and electronic systems documentation.</p>
+    </div>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--magenta);"></span>
+        <span>TELEMETRY</span>
+      </h3>
+      <p>Status: SYS.ONLINE<br>Substack: derkyzer.substack.com<br>Host: GitHub Pages (derkyzer.com)</p>
+    </div>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--yellow);"></span>
+        <span>NAVIGATION</span>
+      </h3>
+      <p>
+        <a href="../" style="color: var(--text-color); text-decoration: none;">// ROOT TERMINAL</a><br>
+        <a href="../projects/" style="color: var(--text-color); text-decoration: none;">// HARDWARE REPOSITORIES</a><br>
+        <a href="../blog/" style="color: var(--text-color); text-decoration: none;">// TRANSMISSION LOG</a><br>
+        <a href="../tools/" style="color: var(--text-color); text-decoration: none;">// INTERACTIVE TOOLS</a>
+      </p>
+    </div>
+  </footer>
+</div>
+
+<button class="back-to-top chroma-hover" id="backToTop" aria-label="Back to Top">
+  <svg viewBox="0 0 24 24">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+
+<script src="../assets/js/core.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const socialIcons = [
+    {
+      name: 'Steam',
+      svg: '<svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12c0 4.6 2.7 8.6 6.6 10.5l2.3-4.6c-0.9-0.4-1.5-1.3-1.5-2.4 0-1.4 1.1-2.5 2.5-2.5 0.5 0 0.9 0.1 1.3 0.4l4.2-6.1c0-1.4 1.1-2.5 2.5-2.5 1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5c-0.5 0-0.9-0.1-1.3-0.4l-4.2 6.1c0 0.2 0 0.3 0 0.5 0 1.4-1.1 2.5-2.5 2.5-1.1 0-2.1-0.7-2.4-1.7L5.2 21C7.2 22.9 9.5 24 12 24c6.6 0 12-5.4 12-12S18.6 0 12 0z"/></svg>',
+      url: 'https://steamcommunity.com/id/derkyzer'
+    },
+    {
+      name: 'Discord',
+      svg: '<svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>',
+      url: 'https://discord.com/users/derkyzer'
+    },
+    {
+      name: 'X',
+      svg: '<svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>',
+      url: 'https://twitter.com/derkyzer'
+    },
+    {
+      name: 'YouTube',
+      svg: '<svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
+      url: 'https://youtube.com/@derkyzer'
+    },
+    {
+      name: 'Direct Comms Form',
+      svg: '<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+      url: null
+    }
+  ];
+
+  const ring = document.getElementById('radarRing');
+  const targetName = document.getElementById('targetName');
+  const radius = 100; // Radius in px
+
+  socialIcons.forEach((item, index) => {
+    const angle = (index / socialIcons.length) * Math.PI * 2;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+
+    const node = document.createElement('div');
+    node.className = 'radar-node';
+    node.innerHTML = item.svg;
+    node.style.transform = `translate(${x}px, ${y}px)`;
+
+    node.addEventListener('mouseenter', () => {
+      targetName.textContent = item.name.toUpperCase();
+    });
+
+    node.addEventListener('mouseleave', () => {
+      targetName.textContent = 'READY // ROTATING';
+    });
+
+    node.addEventListener('click', () => {
+      if (item.url) {
+        window.open(item.url, '_blank', 'noopener,noreferrer');
+      } else {
+        document.getElementById('senderName').focus();
+      }
+    });
+
+    ring.appendChild(node);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KYZER // Projects & Technical Repositories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/theme.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<style>
+  /* Projects Specific Tactical Layout */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .repo-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .repo-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--panel-border-bright);
+  }
+
+  .repo-media {
+    width: 100%;
+    height: 180px;
+    background: var(--panel-bg-alt);
+    border: 1px solid var(--panel-border);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .repo-media img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .repo-media img.active {
+    display: block;
+  }
+
+  .repo-avatar-fallback {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+  }
+
+  .repo-schematic-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+    background-image: linear-gradient(var(--cyan) 1px, transparent 1px), linear-gradient(90deg, var(--cyan) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  .slideshow-nav {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 5;
+  }
+
+  .slide-btn {
+    background: rgba(18, 18, 18, 0.85);
+    border: 1px solid var(--panel-border-bright);
+    color: var(--text-color);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  .slide-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  .repo-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--heading-color);
+    letter-spacing: -0.01em;
+  }
+
+  .repo-desc {
+    font-size: 13px;
+    color: var(--body-text);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+    flex-grow: 1;
+  }
+
+  .repo-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    border-top: 1px dashed var(--panel-border);
+    margin-top: auto;
+  }
+
+  .repo-lang-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--yellow);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .repo-lang-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: 0 0 6px var(--yellow);
+  }
+
+  .repo-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--cyan);
+    background: rgba(0, 255, 255, 0.04);
+    transition: all 0.2s ease;
+  }
+
+  .repo-link:hover {
+    background: var(--cyan);
+    color: #000;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+  }
+
+  .loading-panel {
+    text-align: center;
+    padding: 60px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+
+<body class="dark-mode subpage">
+
+<!-- Calibrated Title Bar -->
+<header class="title-bar">
+  <div class="nav-colophon-tag">
+    <div class="pip-grid">
+      <span style="background: var(--cyan);"></span>
+      <span style="background: var(--magenta);"></span>
+      <span style="background: var(--yellow);"></span>
+    </div>
+    <a href="../" class="mono" style="color:inherit; text-decoration:none;">
+      <span>SYS.BENCH // KYZER</span>
+    </a>
+  </div>
+
+  <div class="subpage-title-center mono" style="font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase;">
+    MOD.01 // REPOSITORIES
+  </div>
+
+  <button class="tray-toggle chroma-hover" id="trayToggle" aria-label="Open Navigation Drawer">☰</button>
+</header>
+
+<!-- Drawer Tray -->
+<div class="content-tray" id="contentTray">
+  <nav class="icon-links">
+    <a href="../projects/" data-tooltip="Projects // GitHub" style="border-bottom: 2px solid var(--cyan);">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#00FFFF" />
+            <stop offset="1" stop-color="#FF00FF" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient0)" stroke-width="6" height="50" width="80" x="40" y="55"></rect>
+        <line stroke="url(#gradient0)" stroke-width="6" x1="55" x2="105" y1="40" y2="40"></line>
+        <circle cx="80" cy="80" fill="#00FFFF" r="8"></circle>
+      </svg>
+    </a>
+    <a href="../blog/" data-tooltip="Dev Notes // Blog">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#FF00FF" />
+            <stop offset="1" stop-color="#FFFF00" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient1)" stroke-width="6" height="70" width="60" x="50" y="45"></rect>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
+        <line stroke="#ffffff" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
+      </svg>
+    </a>
+    <a href="#" id="themeToggle" data-tooltip="Calibrate Theme">
+      <svg class="icon" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" fill="none" stroke="#FFFF00" stroke-width="6" r="30"></circle>
+        <circle cx="80" cy="80" fill="#00FFFF" r="14"></circle>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
+        <line stroke="#FF00FF" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
+      </svg>
+    </a>
+    <a href="../tools/" data-tooltip="Interactive Scripts & Tools">
+      <svg class="icon" viewBox="0 0 160 160">
+        <polygon fill="none" stroke="#00FFFF" stroke-width="6" points="80,45 115,115 45,115"></polygon>
+        <circle cx="80" cy="90" fill="#FF00FF" r="10"></circle>
+      </svg>
+    </a>
+    <a href="../contact/" data-tooltip="Socials & Comms">
+      <svg class="icon" viewBox="0 0 160 160">
+        <rect fill="none" stroke="#FFFF00" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
+        <polyline fill="none" stroke="#00FFFF" stroke-width="5" points="45,55 80,85 115,55"></polyline>
+      </svg>
+    </a>
+  </nav>
+</div>
+
+<div class="tooltip" id="iconTooltip"></div>
+
+<div id="pageWrapper">
+  <div class="content-divider"></div>
+
+  <main class="subpage-content">
+    <!-- Subpage Hero Module Header -->
+    <section class="subpage-hero glow-container">
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+      
+      <div class="subpage-badge">
+        <span class="pip pip-cyan"></span>
+        <span>MOD.01 // REPOSITORIES & SYSTEMS</span>
+      </div>
+      
+      <h1 class="subpage-title chroma-hover">
+        ACTIVE REPOSITORIES & OPEN HARDWARE
+      </h1>
+      <p class="subpage-desc">
+        Direct live sync from GitHub API for <strong style="color: var(--cyan);">@derkyzer</strong>. Firmware packages, embedded prototypes, schematic drawings, and interactive applications.
+      </p>
+    </section>
+
+    <!-- Projects Grid Container -->
+    <div id="projectsContainer" class="projects-grid">
+      <div class="loading-panel tech-panel" style="grid-column: 1 / -1;">
+        <span class="pip pip-yellow" style="margin-right: 8px;"></span>
+        SYNCHRONIZING REPOSITORY TELEMETRY...
+      </div>
+    </div>
+  </main>
+
+  <!-- Industrial Triple Footer -->
+  <footer class="triple-footer">
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--cyan);"></span>
+        <span>SPECIFICATIONS</span>
+      </h3>
+      <p>Precision CMYK tactical design system calibrated for high-density hardware telemetry and electronic systems documentation.</p>
+    </div>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--magenta);"></span>
+        <span>TELEMETRY</span>
+      </h3>
+      <p>Status: SYS.ONLINE<br>Substack: derkyzer.substack.com<br>Host: GitHub Pages (derkyzer.com)</p>
+    </div>
+    <div class="footer-col">
+      <h3>
+        <span class="footer-pip" style="background: var(--yellow);"></span>
+        <span>NAVIGATION</span>
+      </h3>
+      <p>
+        <a href="../" style="color: var(--text-color); text-decoration: none;">// ROOT TERMINAL</a><br>
+        <a href="../blog/" style="color: var(--text-color); text-decoration: none;">// TRANSMISSION LOG</a><br>
+        <a href="../tools/" style="color: var(--text-color); text-decoration: none;">// INTERACTIVE TOOLS</a><br>
+        <a href="../contact/" style="color: var(--text-color); text-decoration: none;">// COMMS UPLINK</a>
+      </p>
+    </div>
+  </footer>
+</div>
+
+<button class="back-to-top chroma-hover" id="backToTop" aria-label="Back to Top">
+  <svg viewBox="0 0 24 24">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+
+<script src="../assets/js/core.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const username = "derkyzer";
+  const container = document.getElementById('projectsContainer');
+  let userAvatar = null;
+
+  // 1. Fetch user avatar
+  fetch(`https://api.github.com/users/${username}`)
+    .then(r => r.json())
+    .then(data => { userAvatar = data.avatar_url; })
+    .catch(err => console.warn('Avatar fetch error:', err));
+
+  // 2. Fetch Repositories
+  fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30`)
+    .then(r => r.json())
+    .then(repos => {
+      if (!Array.isArray(repos) || repos.length === 0) {
+        container.innerHTML = '<div class="loading-panel" style="grid-column: 1 / -1;">NO PUBLIC REPOSITORIES FOUND.</div>';
+        return;
+      }
+      container.innerHTML = '';
+
+      repos.filter(repo => !repo.fork).forEach((repo, idx) => {
+        const card = document.createElement('article');
+        card.className = 'repo-card tech-panel glow-container';
+
+        // Check for docs images
+        const docsUrl = `https://api.github.com/repos/${username}/${repo.name}/contents/docs?ref=main`;
+        fetch(docsUrl)
+          .then(res => res.status === 200 ? res.json() : [])
+          .then(contents => {
+            const images = Array.isArray(contents)
+              ? contents.filter(f => /\.(png|jpg|jpeg|gif|webp)$/i.test(f.name)).map(f => f.download_url)
+              : [];
+            renderCardContent(card, repo, idx, images);
+          })
+          .catch(() => {
+            renderCardContent(card, repo, idx, []);
+          });
+
+        container.appendChild(card);
+      });
+    })
+    .catch(err => {
+      console.error('Repos fetch error:', err);
+      container.innerHTML = '<div class="loading-panel" style="grid-column: 1 / -1; color: var(--magenta);">ERROR ACQUIRING GITHUB TELEMETRY. PLEASE RETRY.</div>';
+    });
+
+  function renderCardContent(card, repo, idx, images) {
+    const formattedId = String(idx + 1).padStart(2, '0');
+    const lang = repo.language || 'SYS.HARDWARE';
+    const desc = repo.description || 'Modular electronics and software asset repository.';
+
+    let mediaHTML = '';
+    if (images.length > 0) {
+      mediaHTML = `
+        <div class="repo-media">
+          <div class="repo-schematic-bg"></div>
+          ${images.map((src, i) => `<img src="${src}" alt="${repo.name}" class="${i === 0 ? 'active' : ''}">`).join('')}
+          ${images.length > 1 ? `
+            <div class="slideshow-nav">
+              <button class="slide-btn prev-btn">‹</button>
+              <button class="slide-btn next-btn">›</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    } else {
+      mediaHTML = `
+        <div class="repo-media">
+          <div class="repo-schematic-bg"></div>
+          <svg viewBox="0 0 80 80" width="48" height="48" style="opacity: 0.6;">
+            <rect x="15" y="15" width="50" height="50" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+            <circle cx="40" cy="40" r="14" fill="none" stroke="var(--magenta)" stroke-width="2"/>
+            <line x1="10" y1="40" x2="70" y2="40" stroke="var(--yellow)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <line x1="40" y1="10" x2="40" y2="70" stroke="var(--yellow)" stroke-width="1.5" stroke-dasharray="3 3"/>
+          </svg>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+
+      <div class="panel-header" style="margin-bottom: 12px;">
+        <span class="pip pip-cyan"></span>
+        <span class="title">MOD.${formattedId} // ${repo.name.toUpperCase()}</span>
+        <div class="panel-meta">
+          <span class="coord">★ ${repo.stargazers_count || 0}</span>
+        </div>
+      </div>
+
+      ${mediaHTML}
+
+      <h2 class="repo-title mono chroma-hover">${repo.name}</h2>
+      <p class="repo-desc">${desc}</p>
+
+      <div class="repo-footer">
+        <div class="repo-lang-badge">
+          <span class="repo-lang-dot"></span>
+          <span>${lang}</span>
+        </div>
+        <a href="${repo.html_url}" target="_blank" rel="noopener noreferrer" class="repo-link">
+          <span>SOURCE ↗</span>
+        </a>
+      </div>
+    `;
+
+    // Hook slideshow buttons if any
+    const prevBtn = card.querySelector('.prev-btn');
+    const nextBtn = card.querySelector('.next-btn');
+    if (prevBtn && nextBtn) {
+      const imgs = card.querySelectorAll('.repo-media img');
+      let currentImg = 0;
+      prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        imgs[currentImg].classList.remove('active');
+        currentImg = (currentImg - 1 + imgs.length) % imgs.length;
+        imgs[currentImg].classList.add('active');
+      });
+      nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        imgs[currentImg].classList.remove('active');
+        currentImg = (currentImg + 1) % imgs.length;
+        imgs[currentImg].classList.add('active');
+      });
+    }
+  }
+});
+</script>
+</body>
+</html>
