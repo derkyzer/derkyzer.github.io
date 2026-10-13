@@ -1,0 +1,19 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local sprint notes, plans, automation scripts, and generated index
+scripts/
+notes/
+plans/
+workspace_index.json
+AGENT_NOTES.md
+
+# Operating System temporary files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo

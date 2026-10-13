@@ -56,12 +56,6 @@
     border: 1px dashed var(--panel-border-bright);
     transform-style: preserve-3d;
     transform: rotateX(60deg);
-    animation: ringRotate 24s linear infinite;
-  }
-
-  @keyframes ringRotate {
-    from { transform: rotateX(60deg) rotateZ(0deg); }
-    to { transform: rotateX(60deg) rotateZ(360deg); }
   }
 
   .radar-crosshair {
@@ -93,14 +87,13 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     transform-style: preserve-3d;
   }
 
   .radar-node:hover {
     border-color: var(--cyan);
     box-shadow: 0 0 16px rgba(0, 255, 255, 0.4);
-    transform: scale(1.25);
   }
 
   .radar-node svg {
@@ -448,6 +441,14 @@
           <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
           <span>DIRECT FORM</span>
         </a>
+        <a href="https://www.linkedin.com/in/kyzerw" target="_blank" rel="noopener noreferrer" class="channel-pill glow-container">
+          <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          <span>LINKEDIN</span>
+        </a>
+        <div class="channel-pill glow-container pgp-pill" id="pgpChannelPill" title="Click to copy PGP Key Fingerprint" style="cursor: pointer;">
+          <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+          <span id="pgpText">PGP // 74B2 E77A 57F1 496C</span>
+        </div>
       </div>
     </section>
   </main>
@@ -457,16 +458,26 @@
     <div class="footer-col">
       <h3>
         <span class="footer-pip" style="background: var(--cyan);"></span>
-        <span>SPECIFICATIONS</span>
+        <span>SYS.STACK</span>
       </h3>
-      <p>Precision CMYK tactical design system calibrated for high-density hardware telemetry and electronic systems documentation.</p>
+      <ul>
+        <li><span class="idx">[01]</span> Python &amp; Data Pipeline Architecture</li>
+        <li><span class="idx">[02]</span> Vector Image Tracing &amp; Spline Engines</li>
+        <li><span class="idx">[03]</span> MATLAB &amp; Numerical Modeling</li>
+        <li><span class="idx">[04]</span> Professional Audio DAWs &amp; DSP Nodes</li>
+        <li><span class="idx">[05]</span> KiCAD Circuit Layout &amp; Bench EDA</li>
+        <li><span class="idx">[06]</span> UI/UX Interactive Systems &amp; GLSL</li>
+      </ul>
     </div>
     <div class="footer-col">
       <h3>
         <span class="footer-pip" style="background: var(--magenta);"></span>
-        <span>TELEMETRY</span>
+        <span>LOC.ORIGIN</span>
       </h3>
-      <p>Status: SYS.ONLINE<br>Substack: derkyzer.substack.com<br>Host: GitHub Pages (derkyzer.com)</p>
+      <p><strong style="color: #ffffff;">COORDINATES:</strong> 34.7304° N, 86.5861° W</p>
+      <p><strong style="color: #ffffff;">REGION:</strong> Southeast US // Huntsville, AL</p>
+      <p><strong style="color: #ffffff;">OPERATOR:</strong> KYZER WEBER</p>
+      <p><strong style="color: #ffffff;">STATION:</strong> BENCH MANIFEST // ACTIVE</p>
     </div>
     <div class="footer-col">
       <h3>
@@ -481,6 +492,10 @@
       </p>
     </div>
   </footer>
+
+  <div class="footer-bottom-text">
+    KYZER WEBER © 2026 // ALL RIGHTS RESERVED // BENCH MANIFEST VERIFIED
+  </div>
 </div>
 
 <button class="back-to-top chroma-hover" id="backToTop" aria-label="Back to Top">
@@ -515,6 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
       url: 'https://youtube.com/@derkyzer'
     },
     {
+      name: 'LinkedIn',
+      svg: '<svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>',
+      url: 'https://www.linkedin.com/in/kyzerw'
+    },
+    {
       name: 'Direct Comms Form',
       svg: '<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
       url: null
@@ -523,24 +543,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const ring = document.getElementById('radarRing');
   const targetName = document.getElementById('targetName');
+  const viewport = document.getElementById('radarViewport');
   const radius = 100; // Radius in px
 
-  socialIcons.forEach((item, index) => {
-    const angle = (index / socialIcons.length) * Math.PI * 2;
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius;
+  const nodes = [];
+  let currentTilt = 60;
+  let currentAngle = 0;
+  let isHovered = false;
 
+  socialIcons.forEach((item, index) => {
     const node = document.createElement('div');
     node.className = 'radar-node';
     node.innerHTML = item.svg;
-    node.style.transform = `translate(${x}px, ${y}px)`;
 
     node.addEventListener('mouseenter', () => {
       targetName.textContent = item.name.toUpperCase();
     });
 
     node.addEventListener('mouseleave', () => {
-      targetName.textContent = 'READY // ROTATING';
+      targetName.textContent = isHovered ? 'PAUSED // UPRIGHT' : 'READY // ROTATING';
     });
 
     node.addEventListener('click', () => {
@@ -552,7 +573,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     ring.appendChild(node);
+    nodes.push(node);
   });
+
+  if (viewport) {
+    viewport.addEventListener('mouseenter', () => {
+      isHovered = true;
+      targetName.textContent = 'PAUSED // UPRIGHT';
+    });
+    viewport.addEventListener('mouseleave', () => {
+      isHovered = false;
+      targetName.textContent = 'READY // ROTATING';
+    });
+  }
+
+  function animateRing() {
+    // Smoothly transition between 60deg tilted away and 0deg upright
+    const targetTilt = isHovered ? 0 : 60;
+    currentTilt += (targetTilt - currentTilt) * 0.08;
+
+    // Stop rotation when hovered, rotate when unhovered
+    if (!isHovered) {
+      currentAngle += 0.0055;
+    }
+
+    ring.style.transform = `rotateX(${currentTilt}deg)`;
+
+    nodes.forEach((node, index) => {
+      const angle = (index / socialIcons.length) * Math.PI * 2 + currentAngle;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      const isNodeHovered = node.matches(':hover');
+      const scale = isNodeHovered ? 1.25 : 1.0;
+
+      // Translate along the 3D ring plane, cancel out the tilt so icon remains facing the viewer,
+      // and keep bottom of icon pointed straight toward the bottom of the screen!
+      node.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotateX(${-currentTilt.toFixed(2)}deg) scale(${scale})`;
+    });
+
+    requestAnimationFrame(animateRing);
+  }
+
+  requestAnimationFrame(animateRing);
+
+  // PGP Key Fingerprint Click-to-Copy
+  const pgpPill = document.getElementById('pgpChannelPill');
+  const pgpText = document.getElementById('pgpText');
+  if (pgpPill && pgpText) {
+    pgpPill.addEventListener('click', () => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText('74B2 E77A 57F1 496C').then(() => {
+          const orig = pgpText.textContent;
+          pgpText.textContent = 'COPIED TO CLIPBOARD!';
+          setTimeout(() => {
+            pgpText.textContent = orig;
+          }, 2000);
+        }).catch(() => {});
+      }
+    });
+  }
 });
 </script>
 </body>

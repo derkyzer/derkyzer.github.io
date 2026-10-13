@@ -16,7 +16,7 @@
   // Shader Uniform Locations
   let uResolutionLoc, uMouseLoc, uTimeLoc, uRippleIntensityLoc;
   let uGridColorLoc, uGlowColorLoc, uIsDarkLoc, uCellSizeLoc;
-  let uBoxRectLoc, uBoxHoverLoc;
+  let uBoxRectLoc, uBoxHoverLoc, uDprLoc;
 
   // State
   let startTime = performance.now();
@@ -26,6 +26,7 @@
   let lastMouseTime = performance.now();
   let rippleIntensity = 0;
   let targetRippleIntensity = 0;
+  let currentDpr = 1;
 
   // Hovered Card State
   let targetBox = { x: 0, y: 0, width: 0, height: 0 };
@@ -54,6 +55,7 @@
     uniform float u_cell_size;
     uniform vec4 u_box_rect;
     uniform float u_box_hover;
+    uniform float u_dpr;
 
     float sdBox(vec2 p, vec2 b) {
       vec2 d = abs(p) - b;
@@ -75,8 +77,8 @@
     }
 
     void main() {
-      // Convert WebGL bottom-left coordinate origin to top-left screen coordinates
-      vec2 p = vec2(gl_FragCoord.x, u_resolution.y - gl_FragCoord.y);
+      // Convert WebGL bottom-left physical coordinate origin to top-left CSS coordinates
+      vec2 p = vec2(gl_FragCoord.x / u_dpr, u_resolution.y - gl_FragCoord.y / u_dpr);
 
       // 1. Mouse Ripple Wave Distortion (calibrated strength & warp-reactive glow)
       vec2 delta = p - u_mouse;
@@ -226,6 +228,7 @@
     uCellSizeLoc = gl.getUniformLocation(program, 'u_cell_size');
     uBoxRectLoc = gl.getUniformLocation(program, 'u_box_rect');
     uBoxHoverLoc = gl.getUniformLocation(program, 'u_box_hover');
+    uDprLoc = gl.getUniformLocation(program, 'u_dpr');
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -237,11 +240,11 @@
 
   function resizeCanvas() {
     if (!canvas || !gl) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    currentDpr = Math.min(window.devicePixelRatio || 1, 2);
     const displayWidth = window.innerWidth;
     const displayHeight = window.innerHeight;
-    const pixelWidth = Math.floor(displayWidth * dpr);
-    const pixelHeight = Math.floor(displayHeight * dpr);
+    const pixelWidth = Math.floor(displayWidth * currentDpr);
+    const pixelHeight = Math.floor(displayHeight * currentDpr);
 
     if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
       canvas.width = pixelWidth;
@@ -251,18 +254,18 @@
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
 
-  // Track Mouse Movement & Velocity
-  window.addEventListener('mousemove', (e) => {
+  // Unified Pointer & Touch Tracking
+  function handlePointer(clientX, clientY) {
     const now = performance.now();
     const dt = Math.max(1, now - lastMouseTime);
     lastMouseTime = now;
 
-    const dx = e.clientX - targetMouse.x;
-    const dy = e.clientY - targetMouse.y;
+    const dx = clientX - targetMouse.x;
+    const dy = clientY - targetMouse.y;
     const speed = Math.sqrt(dx * dx + dy * dy) / dt;
 
-    targetMouse.x = e.clientX;
-    targetMouse.y = e.clientY;
+    targetMouse.x = clientX;
+    targetMouse.y = clientY;
 
     if (mouse.x < -1000) {
       mouse.x = targetMouse.x;
@@ -271,6 +274,10 @@
 
     // Smoothly build up target intensity without abrupt jumps
     targetRippleIntensity = Math.min(0.85, targetRippleIntensity + speed * 0.08);
+  }
+
+  window.addEventListener('mousemove', (e) => {
+    handlePointer(e.clientX, e.clientY);
   }, { passive: true });
 
   window.addEventListener('mouseleave', () => {
@@ -278,6 +285,30 @@
     targetMouse.y = -2000;
     targetRippleIntensity = 0;
   });
+
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 0) {
+      handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length > 0) {
+      handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    targetMouse.x = -2000;
+    targetMouse.y = -2000;
+    targetRippleIntensity = 0;
+  }, { passive: true });
+
+  window.addEventListener('touchcancel', () => {
+    targetMouse.x = -2000;
+    targetMouse.y = -2000;
+    targetRippleIntensity = 0;
+  }, { passive: true });
 
   // Track Hover on Cards/Panels across all pages
   const CARD_SELECTORS = [
@@ -383,6 +414,7 @@
 
     gl.uniform4f(uBoxRectLoc, currentBox.x, currentBox.y, currentBox.width, currentBox.height);
     gl.uniform1f(uBoxHoverLoc, hoverProgress);
+    gl.uniform1f(uDprLoc, currentDpr);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
