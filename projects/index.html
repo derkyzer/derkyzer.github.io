@@ -36,7 +36,7 @@
 
   .repo-media {
     width: 100%;
-    height: 180px;
+    height: 230px;
     background: var(--panel-bg-alt);
     border: 1px solid var(--panel-border);
     margin-bottom: 16px;
@@ -50,7 +50,7 @@
   .repo-media img {
     max-width: 100%;
     max-height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: none;
   }
 
@@ -64,14 +64,25 @@
     border-radius: 50%;
     border: 2px solid var(--cyan);
     box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+    object-fit: cover;
   }
 
   .repo-schematic-bg {
     position: absolute;
     inset: 0;
-    opacity: 0.15;
-    background-image: linear-gradient(var(--cyan) 1px, transparent 1px), linear-gradient(90deg, var(--cyan) 1px, transparent 1px);
+    pointer-events: none;
+    z-index: 2;
+    background-image:
+      linear-gradient(rgba(0, 255, 255, 0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 255, 0.22) 1px, transparent 1px);
     background-size: 16px 16px;
+    background-position: center center;
+  }
+
+  body:not(.dark-mode) .repo-schematic-bg {
+    background-image:
+      linear-gradient(rgba(0, 130, 130, 0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 130, 130, 0.22) 1px, transparent 1px);
   }
 
   .slideshow-nav {
@@ -313,10 +324,10 @@
         <span class="footer-pip" style="background: var(--magenta);"></span>
         <span>LOC.ORIGIN</span>
       </h3>
-      <p><strong style="color: #ffffff;">COORDINATES:</strong> 34.7304° N, 86.5861° W</p>
-      <p><strong style="color: #ffffff;">REGION:</strong> Southeast US // Huntsville, AL</p>
-      <p><strong style="color: #ffffff;">OPERATOR:</strong> KYZER WEBER</p>
-      <p><strong style="color: #ffffff;">STATION:</strong> BENCH MANIFEST // ACTIVE</p>
+      <p><strong>COORDINATES:</strong> 34.7304° N, 86.5861° W</p>
+      <p><strong>REGION:</strong> Southeast US // Huntsville, AL</p>
+      <p><strong>OPERATOR:</strong> KYZER WEBER</p>
+      <p><strong>STATION:</strong> BENCH MANIFEST // ACTIVE</p>
     </div>
     <div class="footer-col">
       <h3>

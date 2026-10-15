@@ -323,9 +323,24 @@
     '.subpage-hero'
   ].join(', ');
 
+  let lastHoveredElement = null;
+  let lastBoxRect = { x: 0, y: 0 };
+
   function updateHoveredBox() {
     if (activeHoverElement && activeHoverElement.isConnected) {
       const rect = activeHoverElement.getBoundingClientRect();
+      if (activeHoverElement === lastHoveredElement) {
+        // While scrolling on the same hovered element, instantly transfer the scroll delta to currentBox
+        // so the shader border never lags behind during scrolling.
+        const deltaX = rect.left - lastBoxRect.x;
+        const deltaY = rect.top - lastBoxRect.y;
+        currentBox.x += deltaX;
+        currentBox.y += deltaY;
+      }
+      lastHoveredElement = activeHoverElement;
+      lastBoxRect.x = rect.left;
+      lastBoxRect.y = rect.top;
+
       targetBox.x = rect.left;
       targetBox.y = rect.top;
       targetBox.width = rect.width;
@@ -333,6 +348,7 @@
       isHovered = true;
     } else {
       isHovered = false;
+      lastHoveredElement = null;
     }
   }
 
@@ -351,6 +367,7 @@
       if (!related) {
         activeHoverElement = null;
         isHovered = false;
+        lastHoveredElement = null;
       } else {
         activeHoverElement = related;
         updateHoveredBox();
@@ -367,6 +384,11 @@
   // Main Render Loop
   function render() {
     if (!gl || !program) return;
+
+    // Refresh box position on every frame in case of active scrolling
+    if (activeHoverElement) {
+      updateHoveredBox();
+    }
 
     const now = performance.now();
     const elapsedTime = (now - startTime) / 1000.0;

@@ -10,6 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Periodic Micro-Voltage Blink on K, Y, Z (every ~26s)
   const cmyGlyphs = [document.getElementById('glyphK'), document.getElementById('glyphY'), document.getElementById('glyphZ')].filter(Boolean);
+
+  // Clean up initial startup animation class so hover colors trigger immediately
+  cmyGlyphs.forEach(el => {
+    el.addEventListener('animationend', () => {
+      el.classList.remove('voltage-startup');
+      el.classList.remove('voltage-blink');
+    });
+  });
+  setTimeout(() => {
+    cmyGlyphs.forEach(el => el.classList.remove('voltage-startup'));
+  }, 500);
+
   setInterval(() => {
     cmyGlyphs.forEach(el => {
       el.classList.remove('voltage-blink');
