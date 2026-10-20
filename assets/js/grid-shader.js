@@ -96,9 +96,10 @@
       vec2 gridCoord = mod(distortedP, u_cell_size);
       vec2 distToLine = min(gridCoord, u_cell_size - gridCoord);
       float minDist = min(distToLine.x, distToLine.y);
-      float gridLine = smoothstep(1.2, 0.1, minDist);
+      float gridLine = smoothstep(1.25, 0.08, minDist);
 
-      float baseAlpha = (u_is_dark > 0.5) ? 0.042 : 0.07;
+      // Higher base alpha in light theme ensures crisp grid line visibility even without mouse distortion
+      float baseAlpha = (u_is_dark > 0.5) ? 0.045 : 0.19;
 
       // 3. Ambient Cursor & Warp-Reactive Glow
       // Glow proportional to the physical warp displacement applied to the grid
@@ -346,6 +347,15 @@
       targetBox.width = rect.width;
       targetBox.height = rect.height;
       isHovered = true;
+
+      // When reduce-motion is enabled, immediately snap currentBox to avoid smooth sliding
+      if (document.body.classList.contains('reduce-motion')) {
+        currentBox.x = targetBox.x;
+        currentBox.y = targetBox.y;
+        currentBox.width = targetBox.width;
+        currentBox.height = targetBox.height;
+        hoverProgress = 1.0;
+      }
     } else {
       isHovered = false;
       lastHoveredElement = null;
@@ -376,6 +386,15 @@
   }, { passive: true });
 
   window.addEventListener('scroll', updateHoveredBox, { passive: true });
+  let isScrolling = false;
+  let scrollTimeout = null;
+  window.addEventListener('scroll', () => {
+    isScrolling = true;
+    if (activeHoverElement) updateHoveredBox();
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => { isScrolling = false; }, 150);
+  }, { passive: true });
+
   window.addEventListener('resize', () => {
     resizeCanvas();
     updateHoveredBox();
@@ -385,8 +404,8 @@
   function render() {
     if (!gl || !program) return;
 
-    // Refresh box position on every frame in case of active scrolling
-    if (activeHoverElement) {
+    // Refresh box position during active scrolling only, eliminating per-frame reflows
+    if (activeHoverElement && isScrolling) {
       updateHoveredBox();
     }
 
@@ -402,27 +421,38 @@
     targetRippleIntensity *= 0.94;
     if (rippleIntensity < 0.001) rippleIntensity = 0;
 
-    // Smooth hover progress lerp
-    const targetProgress = isHovered ? 1.0 : 0.0;
-    hoverProgress += (targetProgress - hoverProgress) * 0.14;
-    if (hoverProgress < 0.001 && !isHovered) hoverProgress = 0;
+    const isReduceMotion = document.body.classList.contains('reduce-motion');
 
-    // Smooth box rect lerp
-    currentBox.x += (targetBox.x - currentBox.x) * 0.25;
-    currentBox.y += (targetBox.y - currentBox.y) * 0.25;
-    currentBox.width += (targetBox.width - currentBox.width) * 0.25;
-    currentBox.height += (targetBox.height - currentBox.height) * 0.25;
+    if (isReduceMotion) {
+      hoverProgress = isHovered ? 1.0 : 0.0;
+      currentBox.x = targetBox.x;
+      currentBox.y = targetBox.y;
+      currentBox.width = targetBox.width;
+      currentBox.height = targetBox.height;
+    } else {
+      // Smooth hover progress lerp
+      const targetProgress = isHovered ? 1.0 : 0.0;
+      hoverProgress += (targetProgress - hoverProgress) * 0.14;
+      if (hoverProgress < 0.001 && !isHovered) hoverProgress = 0;
+
+      // Smooth box rect lerp
+      currentBox.x += (targetBox.x - currentBox.x) * 0.25;
+      currentBox.y += (targetBox.y - currentBox.y) * 0.25;
+      currentBox.width += (targetBox.width - currentBox.width) * 0.25;
+      currentBox.height += (targetBox.height - currentBox.height) * 0.25;
+    }
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     const isDark = document.body.classList.contains('dark-mode');
+    const disableWaves = window.KYZER_DISABLE_GRID_WAVES || document.body.classList.contains('reduce-motion');
 
     // Uniform updates
     gl.uniform2f(uResolutionLoc, window.innerWidth, window.innerHeight);
     gl.uniform2f(uMouseLoc, mouse.x, mouse.y);
     gl.uniform1f(uTimeLoc, elapsedTime);
-    gl.uniform1f(uRippleIntensityLoc, rippleIntensity);
+    gl.uniform1f(uRippleIntensityLoc, disableWaves ? 0.0 : rippleIntensity);
     gl.uniform1f(uIsDarkLoc, isDark ? 1.0 : 0.0);
     gl.uniform1f(uCellSizeLoc, 24.0);
 

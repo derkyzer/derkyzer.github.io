@@ -19,6 +19,126 @@ document.addEventListener('DOMContentLoaded', () => {
     body.classList.add('dark-mode');
   }
 
+  // 1b. Accessibility Preferences Persistence
+  const a11yPanel = document.getElementById('a11yPanel');
+  const a11yToggle = document.getElementById('a11yToggle');
+  const checkReduceMotion = document.getElementById('a11yReduceMotion');
+  const checkHighContrast = document.getElementById('a11yHighContrast');
+  const checkDisableWaves = document.getElementById('a11yDisableWaves');
+  const checkDyslexicFont = document.getElementById('a11yDyslexicFont');
+  const checkHighVisFont = document.getElementById('a11yHighVisFont');
+
+  if (localStorage.getItem('kyzer_reduce_motion') === 'true') {
+    body.classList.add('reduce-motion');
+    if (checkReduceMotion) checkReduceMotion.checked = true;
+  }
+  if (localStorage.getItem('kyzer_high_contrast') === 'true') {
+    body.classList.add('high-contrast');
+    if (checkHighContrast) checkHighContrast.checked = true;
+  }
+  if (localStorage.getItem('kyzer_disable_waves') === 'true') {
+    window.KYZER_DISABLE_GRID_WAVES = true;
+    if (checkDisableWaves) checkDisableWaves.checked = true;
+  }
+  if (localStorage.getItem('kyzer_dyslexic_font') === 'true') {
+    body.classList.add('font-dyslexic');
+    if (checkDyslexicFont) checkDyslexicFont.checked = true;
+  }
+  if (localStorage.getItem('kyzer_high_vis_font') === 'true') {
+    body.classList.add('font-high-visibility');
+    if (checkHighVisFont) checkHighVisFont.checked = true;
+  }
+
+  // Dynamic Positioning for Separated Accessibility Pullout
+  function updateA11yPanelPosition() {
+    if (!a11yPanel) return;
+    const header = document.querySelector('.title-bar');
+    let topOffset = 0;
+
+    if (tray && tray.classList.contains('open')) {
+      const headerHeight = header ? header.offsetHeight : 60;
+      const trayHeight = tray.offsetHeight || 80;
+      topOffset = headerHeight + trayHeight;
+    } else if (header && (!body.classList.contains('enable-header-scroll-fade') || body.classList.contains('scrolled') || body.classList.contains('subpage'))) {
+      const headerRect = header.getBoundingClientRect();
+      topOffset = Math.max(0, headerRect.bottom);
+    } else {
+      topOffset = 0;
+    }
+
+    a11yPanel.style.setProperty('--a11y-top', `${topOffset}px`);
+  }
+
+  window.addEventListener('scroll', updateA11yPanelPosition, { passive: true });
+  window.addEventListener('resize', updateA11yPanelPosition, { passive: true });
+
+  if (a11yToggle && a11yPanel) {
+    a11yToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      updateA11yPanelPosition();
+      a11yPanel.classList.toggle('open');
+    });
+
+    a11yPanel.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (a11yPanel.classList.contains('open')) {
+        const inPanel = a11yPanel.contains(e.target);
+        const inToggle = a11yToggle.contains(e.target);
+        if (!inPanel && !inToggle) {
+          a11yPanel.classList.remove('open');
+        }
+      }
+    });
+
+    if (checkReduceMotion) {
+      checkReduceMotion.addEventListener('change', (e) => {
+        body.classList.toggle('reduce-motion', e.target.checked);
+        localStorage.setItem('kyzer_reduce_motion', e.target.checked ? 'true' : 'false');
+        if (typeof window.KYZER_RESET_SHAPE_DISPLACEMENT === 'function') {
+          window.KYZER_RESET_SHAPE_DISPLACEMENT();
+        }
+      });
+    }
+    if (checkHighContrast) {
+      checkHighContrast.addEventListener('change', (e) => {
+        body.classList.toggle('high-contrast', e.target.checked);
+        localStorage.setItem('kyzer_high_contrast', e.target.checked ? 'true' : 'false');
+      });
+    }
+    if (checkDisableWaves) {
+      checkDisableWaves.addEventListener('change', (e) => {
+        window.KYZER_DISABLE_GRID_WAVES = e.target.checked;
+        localStorage.setItem('kyzer_disable_waves', e.target.checked ? 'true' : 'false');
+      });
+    }
+    if (checkDyslexicFont) {
+      checkDyslexicFont.addEventListener('change', (e) => {
+        body.classList.toggle('font-dyslexic', e.target.checked);
+        localStorage.setItem('kyzer_dyslexic_font', e.target.checked ? 'true' : 'false');
+        if (e.target.checked && checkHighVisFont) {
+          checkHighVisFont.checked = false;
+          body.classList.remove('font-high-visibility');
+          localStorage.setItem('kyzer_high_vis_font', 'false');
+        }
+      });
+    }
+    if (checkHighVisFont) {
+      checkHighVisFont.addEventListener('change', (e) => {
+        body.classList.toggle('font-high-visibility', e.target.checked);
+        localStorage.setItem('kyzer_high_vis_font', e.target.checked ? 'true' : 'false');
+        if (e.target.checked && checkDyslexicFont) {
+          checkDyslexicFont.checked = false;
+          body.classList.remove('font-dyslexic');
+          localStorage.setItem('kyzer_dyslexic_font', 'false');
+        }
+      });
+    }
+  }
+
   if (themeToggle) {
     themeToggle.addEventListener('click', (e) => {
       e.preventDefault();
@@ -26,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       body.removeAttribute('style');
       const isDark = body.classList.contains('dark-mode');
       localStorage.setItem('kyzer_theme', isDark ? 'dark' : 'light');
+      window.dispatchEvent(new CustomEvent('themechange', { detail: { isDark } }));
     });
   }
 
@@ -36,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openTray() {
       tray.classList.add('open');
       if (pageWrapper) pageWrapper.classList.add('page-down');
+      updateA11yPanelPosition();
     }
 
     function closeTray() {
@@ -45,7 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
         iconTooltip.style.opacity = '0';
         iconTooltip.style.top = '-9999px';
       }
+      updateA11yPanelPosition();
     }
+
+    trayToggle.addEventListener('mouseenter', () => {
+      cancelClose();
+      openTray();
+    });
 
     trayToggle.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -136,6 +264,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // 3b. Dynamic Active Navigation Highlighting in Drawer Tray
+  const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+  document.querySelectorAll('.icon-links a').forEach(link => {
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#')) return;
+    try {
+      const linkUrl = new URL(href, window.location.href);
+      const linkPath = linkUrl.pathname.replace(/\/index\.html$/, '/');
+      if (linkPath === currentPath && currentPath !== '/') {
+        link.style.borderBottom = '2px solid var(--cyan)';
+        link.setAttribute('aria-current', 'page');
+      }
+    } catch (err) {}
+  });
+
   // 4. Back to Top Smooth Scroll
   if (backToTop) {
     backToTop.addEventListener('click', () => {
@@ -174,12 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 6. CMYK Ambient Kinetic Shapes (Active across all pages)
   function initAmbientShapes() {
     const shapes = [
-      { type: 'circle', color: '#00FFFF', fill: true },
-      { type: 'circle', color: '#00FFFF', fill: false },
-      { type: 'rect', color: '#FF00FF', fill: true },
-      { type: 'rect', color: '#FF00FF', fill: false },
-      { type: 'polygon', color: '#FFFF00', fill: true },
-      { type: 'polygon', color: '#FFFF00', fill: false }
+      { type: 'circle', color: 'var(--cyan)', fill: true },
+      { type: 'circle', color: 'var(--cyan)', fill: false },
+      { type: 'rect', color: 'var(--magenta)', fill: true },
+      { type: 'rect', color: 'var(--magenta)', fill: false },
+      { type: 'polygon', color: 'var(--yellow)', fill: true },
+      { type: 'polygon', color: 'var(--yellow)', fill: false }
     ];
 
     const activeShapes = [];
@@ -224,51 +367,68 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(svg);
       activeShapes.push(svg);
 
-      function respawnShape() {
-        // Step 1: Smoothly fade out at CURRENT scale and position (prevents jump)
+      function spawnShape() {
+        // Step 1: Assign size and coordinates while invisible
         svg.style.opacity = '0';
         svg.style.setProperty('--push-x', '0px');
         svg.style.setProperty('--push-y', '0px');
         delete svg.dataset.pushed;
 
-        // Step 2: Only after transition completes (1000ms), mutate size and coordinates while invisible
+        const newSize = Math.floor(Math.random() * 70) + 40;
+        svg.setAttribute('width', newSize);
+        svg.setAttribute('height', newSize);
+
+        const maxX = Math.max(20, window.innerWidth - newSize - 40);
+        const maxY = Math.max(20, window.innerHeight - newSize - 40);
+        const x = Math.random() * maxX;
+        const y = Math.random() * maxY;
+
+        svg.style.left = x + 'px';
+        svg.style.top = y + 'px';
+
+        // Step 2: Fade in gracefully
+        requestAnimationFrame(() => {
+          svg.style.opacity = '0.22';
+        });
+
+        // Step 3: Lifecycle expiration - after lifetime, smoothly fade out before relocating
+        const lifetime = Math.random() * 6000 + 7500;
         setTimeout(() => {
-          const newSize = Math.floor(Math.random() * 70) + 40;
-          svg.setAttribute('width', newSize);
-          svg.setAttribute('height', newSize);
+          // Smooth fade out
+          svg.style.opacity = '0';
+          svg.style.setProperty('--push-x', '0px');
+          svg.style.setProperty('--push-y', '0px');
+          delete svg.dataset.pushed;
 
-          const maxX = Math.max(20, window.innerWidth - newSize - 40);
-          const maxY = Math.max(20, window.innerHeight - newSize - 40);
-          const x = Math.random() * maxX;
-          const y = Math.random() * maxY;
-
-          svg.style.left = x + 'px';
-          svg.style.top = y + 'px';
-
-          // Step 3: Fade in gracefully
-          requestAnimationFrame(() => {
-            svg.style.opacity = '0.22';
-          });
-        }, 1050);
-
-        // Schedule next respawn cycle
-        setTimeout(respawnShape, Math.random() * 6000 + 8000);
+          // Wait until opacity transition completes (1200ms) + ambient delay before respawning
+          setTimeout(spawnShape, 1200 + Math.random() * 1200);
+        }, lifetime);
       }
 
       setTimeout(() => {
-        respawnShape();
+        spawnShape();
       }, index * 400);
     }
 
     shapes.forEach((shape, index) => createShape(shape, index));
 
-    // Mouse approach displacement effect (repels shape away when cursor approaches)
+    function resetShapeDisplacement() {
+      activeShapes.forEach(svg => {
+        svg.style.setProperty('--push-x', '0px');
+        svg.style.setProperty('--push-y', '0px');
+        delete svg.dataset.pushed;
+      });
+    }
+    window.KYZER_RESET_SHAPE_DISPLACEMENT = resetShapeDisplacement;
+
+    // Mouse approach displacement effect (repels shape away when cursor approaches; disabled under reduce-motion)
     let mouseDisplaceRaf = null;
     let lastClientX = -9999;
     let lastClientY = -9999;
 
     function applyMouseDisplacement() {
       mouseDisplaceRaf = null;
+      if (body.classList.contains('reduce-motion')) return;
       const proximityRadius = 140; // Proximity threshold in px
       const maxRepel = 48; // Maximum push offset in px
 

@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>KYZER // Communications & Social Array</title>
+<title>KYZER // Communications &amp; Social Array</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="manifest" href="../site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -244,29 +246,19 @@
 <!-- Calibrated Title Bar -->
 <header class="title-bar">
   <div class="nav-colophon-tag">
-    <a href="../" class="subpage-brand-kyzer" aria-label="Return to KYZER Home" data-tooltip="KYZER // Home">
-      <span class="morph-slot">
-        <span class="swatch-rect rect-cyan"></span>
-        <span class="morph-char char-k">K</span>
-      </span>
-      <span class="morph-slot">
-        <span class="swatch-rect rect-magenta"></span>
-        <span class="morph-char char-y">Y</span>
-      </span>
-      <span class="morph-slot">
-        <span class="swatch-rect rect-yellow"></span>
-        <span class="morph-char char-z">Z</span>
-      </span>
-      <span class="morph-suffix">
-        <span class="char-e">E</span><span class="char-r">R</span>
-      </span>
-    </a>
+    <a href="../" class="subpage-brand-kyzer" aria-label="Return to KYZER Home" data-tooltip="KYZER // Home"><span class="morph-slot"><span class="swatch-rect rect-cyan"></span><span class="morph-char char-k">K</span></span><span class="morph-slot"><span class="swatch-rect rect-magenta"></span><span class="morph-char char-y">Y</span></span><span class="morph-slot"><span class="swatch-rect rect-yellow"></span><span class="morph-char char-z">Z</span></span><span class="morph-suffix"><span class="char-e">E</span><span class="char-r">R</span></span></a>
   </div>
 
   <div class="subpage-title-center mono" style="font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase;">
     MOD.03 // COMMS ARRAY
   </div>
 
+  <button class="a11y-toggle chroma-hover" id="a11yToggle" aria-label="Accessibility Settings" title="Accessibility Settings" data-tooltip="Accessibility Options">
+    <svg viewBox="0 0 160 160" role="img" aria-label="Accessibility Settings Icon">
+      <circle cx="80" cy="40" r="14" fill="var(--cyan)"></circle>
+      <path d="M 45 65 L 115 65 M 80 65 L 80 110 M 80 110 L 55 150 M 80 110 L 105 150" stroke="var(--yellow)" stroke-width="8" stroke-linecap="round"></path>
+    </svg>
+  </button>
   <button class="tray-toggle chroma-hover" id="trayToggle" aria-label="Open Navigation Drawer">☰</button>
 </header>
 
@@ -277,52 +269,81 @@
       <svg class="icon" viewBox="0 0 160 160">
         <defs>
           <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#00FFFF" />
-            <stop offset="1" stop-color="#FF00FF" />
+            <stop offset="0" stop-color="var(--cyan)" />
+            <stop offset="1" stop-color="var(--magenta)" />
           </linearGradient>
         </defs>
         <rect fill="none" stroke="url(#gradient0)" stroke-width="6" height="50" width="80" x="40" y="55"></rect>
         <line stroke="url(#gradient0)" stroke-width="6" x1="55" x2="105" y1="40" y2="40"></line>
-        <circle cx="80" cy="80" fill="#00FFFF" r="8"></circle>
+        <circle cx="80" cy="80" fill="var(--cyan)" r="8"></circle>
       </svg>
     </a>
     <a href="../blog/" data-tooltip="Dev Notes // Blog">
       <svg class="icon" viewBox="0 0 160 160">
         <defs>
           <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#FF00FF" />
-            <stop offset="1" stop-color="#FFFF00" />
+            <stop offset="0" stop-color="var(--magenta)" />
+            <stop offset="1" stop-color="var(--yellow)" />
           </linearGradient>
         </defs>
         <rect fill="none" stroke="url(#gradient1)" stroke-width="6" height="70" width="60" x="50" y="45"></rect>
-        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
-        <line stroke="#ffffff" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
-        <line stroke="#ffffff" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
+        <line stroke="var(--heading-color)" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
+        <line stroke="var(--heading-color)" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
+        <line stroke="var(--heading-color)" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
       </svg>
     </a>
     <a href="#" id="themeToggle" data-tooltip="Calibrate Theme">
       <svg class="icon" viewBox="0 0 160 160">
-        <circle cx="80" cy="80" fill="none" stroke="#FFFF00" stroke-width="6" r="30"></circle>
-        <circle cx="80" cy="80" fill="#00FFFF" r="14"></circle>
-        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
-        <line stroke="#FF00FF" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
-        <line stroke="#FF00FF" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
-        <line stroke="#FF00FF" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
+        <circle cx="80" cy="80" fill="none" stroke="var(--yellow)" stroke-width="6" r="30"></circle>
+        <circle cx="80" cy="80" fill="var(--cyan)" r="14"></circle>
+        <line stroke="var(--magenta)" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
+        <line stroke="var(--magenta)" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
+        <line stroke="var(--magenta)" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
+        <line stroke="var(--magenta)" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
       </svg>
     </a>
     <a href="../tools/" data-tooltip="Interactive Scripts & Tools">
       <svg class="icon" viewBox="0 0 160 160">
-        <polygon fill="none" stroke="#00FFFF" stroke-width="6" points="80,45 115,115 45,115"></polygon>
-        <circle cx="80" cy="90" fill="#FF00FF" r="10"></circle>
+        <polygon fill="none" stroke="var(--cyan)" stroke-width="6" points="80,45 115,115 45,115"></polygon>
+        <circle cx="80" cy="90" fill="var(--magenta)" r="10"></circle>
       </svg>
     </a>
     <a href="../contact/" data-tooltip="Socials & Comms" style="border-bottom: 2px solid var(--yellow);">
-      <svg class="icon" viewBox="0 0 160 160">
-        <rect fill="none" stroke="#FFFF00" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
-        <polyline fill="none" stroke="#00FFFF" stroke-width="5" points="45,55 80,85 115,55"></polyline>
+      <svg class="icon" viewBox="0 0 160 160" role="img" aria-label="Contact Icon">
+        <title>Socials & Comms</title>
+        <rect fill="none" stroke="var(--yellow)" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
+        <polyline fill="none" stroke="var(--cyan)" stroke-width="5" points="45,55 80,85 115,55"></polyline>
       </svg>
     </a>
   </nav>
+</div>
+
+<!-- Accessibility Options Submenu (Separated Pullout) -->
+<div class="tray-a11y-panel" id="a11yPanel" aria-label="Accessibility Controls">
+  <div class="tray-a11y-header">
+    <span>// ACCESSIBILITY CALIBRATION</span>
+    <span style="font-size: 9px; color: var(--text-dim);">SYS.CFG</span>
+  </div>
+  <label class="tray-a11y-row">
+    <span>Reduced Motion</span>
+    <input type="checkbox" id="a11yReduceMotion" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>High Contrast Reticle</span>
+    <input type="checkbox" id="a11yHighContrast" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>Disable Grid Distortion Waves</span>
+    <input type="checkbox" id="a11yDisableWaves" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>Dyslexic Font</span>
+    <input type="checkbox" id="a11yDyslexicFont" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>High Visibility Font</span>
+    <input type="checkbox" id="a11yHighVisFont" />
+  </label>
 </div>
 
 <div class="tooltip" id="iconTooltip"></div>
@@ -599,6 +620,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function animateRing() {
+    const isReduceMotion = document.body.classList.contains('reduce-motion');
+    if (isReduceMotion) {
+      // Keep radial stationary, upright, and fully accessible without continuous motion
+      currentTilt = 0;
+      ring.style.transform = 'rotateX(0deg)';
+      nodes.forEach((node, index) => {
+        const angle = (index / socialIcons.length) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        node.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 5px) rotateX(0deg)`;
+      });
+      if (!hoveredNodeName) {
+        targetName.textContent = 'STATIONARY // ACCESSIBLE';
+      }
+      requestAnimationFrame(animateRing);
+      return;
+    }
+
     // Smoothly transition between 60deg tilted away and 0deg upright
     const targetTilt = isHovered ? 0 : 60;
     if (Math.abs(targetTilt - currentTilt) > 0.01) {

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" fill="#0d0d0d" rx="8" />
+  <g font-family="'JetBrains Mono', monospace" font-size="28" font-weight="700">
+    <text x="14" y="44" fill="#00FFFF">K</text>
+    <text x="34" y="44" fill="#FFFF00">Z</text>
+  </g>
+  <circle cx="34" cy="20" r="3" fill="#FF00FF" />
+</svg>

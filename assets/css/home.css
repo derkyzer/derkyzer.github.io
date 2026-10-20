@@ -132,7 +132,7 @@
     position: relative;
     width: 100%;
     min-height: 380px;
-    background: var(--bottom-text-bg);
+    background: var(--panel-bg-alt);
     border: 1px solid var(--panel-border);
     display: flex;
     align-items: center;
@@ -227,7 +227,7 @@
   .nav-step-btn.active {
     border-color: var(--cyan);
     color: var(--cyan);
-    background: rgba(0, 255, 255, 0.05);
+    background: rgba(var(--cyan-rgb), 0.08);
   }
 
 
@@ -237,7 +237,7 @@
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     padding: 28px;
-    margin-bottom: 60px;
+    margin-bottom: 24px;
   }
 
 
@@ -273,7 +273,7 @@
 
   .waveform-box {
     position: relative;
-    background: #0a0a0a;
+    background: var(--panel-bg-alt);
     border: 1px solid var(--panel-border);
     padding: 16px;
     height: 140px;
@@ -349,12 +349,12 @@
   .audio-ctrl-btn:hover {
     border-color: var(--magenta);
     color: var(--magenta);
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.25);
+    box-shadow: 0 0 10px rgba(var(--magenta-rgb), 0.25);
   }
 
 
   .audio-ctrl-btn.active {
-    background: rgba(255, 0, 255, 0.12);
+    background: rgba(var(--magenta-rgb), 0.12);
     border-color: var(--magenta);
     color: #ffffff;
   }

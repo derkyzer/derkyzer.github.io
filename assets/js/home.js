@@ -8,22 +8,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const heroLogo = document.getElementById('heroLogo');
 
 
-  // Periodic Micro-Voltage Blink on K, Y, Z (every ~26s)
-  const cmyGlyphs = [document.getElementById('glyphK'), document.getElementById('glyphY'), document.getElementById('glyphZ')].filter(Boolean);
+  // Periodic Micro-Voltage Blink on K, Y, Z, E, R (every ~26s)
+  const heroGlyphs = [
+    document.getElementById('glyphK'),
+    document.getElementById('glyphY'),
+    document.getElementById('glyphZ'),
+    document.getElementById('glyphSharedE'),
+    document.getElementById('glyphSharedR')
+  ].filter(Boolean);
 
   // Clean up initial startup animation class so hover colors trigger immediately
-  cmyGlyphs.forEach(el => {
+  heroGlyphs.forEach(el => {
     el.addEventListener('animationend', () => {
       el.classList.remove('voltage-startup');
       el.classList.remove('voltage-blink');
     });
   });
   setTimeout(() => {
-    cmyGlyphs.forEach(el => el.classList.remove('voltage-startup'));
+    heroGlyphs.forEach(el => el.classList.remove('voltage-startup'));
   }, 500);
 
   setInterval(() => {
-    cmyGlyphs.forEach(el => {
+    heroGlyphs.forEach(el => {
       el.classList.remove('voltage-blink');
       void el.offsetWidth; // trigger reflow
       el.classList.add('voltage-blink');
@@ -140,41 +146,52 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 
 
-  // SVG Data Generator for Crisp Technical Specimen Cards
-  function createSpecimenSVG(type) {
+  // SVG Data Generator for Crisp Technical Specimen Cards (Theme-reactive)
+  function createSpecimenSVG(type, isDark) {
+    const bg = isDark ? '#161616' : '#f0f0ea';
+    const grid = isDark ? '#262626' : '#d8d8d0';
+    const frame = isDark ? '#3a3a3a' : '#b8b8ae';
+    const text = isDark ? '#888888' : '#333333';
+    const cyan = isDark ? '#00FFFF' : '#0099cc';
+    const magenta = isDark ? '#FF00FF' : '#d90479';
+    const yellow = isDark ? '#FFFF00' : '#e59b00';
+
+    let content = '';
     if (type === 'trace') {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="%230d0d0d"/><path d="M50 170 Q150 40 250 170 T450 170 T550 120" fill="none" stroke="%2300FFFF" stroke-width="2"/><path d="M50 190 Q180 290 300 170 T500 220" fill="none" stroke="%23FF00FF" stroke-width="2" stroke-dasharray="4 4"/><circle cx="250" cy="170" r="5" fill="%23FFFF00"/><circle cx="450" cy="170" r="5" fill="%2300FFFF"/><text x="40" y="40" fill="%23666666" font-family="monospace" font-size="12">CONTOUR_SPLINE // POLYNOMIAL DECOMPOSITION</text></svg>`;
+      content = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="${bg}"/><path d="M50 170 Q150 40 250 170 T450 170 T550 120" fill="none" stroke="${cyan}" stroke-width="2.5"/><path d="M50 190 Q180 290 300 170 T500 220" fill="none" stroke="${magenta}" stroke-width="2.5" stroke-dasharray="4 4"/><circle cx="250" cy="170" r="5" fill="${yellow}"/><circle cx="450" cy="170" r="5" fill="${cyan}"/><text x="40" y="40" fill="${text}" font-family="monospace" font-size="12">CONTOUR_SPLINE // POLYNOMIAL DECOMPOSITION</text></svg>`;
     } else if (type === 'dsp') {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="%230d0d0d"/><g stroke="%23222222" stroke-width="1"><line x1="50" y1="50" x2="550" y2="50"/><line x1="50" y1="120" x2="550" y2="120"/><line x1="50" y1="190" x2="550" y2="190"/><line x1="50" y1="260" x2="550" y2="260"/></g><path d="M50 190 L90 120 L130 220 L170 80 L210 240 L250 150 L290 190 L330 90 L370 230 L410 160 L450 190 L490 110 L530 190" fill="none" stroke="%23FF00FF" stroke-width="2.5"/><text x="40" y="40" fill="%23666666" font-family="monospace" font-size="12">FFT_SPECTRUM // REALTIME AUDIO HARMONICS</text></svg>`;
+      content = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="${bg}"/><g stroke="${grid}" stroke-width="1"><line x1="50" y1="50" x2="550" y2="50"/><line x1="50" y1="120" x2="550" y2="120"/><line x1="50" y1="190" x2="550" y2="190"/><line x1="50" y1="260" x2="550" y2="260"/></g><path d="M50 190 L90 120 L130 220 L170 80 L210 240 L250 150 L290 190 L330 90 L370 230 L410 160 L450 190 L490 110 L530 190" fill="none" stroke="${magenta}" stroke-width="2.5"/><text x="40" y="40" fill="${text}" font-family="monospace" font-size="12">FFT_SPECTRUM // REALTIME AUDIO HARMONICS</text></svg>`;
     } else if (type === 'bench') {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="%230d0d0d"/><rect x="80" y="70" width="440" height="200" fill="none" stroke="%23333333" stroke-width="1.5"/><circle cx="140" cy="170" r="35" fill="none" stroke="%2300FFFF" stroke-width="3"/><circle cx="300" cy="170" r="45" fill="none" stroke="%23FFFF00" stroke-width="2"/><rect x="410" y="130" width="60" height="80" fill="none" stroke="%23FF00FF" stroke-width="2"/><text x="40" y="40" fill="%23666666" font-family="monospace" font-size="12">EDA_SCHEMATIC // TEST BENCH TELEMETRY</text></svg>`;
+      content = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="${bg}"/><rect x="80" y="70" width="440" height="200" fill="none" stroke="${frame}" stroke-width="1.5"/><circle cx="140" cy="170" r="35" fill="none" stroke="${cyan}" stroke-width="3"/><circle cx="300" cy="170" r="45" fill="none" stroke="${yellow}" stroke-width="2"/><rect x="410" y="130" width="60" height="80" fill="none" stroke="${magenta}" stroke-width="2"/><text x="40" y="40" fill="${text}" font-family="monospace" font-size="12">EDA_SCHEMATIC // TEST BENCH TELEMETRY</text></svg>`;
     } else {
-      return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="%230d0d0d"/><line x1="50" y1="170" x2="550" y2="170" stroke="%23333333" stroke-width="1"/><line x1="300" y1="40" x2="300" y2="300" stroke="%23333333" stroke-width="1"/><circle cx="300" cy="170" r="80" fill="none" stroke="%2300FFFF" stroke-width="1.5" stroke-dasharray="6 6"/><circle cx="300" cy="170" r="120" fill="none" stroke="%23FFFF00" stroke-width="1"/><polygon points="300,160 308,175 292,175" fill="%23FF00FF"/><text x="40" y="40" fill="%23666666" font-family="monospace" font-size="12">RECON_RADAR // TERRAIN OPTICAL TELEMETRY</text></svg>`;
+      content = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340"><rect width="100%" height="100%" fill="${bg}"/><line x1="50" y1="170" x2="550" y2="170" stroke="${frame}" stroke-width="1"/><line x1="300" y1="40" x2="300" y2="300" stroke="${frame}" stroke-width="1"/><circle cx="300" cy="170" r="80" fill="none" stroke="${cyan}" stroke-width="1.5" stroke-dasharray="6 6"/><circle cx="300" cy="170" r="120" fill="none" stroke="${yellow}" stroke-width="1"/><polygon points="300,160 308,175 292,175" fill="${magenta}"/><text x="40" y="40" fill="${text}" font-family="monospace" font-size="12">RECON_RADAR // TERRAIN OPTICAL TELEMETRY</text></svg>`;
     }
+
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(content);
   }
 
 
   // Gallery Manifest Data
   const galleryData = [
     {
+      type: 'trace',
       title: "FIG. 01 // VECTOR TRACING & CONTOUR SYNTHESIS",
-      description: "Algorithmic edge detection, Bezier spline extraction, and mathematical contour reconstruction pipelines.",
-      image: createSpecimenSVG('trace')
+      description: "Algorithmic edge detection, Bezier spline extraction, and mathematical contour reconstruction pipelines."
     },
     {
+      type: 'dsp',
       title: "FIG. 02 // REAL-TIME DSP & SPECTRAL HARMONICS",
-      description: "Custom audio synthesizer engine, Web Audio API frequency analysis, and numerical waveform modeling.",
-      image: createSpecimenSVG('dsp')
+      description: "Custom audio synthesizer engine, Web Audio API frequency analysis, and numerical waveform modeling."
     },
     {
+      type: 'bench',
       title: "FIG. 03 // TACTICAL UI & BENCH INSTRUMENTATION",
-      description: "Interactive laboratory control consoles, hardware telemetry readouts, and calibrated tactile interfaces.",
-      image: createSpecimenSVG('bench')
+      description: "Interactive laboratory control consoles, hardware telemetry readouts, and calibrated tactile interfaces."
     },
     {
+      type: 'recon',
       title: "FIG. 04 // FIELD APPARATUS & OPTICAL RECON",
-      description: "High-contrast terrain telemetry, radar coordinate overlays, and environmental sensor logging.",
-      image: createSpecimenSVG('recon')
+      description: "High-contrast terrain telemetry, radar coordinate overlays, and environmental sensor logging."
     }
   ];
 
@@ -192,9 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateGallery(idx) {
     currentGalleryIndex = idx;
     const item = galleryData[currentGalleryIndex];
+    const isDark = body.classList.contains('dark-mode');
     galleryTitle.textContent = item.title;
     galleryDesc.textContent = item.description;
-    galleryImage.src = item.image;
+    galleryImage.src = createSpecimenSVG(item.type, isDark);
     galleryCount.textContent = `FIG. 0${currentGalleryIndex + 1} / 0${galleryData.length}`;
 
 
@@ -219,6 +237,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Gallery
   updateGallery(0);
 
+  // Re-render gallery specimens dynamically when theme changes
+  const themeObserver = new MutationObserver(() => {
+    updateGallery(currentGalleryIndex);
+  });
+  themeObserver.observe(body, { attributes: true, attributeFilter: ['class'] });
+
+  window.addEventListener('themechange', () => {
+    updateGallery(currentGalleryIndex);
+  });
+
 
   // MOD.04 // TRANSMISSION - Web Audio Synthesizer & Waveform Oscilloscope
   const waveformCanvas = document.getElementById('waveformCanvas');
@@ -242,30 +270,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const width = waveformCanvas.width;
       const height = waveformCanvas.height;
       const midY = height / 2;
+      const isDark = body.classList.contains('dark-mode');
 
-
-      ctx.fillStyle = '#0a0a0a';
+      ctx.fillStyle = isDark ? '#161616' : '#f0f0ea';
       ctx.fillRect(0, 0, width, height);
 
-
       // Subtle horizontal grid line
-      ctx.strokeStyle = '#1a1a1a';
+      ctx.strokeStyle = isDark ? '#262626' : '#cfcfc5';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, midY);
       ctx.lineTo(width, midY);
       ctx.stroke();
 
-
       // Primary Waveform Path
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = isAudioPlaying ? '#00FFFF' : 'rgba(0, 255, 255, 0.6)';
-
+      const cyanStroke = isDark ? '#00FFFF' : '#0099cc';
+      const cyanMuted = isDark ? 'rgba(0, 255, 255, 0.6)' : 'rgba(0, 153, 204, 0.6)';
+      ctx.strokeStyle = isAudioPlaying ? cyanStroke : cyanMuted;
 
       const freqMultiplier = isAudioPlaying ? 0.045 : 0.025;
       const amplitude = isAudioPlaying ? 24 : 14;
-
 
       for (let x = 0; x < width; x++) {
         const y = midY + Math.sin(x * freqMultiplier + wavePhase) * amplitude +
@@ -278,11 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       ctx.stroke();
 
-
       // Secondary Chromatic Ghost Wave (Magenta)
       ctx.beginPath();
       ctx.lineWidth = 1.2;
-      ctx.strokeStyle = isAudioPlaying ? 'rgba(255, 0, 255, 0.7)' : 'rgba(255, 0, 255, 0.3)';
+      const magentaStroke = isDark ? 'rgba(255, 0, 255, 0.7)' : 'rgba(184, 0, 110, 0.7)';
+      const magentaMuted = isDark ? 'rgba(255, 0, 255, 0.3)' : 'rgba(184, 0, 110, 0.3)';
+      ctx.strokeStyle = isAudioPlaying ? magentaStroke : magentaMuted;
       for (let x = 0; x < width; x++) {
         const y = midY + Math.sin(x * freqMultiplier + wavePhase + 0.3) * (amplitude * 0.85);
         if (x === 0) {

@@ -1,3 +1,6 @@
+  @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Lexend:wght@400;600;700&display=swap');
+  @import url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic.min.css');
+
   :root {
     --bg-color: #121212;
     --panel-bg: #161616;
@@ -24,6 +27,17 @@
     --yellow: #FFFF00;
     --key-black: #050505;
 
+    /* RGB triplets for variable alpha blending */
+    --cyan-rgb: 0, 255, 255;
+    --magenta-rgb: 255, 0, 255;
+    --yellow-rgb: 255, 255, 0;
+
+    /* Z Orbital System Styling (Bright yellow line & pip) */
+    --orbit-stroke: #FFFF00;
+    --orbit-pip: #FFFF00;
+
+    /* Top Bar Branding Home Button Glow (Crisp, intense, compact glow on dark mode) */
+    --brand-glow: drop-shadow(0 0 2.5px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 1px #ffffff);
 
     /* WEBER Stepped Luminance (Dark Mode: getting lighter to the right, capped) */
     --weber-w: #4c4c4c; /* Distinct from #121212 */
@@ -51,15 +65,25 @@
     --tooltip-bg: #deded6;
     --r-color: #050505;
     --bottom-text-bg: #deded6;
-    --grid-color: rgba(0, 0, 0, 0.05);
+    --grid-color: rgba(0, 0, 0, 0.12);
     --header-bg: rgba(244, 244, 240, 0.95);
 
 
-    /* CMYK Accents tuned for high-contrast on light background */
-    --cyan: #008282;
-    --magenta: #b50085;
-    --yellow: #8f6e00;
+    /* CMYK Accents calibrated for crisp, vibrant, aesthetic visibility on light backgrounds */
+    --cyan: #0099cc;
+    --magenta: #d90479;
+    --yellow: #e59b00;
 
+    --cyan-rgb: 0, 153, 204;
+    --magenta-rgb: 217, 4, 121;
+    --yellow-rgb: 229, 155, 0;
+
+    /* Z Orbital System Styling (Clean warm yellow line & pip) */
+    --orbit-stroke: #e59b00;
+    --orbit-pip: #e59b00;
+
+    /* Top Bar Branding Home Button Glow (Crisp, intense, compact glow on light mode) */
+    --brand-glow: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 1px #000000);
 
     /* WEBER Stepped Luminance (Light Mode: getting darker to the right, capped) */
     --weber-w: #b2b2aa; /* Distinct from #f4f4f0 */
@@ -142,7 +166,7 @@
   }
 
 
-  /* Misregistration on Hover for K, Y, Z */
+  /* Misregistration on Hover for K, Y, Z, E, R */
   #heroLogo:hover .glyph-k {
     transform: translate(-1.8px, -0.5px);
     filter: drop-shadow(-1.5px 0 0 var(--cyan)) drop-shadow(1.5px 0 0 var(--magenta)) !important;
@@ -155,10 +179,57 @@
     transform: translate(-1.2px, 0.8px);
     filter: drop-shadow(-1.5px 0 0 var(--yellow)) drop-shadow(1.5px 0 0 var(--cyan)) !important;
   }
-
+  #heroLogo:hover .glyph-shared-e {
+    transform: translate(1.5px, -0.7px);
+    filter: drop-shadow(1.5px 0 0 var(--magenta)) drop-shadow(-1.5px 0 0 var(--cyan)) !important;
+  }
+  #heroLogo:hover .glyph-shared-r {
+    transform: translate(-1.2px, 0.6px);
+    filter: drop-shadow(-1.5px 0 0 var(--cyan)) drop-shadow(1.5px 0 0 var(--yellow)) !important;
+  }
 
   .glyph-k, .glyph-y, .glyph-z, .glyph-shared-e, .glyph-shared-r, .glyph-web-w, .glyph-web-e, .glyph-web-b {
     transition: transform 0.2s ease, filter 0.2s ease, opacity 0.3s ease;
+  }
+
+  .glyph-k { fill: var(--cyan); }
+  .glyph-y { fill: var(--magenta); }
+  .glyph-z { fill: var(--yellow); }
+
+  /* Hero Accent Flourishes */
+  .hero-flourish {
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  @keyframes reticleFloat1 {
+    0% { transform: translate(130px, 16px); }
+    50% { transform: translate(132px, 12px); }
+    100% { transform: translate(128px, 18px); }
+  }
+
+  @keyframes reticleFloat2 {
+    0% { transform: translate(470px, 20px); }
+    50% { transform: translate(468px, 16px); }
+    100% { transform: translate(472px, 23px); }
+  }
+
+  @keyframes flourishPulse {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.92); }
+  }
+
+  .tactical-reticle.reticle-1 {
+    animation: reticleFloat1 7s ease-in-out infinite alternate;
+  }
+
+  .tactical-reticle.reticle-2 {
+    animation: reticleFloat2 6s ease-in-out infinite alternate;
+  }
+
+  .flourish-pulse {
+    animation: flourishPulse 4s ease-in-out infinite;
+    transform-origin: 412px 16px;
   }
 
 
@@ -217,6 +288,109 @@
   .glow-container:hover .glow-border-layer {
     opacity: 0.85;
     animation: multiGlowShift 4s ease infinite;
+  }
+
+  /* Keyboard Focus Indicator (Tactical outline for accessibility) */
+  :focus-visible {
+    outline: 2px solid var(--cyan) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 10px rgba(var(--cyan-rgb), 0.5) !important;
+  }
+
+  /* Accessibility System Overrides */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .cmyk-shape {
+      animation: none !important;
+      transform: none !important;
+      transition: opacity 1.2s ease !important;
+    }
+    .hero-flourish circle, .hero-flourish g {
+      animation: none !important;
+    }
+  }
+
+  body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  body.reduce-motion .cmyk-shape {
+    animation: none !important;
+    transform: none !important;
+    transition: opacity 1.2s ease !important;
+  }
+  body.reduce-motion .hero-flourish circle, body.reduce-motion .hero-flourish g {
+    animation: none !important;
+  }
+
+  body.high-contrast {
+    --panel-border: #555555;
+    --panel-border-bright: #888888;
+    --text-muted: #cccccc;
+    --text-dim: #999999;
+  }
+  body:not(.dark-mode).high-contrast {
+    --panel-border: #444444;
+    --panel-border-bright: #111111;
+    --text-muted: #222222;
+    --text-dim: #444444;
+  }
+
+  /* Dyslexic & High Visibility Font Accessibility Modes */
+  body.font-dyslexic {
+    font-family: 'Lexend', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  }
+  body.font-dyslexic p,
+  body.font-dyslexic a,
+  body.font-dyslexic li,
+  body.font-dyslexic label,
+  body.font-dyslexic input,
+  body.font-dyslexic textarea,
+  body.font-dyslexic h1,
+  body.font-dyslexic h2,
+  body.font-dyslexic h3,
+  body.font-dyslexic h4,
+  body.font-dyslexic strong,
+  body.font-dyslexic em,
+  body.font-dyslexic .body-text,
+  body.font-dyslexic span:not(.morph-char):not(.swatch-rect):not([class*="glyph"]):not([class*="pip"]) {
+    font-family: 'Lexend', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    line-height: 1.68 !important;
+  }
+
+  body.font-high-visibility {
+    font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  }
+  body.font-high-visibility p,
+  body.font-high-visibility a,
+  body.font-high-visibility li,
+  body.font-high-visibility label,
+  body.font-high-visibility input,
+  body.font-high-visibility textarea,
+  body.font-high-visibility h1,
+  body.font-high-visibility h2,
+  body.font-high-visibility h3,
+  body.font-high-visibility h4,
+  body.font-high-visibility strong,
+  body.font-high-visibility em,
+  body.font-high-visibility .body-text,
+  body.font-high-visibility span:not(.morph-char):not(.swatch-rect):not([class*="glyph"]):not([class*="pip"]) {
+    font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    line-height: 1.65 !important;
+    font-size: 1.02em;
+  }
+  body.font-high-visibility strong,
+  body.font-high-visibility b,
+  body.font-high-visibility h1,
+  body.font-high-visibility h2,
+  body.font-high-visibility h3,
+  body.font-high-visibility h4 {
+    font-weight: 700 !important;
   }
 
 
