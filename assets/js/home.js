@@ -6,9 +6,80 @@ document.addEventListener('DOMContentLoaded', () => {
   const backToTop = document.getElementById('backToTop');
   const iconTooltip = document.getElementById('iconTooltip');
   const heroLogo = document.getElementById('heroLogo');
+  const heroFlourish = document.getElementById('heroFlourish') || document.querySelector('.hero-flourish');
 
 
-  // Periodic Micro-Voltage Blink on K, Y, Z, E, R (every ~26s)
+  // Tactical CMY & Artifact Randomization
+  const CMY_PALETTE = ['var(--cyan)', 'var(--magenta)', 'var(--yellow)'];
+
+  function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randomizeFlourishColors() {
+    if (!heroFlourish) return;
+
+    const bracketTL = document.getElementById('flourishBracketTL');
+    const bracketBL = document.getElementById('flourishBracketBL');
+    const bracketTR = document.getElementById('flourishBracketTR');
+    const bracketBR = document.getElementById('flourishBracketBR');
+    const diamond = document.getElementById('flourishDiamond');
+
+    // Colors excluding nearest glyph to avoid clustering
+    const nonCyan = ['var(--magenta)', 'var(--yellow)'];
+    const nonYellow = ['var(--cyan)', 'var(--magenta)'];
+
+    if (bracketTL) bracketTL.setAttribute('stroke', pickRandom(nonCyan));
+    if (bracketBL) bracketBL.setAttribute('stroke', pickRandom(nonCyan));
+    if (bracketTR) bracketTR.setAttribute('stroke', pickRandom(CMY_PALETTE));
+    if (bracketBR) bracketBR.setAttribute('stroke', pickRandom(CMY_PALETTE));
+    if (diamond) diamond.setAttribute('stroke', pickRandom(nonYellow));
+
+    // Reticles & moving shapes
+    const reticle1 = heroFlourish.querySelector('.reticle-1');
+    if (reticle1) {
+      const col = pickRandom(nonCyan);
+      reticle1.querySelectorAll('line, circle').forEach(el => el.setAttribute('stroke', col));
+    }
+
+    const reticle2 = heroFlourish.querySelector('.reticle-2');
+    if (reticle2) {
+      const col = pickRandom(CMY_PALETTE);
+      reticle2.querySelectorAll('line, circle').forEach(el => el.setAttribute('stroke', col));
+    }
+
+    const drift1 = heroFlourish.querySelector('.shape-drift-1');
+    if (drift1) {
+      const col = pickRandom(nonCyan);
+      drift1.querySelectorAll('polygon, circle, line').forEach(el => {
+        if (el.tagName.toLowerCase() === 'circle') el.setAttribute('fill', col);
+        el.setAttribute('stroke', col);
+      });
+    }
+
+    const drift2 = heroFlourish.querySelector('.shape-drift-2');
+    if (drift2) {
+      const col = pickRandom(CMY_PALETTE);
+      drift2.querySelectorAll('line, rect, polygon').forEach(el => el.setAttribute('stroke', col));
+    }
+
+    const drift3 = heroFlourish.querySelector('.shape-drift-3');
+    if (drift3) {
+      const col = pickRandom(nonCyan);
+      drift3.querySelectorAll('circle, line').forEach(el => el.setAttribute('stroke', col));
+    }
+
+    const drift4 = heroFlourish.querySelector('.shape-drift-4');
+    if (drift4) {
+      const col = pickRandom(CMY_PALETTE);
+      drift4.querySelectorAll('path, line, rect').forEach(el => el.setAttribute('stroke', col));
+    }
+  }
+
+  // Initial color randomization
+  randomizeFlourishColors();
+
+  // Multi-Mode Hero Glitch Generator (Blink, Chromatic Aberration, Scanline Jitter, Voltage Strobe, Cascade Wave)
   const heroGlyphs = [
     document.getElementById('glyphK'),
     document.getElementById('glyphY'),
@@ -17,24 +88,162 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('glyphSharedR')
   ].filter(Boolean);
 
+  const ALL_GLITCH_CLASSES = [
+    'voltage-startup',
+    'voltage-blink',
+    'glitch-chromatic',
+    'glitch-jitter',
+    'glitch-strobe',
+    'glitch-cascade'
+  ];
+
+  function clearGlitchClasses(el) {
+    ALL_GLITCH_CLASSES.forEach(cls => el.classList.remove(cls));
+  }
+
   // Clean up initial startup animation class so hover colors trigger immediately
   heroGlyphs.forEach(el => {
     el.addEventListener('animationend', () => {
-      el.classList.remove('voltage-startup');
-      el.classList.remove('voltage-blink');
+      clearGlitchClasses(el);
     });
   });
   setTimeout(() => {
-    heroGlyphs.forEach(el => el.classList.remove('voltage-startup'));
+    heroGlyphs.forEach(clearGlitchClasses);
   }, 500);
 
-  setInterval(() => {
-    heroGlyphs.forEach(el => {
-      el.classList.remove('voltage-blink');
-      void el.offsetWidth; // trigger reflow
-      el.classList.add('voltage-blink');
+  const GLITCH_VARIANTS = [
+    'voltage-blink',
+    'glitch-chromatic',
+    'glitch-jitter',
+    'glitch-strobe',
+    'glitch-cascade'
+  ];
+  let lastGlitchVariant = '';
+
+  function triggerHeroGlitch() {
+    // Choose a different glitch variant for organic variety
+    const available = GLITCH_VARIANTS.filter(v => v !== lastGlitchVariant);
+    const chosen = pickRandom(available) || 'glitch-chromatic';
+    lastGlitchVariant = chosen;
+
+    // Randomize shape colors on glitch
+    randomizeFlourishColors();
+
+    if (chosen === 'glitch-cascade') {
+      // Cascade wave traveling across letters
+      heroGlyphs.forEach((el, index) => {
+        setTimeout(() => {
+          clearGlitchClasses(el);
+          void el.offsetWidth;
+          el.classList.add('glitch-cascade');
+        }, index * 55);
+      });
+    } else {
+      heroGlyphs.forEach(el => {
+        clearGlitchClasses(el);
+        void el.offsetWidth; // trigger reflow
+        el.classList.add(chosen);
+      });
+    }
+
+    if (heroFlourish) {
+      heroFlourish.classList.remove('flourish-flicker');
+      void heroFlourish.offsetWidth;
+      heroFlourish.classList.add('flourish-flicker');
+      heroFlourish.classList.add('is-active');
+
+      setTimeout(() => {
+        heroFlourish.classList.remove('flourish-flicker');
+        if (!heroLogo || !heroLogo.matches(':hover')) {
+          heroFlourish.classList.remove('is-active');
+        }
+      }, 500);
+    }
+  }
+
+  // Organic glitch timing: triggers every 5.5 to 9.5 seconds
+  let heroGlitchTimer = null;
+  function scheduleNextHeroGlitch() {
+    const nextInterval = Math.floor(Math.random() * 4000) + 5500;
+    heroGlitchTimer = setTimeout(() => {
+      triggerHeroGlitch();
+      scheduleNextHeroGlitch();
+    }, nextInterval);
+  }
+  scheduleNextHeroGlitch();
+
+  // After 3.2 seconds, hero flourish artifacts fade down to 15% opacity
+  setTimeout(() => {
+    if (heroFlourish) {
+      heroFlourish.classList.add('is-dimmed');
+    }
+  }, 3200);
+
+  // Return to full opacity on mouseover, fade down on mouseleave
+  if (heroLogo && heroFlourish) {
+    heroLogo.addEventListener('mouseenter', () => {
+      heroFlourish.classList.add('is-active');
     });
-  }, 26000);
+    heroLogo.addEventListener('mouseleave', () => {
+      heroFlourish.classList.remove('is-active');
+    });
+  }
+
+  // Dynamic Size and Shape Adjustments for Hero Framing / Flourishes (Desktop vs Mobile)
+  function updateFlourishGeometry() {
+    if (!heroFlourish) return;
+    const isMobile = window.innerWidth <= 680;
+
+    const bracketTL = document.getElementById('flourishBracketTL');
+    const bracketBL = document.getElementById('flourishBracketBL');
+    const bracketTR = document.getElementById('flourishBracketTR');
+    const bracketBR = document.getElementById('flourishBracketBR');
+    const vernier = document.getElementById('flourishVernier');
+    const edaText = document.getElementById('flourishEdaText');
+
+    if (isMobile) {
+      heroFlourish.classList.add('is-mobile-flourish');
+      heroFlourish.classList.remove('is-desktop-flourish');
+
+      // Mobile shape: Compact, prominent HUD frame with taller vertical arms and generous padding
+      const bL = 136;
+      const bR = 464;
+      const bT = 10;
+      const bB = 108;
+      const armX = 12;
+      const armY = 28;
+
+      if (bracketTL) bracketTL.setAttribute('d', `M ${bL} ${bT + armY} L ${bL} ${bT} L ${bL + armX} ${bT}`);
+      if (bracketBL) bracketBL.setAttribute('d', `M ${bL} ${bB - armY} L ${bL} ${bB} L ${bL + armX} ${bB}`);
+      if (bracketTR) bracketTR.setAttribute('d', `M ${bR - armX} ${bT} L ${bR} ${bT} L ${bR} ${bT + armY}`);
+      if (bracketBR) bracketBR.setAttribute('d', `M ${bR - armX} ${bB} L ${bR} ${bB} L ${bR} ${bB - armY}`);
+
+      if (vernier) vernier.setAttribute('d', 'M 186 110 L 254 110 M 186 110 L 186 105 M 203 110 L 203 106 M 220 110 L 220 105 M 237 110 L 237 106 M 254 110 L 254 105');
+      if (edaText) { edaText.setAttribute('x', '356'); edaText.setAttribute('y', '109'); }
+    } else {
+      heroFlourish.classList.add('is-desktop-flourish');
+      heroFlourish.classList.remove('is-mobile-flourish');
+
+      // Desktop shape: Sleek elongated tactical framing with vertical padding
+      const bL = 124;
+      const bR = 476;
+      const bT = 14;
+      const bB = 104;
+      const armX = 10;
+      const armY = 24;
+
+      if (bracketTL) bracketTL.setAttribute('d', `M ${bL} ${bT + armY} L ${bL} ${bT} L ${bL + armX} ${bT}`);
+      if (bracketBL) bracketBL.setAttribute('d', `M ${bL} ${bB - armY} L ${bL} ${bB} L ${bL + armX} ${bB}`);
+      if (bracketTR) bracketTR.setAttribute('d', `M ${bR - armX} ${bT} L ${bR} ${bT} L ${bR} ${bT + armY}`);
+      if (bracketBR) bracketBR.setAttribute('d', `M ${bR - armX} ${bB} L ${bR} ${bB} L ${bR} ${bB - armY}`);
+
+      if (vernier) vernier.setAttribute('d', 'M 168 108 L 248 108 M 168 108 L 168 103 M 184 108 L 184 104 M 200 108 L 200 103 M 216 108 L 216 104 M 232 108 L 232 103 M 248 108 L 248 104');
+      if (edaText) { edaText.setAttribute('x', '372'); edaText.setAttribute('y', '107'); }
+    }
+  }
+
+  window.addEventListener('resize', updateFlourishGeometry, { passive: true });
+  updateFlourishGeometry();
 
 
   // Hero Logo Scroll Morphing Animation ("KYZER" -> "KYZER WEBER" shared ER)
@@ -45,9 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Top bar scroll fade-in functionality (preserved, disabled by default for instant accessibility)
   const ENABLE_HEADER_SCROLL_FADE = false;
 
+  const PEEK_OFFSET = 36; // First content box is just barely visible off-screen at bottom
+
   function getTargetSnapPoint() {
     const heroSection = document.querySelector('.hero-section');
-    return heroSection ? Math.max(40, heroSection.offsetTop - 70) : Math.max(40, window.innerHeight - 140);
+    return heroSection ? Math.max(40, heroSection.offsetTop - 70) : Math.max(40, window.innerHeight - PEEK_OFFSET);
   }
 
   function updateHero() {
@@ -56,23 +267,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxScroll = Math.max(100, snapPoint);
     const t = Math.min(Math.max(sy / maxScroll, 0), 1);
 
-    // Frame hero text centered above the peeking content fold (~140px peek)
-    const peekOffset = 140;
+    // Frame hero text comfortably centered above the subtly peeking content fold
+    const peekOffset = PEEK_OFFSET;
     const availableHeroHeight = Math.max(200, window.innerHeight - peekOffset);
-    const startY = availableHeroHeight / 2;
+    const startY = Math.max(65, (availableHeroHeight / 2) - 24);
     const endY = 60 / 2;
     const currentY = startY + (endY - startY) * t;
 
-    // Proportional hero text width scaling with viewport width (even larger, ultra prominent presence)
-    const containerWidth = Math.min(340, window.innerWidth * 0.7);
-    const startWidth = Math.min(1800, Math.max(380, window.innerWidth * 0.94));
+    // Proportional hero text width scaling with viewport width (5% decrease from original screenwidth determined size)
+    const containerWidth = Math.min(320, window.innerWidth * 0.68);
+    const startWidth = Math.min(1710, Math.max(360, window.innerWidth * 0.893));
     const width = startWidth * (1 - t) + containerWidth * t;
 
-    const baseScale = Math.min(1.75, Math.max(1.2, (window.innerWidth * 0.94) / 480));
-    const scale = baseScale * (1 - t) + 0.52 * t;
+    const baseScale = Math.min(1.66, Math.max(1.14, (window.innerWidth * 0.893) / 505));
+    const scale = baseScale * (1 - t) + 0.5 * t;
 
     heroLogo.style.position = 'fixed';
     heroLogo.style.left = '50%';
+    heroLogo.style.top = currentY + 'px';
+    heroLogo.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    heroLogo.style.width = `${width}px`;
+
+    // Center scroll cue exactly halfway between hero text and content box for easy access
+    const scrollCue = document.getElementById('scrollCue');
+    if (scrollCue && !body.classList.contains('subpage')) {
+      const heroBottom = currentY + (56 * scale);
+      const contentTop = window.innerHeight - peekOffset - sy;
+      const cueY = Math.round(heroBottom + (contentTop - heroBottom) / 2);
+      scrollCue.style.top = Math.max(heroBottom + 12, cueY) + 'px';
+    }
     heroLogo.style.top = currentY + 'px';
     heroLogo.style.transform = `translate(-50%, -50%) scale(${scale})`;
     heroLogo.style.width = `${width}px`;
@@ -85,16 +308,11 @@ document.addEventListener('DOMContentLoaded', () => {
       glyphB.style.opacity = weberFade.toFixed(2);
     }
 
-    if (ENABLE_HEADER_SCROLL_FADE) {
-      body.classList.add('enable-header-scroll-fade');
-      if (t > 0.08 || sy > 20) {
-        body.classList.add('scrolled');
-      } else {
-        body.classList.remove('scrolled');
-      }
-    } else {
-      body.classList.remove('enable-header-scroll-fade');
+    // Scroll state: Only mark as scrolled when actually scrolling down past top hero zone
+    if (sy > 25 || t > 0.06) {
       body.classList.add('scrolled');
+    } else {
+      body.classList.remove('scrolled');
     }
 
     if (sy > 300) {
@@ -107,6 +325,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   requestAnimationFrame(updateHero);
 
+  // Click scroll cue to smoothly jump to content below
+  const scrollCue = document.getElementById('scrollCue');
+  if (scrollCue) {
+    scrollCue.addEventListener('click', () => {
+      const targetSnapPoint = getTargetSnapPoint();
+      window.scrollTo({ top: targetSnapPoint, behavior: 'smooth' });
+    });
+  }
+
 
   // Auto-scroll snap: cleanly frames "Hi, Welcome, Hello" (MOD.00) without overshooting
   let scrollSnapTimer = null;
@@ -114,6 +341,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastScrollY = window.scrollY;
 
   window.addEventListener('scroll', () => {
+    // Reduce motion disables autoscroll snap completely
+    if (body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
     const currentScroll = window.scrollY;
     const scrollingDown = currentScroll > lastScrollY;
     lastScrollY = currentScroll;

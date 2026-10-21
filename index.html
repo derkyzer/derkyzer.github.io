@@ -30,74 +30,98 @@
   </div>
 
 
-  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 100" aria-label="KYZER WEBER Logo">
+  <svg class="hero-logo" id="heroLogo" viewBox="0 0 600 130" aria-label="KYZER WEBER Logo">
     <defs>
-      <!-- Clip for upper/back half of rotated orbit (y <= 46) -->
+      <!-- Clip for upper/back half of rotated orbit (relative to Z center at y=60) -->
       <clipPath id="orbitBackClip">
-        <rect x="240" y="14" width="120" height="32" />
+        <rect x="240" y="16" width="120" height="44" />
       </clipPath>
-      <!-- Clip for lower/front half of rotated orbit (y >= 46) -->
+      <!-- Clip for lower/front half of rotated orbit (relative to Z center at y=60) -->
       <clipPath id="orbitFrontClip">
-        <rect x="240" y="46" width="120" height="36" />
+        <rect x="240" y="60" width="120" height="44" />
       </clipPath>
     </defs>
 
-    <!-- Modern Tactical Accent Flourishes (Fade out seamlessly on scroll) -->
-    <g class="hero-flourish remove-on-scroll">
-      <!-- Tactical Corner Crop Brackets -->
-      <path d="M 124 22 L 124 14 L 132 14" fill="none" stroke="var(--cyan)" stroke-width="1.2" />
-      <path d="M 124 74 L 124 82 L 132 82" fill="none" stroke="var(--cyan)" stroke-width="1.2" />
-      <path d="M 468 14 L 476 14 L 476 22" fill="none" stroke="var(--magenta)" stroke-width="1.2" />
-      <path d="M 468 82 L 476 82 L 476 74" fill="none" stroke="var(--yellow)" stroke-width="1.2" />
+    <!-- Modern Tactical Accent Flourishes (Uniform transparency across all framing elements) -->
+    <g class="hero-flourish" id="heroFlourish">
+      <!-- Tactical Corner Crop Brackets (Taller vertical arm profile with generous padding) -->
+      <path id="flourishBracketTL" class="flourish-cmy" d="M 124 38 L 124 14 L 134 14" fill="none" stroke="var(--magenta)" stroke-width="1.2" />
+      <path id="flourishBracketBL" class="flourish-cmy" d="M 124 80 L 124 104 L 134 104" fill="none" stroke="var(--yellow)" stroke-width="1.2" />
+      <path id="flourishBracketTR" class="flourish-cmy" d="M 466 14 L 476 14 L 476 38" fill="none" stroke="var(--cyan)" stroke-width="1.2" />
+      <path id="flourishBracketBR" class="flourish-cmy" d="M 466 104 L 476 104 L 476 80" fill="none" stroke="var(--magenta)" stroke-width="1.2" />
 
-      <!-- Floating Precision Reticle Crosshairs -->
-      <g class="tactical-reticle reticle-1">
-        <line x1="-5" y1="0" x2="5" y2="0" stroke="var(--cyan)" stroke-width="1.1" />
-        <line x1="0" y1="-5" x2="0" y2="5" stroke="var(--cyan)" stroke-width="1.1" />
-        <circle r="2.2" fill="none" stroke="var(--cyan)" stroke-width="0.8" opacity="0.6"/>
+      <!-- Floating Precision Reticle Crosshairs (Colors randomized away from nearest letter) -->
+      <g class="tactical-reticle reticle-1 flourish-cmy-group">
+        <line x1="-5" y1="0" x2="5" y2="0" stroke="var(--yellow)" stroke-width="1.1" />
+        <line x1="0" y1="-5" x2="0" y2="5" stroke="var(--yellow)" stroke-width="1.1" />
+        <circle r="2.2" fill="none" stroke="var(--yellow)" stroke-width="0.8" />
       </g>
-      <g class="tactical-reticle reticle-2">
-        <line x1="-4" y1="0" x2="4" y2="0" stroke="var(--magenta)" stroke-width="1.1" />
-        <line x1="0" y1="-4" x2="0" y2="4" stroke="var(--magenta)" stroke-width="1.1" />
+      <g class="tactical-reticle reticle-2 flourish-cmy-group">
+        <line x1="-4" y1="0" x2="4" y2="0" stroke="var(--cyan)" stroke-width="1.1" />
+        <line x1="0" y1="-4" x2="0" y2="4" stroke="var(--cyan)" stroke-width="1.1" />
       </g>
 
-      <!-- Stepped Calibration / Vernier Scale -->
-      <path d="M 184 86 L 240 86 M 184 86 L 184 82 M 198 86 L 198 83 M 212 86 L 212 82 M 226 86 L 226 83 M 240 86 L 240 82" fill="none" stroke="var(--text-dim)" stroke-width="1" />
+      <!-- Subtle Tactical Grey Bench Accents (Same uniform flourish transparency) -->
+      <g class="tactical-grey-accents">
+        <!-- Top Center Reticle Crosshair -->
+        <line x1="295" y1="14" x2="305" y2="14" stroke="var(--text-dim)" stroke-width="0.9" />
+        <line x1="300" y1="9" x2="300" y2="19" stroke="var(--text-dim)" stroke-width="0.9" />
+        <circle cx="300" cy="14" r="1.6" fill="none" stroke="var(--text-dim)" stroke-width="0.6" />
 
-      <!-- Tactical Diamond Accent Pip -->
-      <polygon points="412,12 416,16 412,20 408,16" fill="none" stroke="var(--yellow)" stroke-width="1.1" class="flourish-pulse" />
+        <!-- Micro Technical Annotation -->
+        <text x="142" y="15" font-family="'JetBrains Mono', monospace" font-size="5" font-weight="600" fill="var(--text-dim)" letter-spacing="0.12em">REF.01 // CAL</text>
 
-      <!-- Telemetry Annotations in Micro Mono -->
-      <text x="136" y="85" font-family="'JetBrains Mono', monospace" font-size="6.5" font-weight="600" fill="var(--text-dim)" letter-spacing="0.08em">LOC // 34°N</text>
-      <text x="432" y="85" font-family="'JetBrains Mono', monospace" font-size="6.5" font-weight="600" fill="var(--text-dim)" letter-spacing="0.08em">EDA // BENCH</text>
+        <!-- Segment Level Indicator (3 micro pips) -->
+        <rect x="344" y="12" width="3" height="3" fill="var(--text-dim)" />
+        <rect x="349" y="12" width="3" height="3" fill="var(--text-dim)" />
+        <rect x="354" y="12" width="3" height="3" fill="none" stroke="var(--text-dim)" stroke-width="0.7" />
 
-      <!-- Dynamic Accent Shapes Moving Around Hero Text -->
-      <g class="hero-moving-shape shape-drift-1">
-        <polygon points="0,-7 6,0 0,7 -6,0" fill="none" stroke="var(--cyan)" stroke-width="1.3" />
-        <circle cx="0" cy="0" r="1.5" fill="var(--cyan)" />
+        <!-- 45-degree Tactical Chamfer Alignment Ticks -->
+        <line x1="130" y1="26" x2="135" y2="31" stroke="var(--text-dim)" stroke-width="0.8" />
+        <line x1="465" y1="87" x2="470" y2="92" stroke="var(--text-dim)" stroke-width="0.8" />
+
+        <!-- Bottom Center Fiducial -->
+        <circle cx="300" cy="107" r="1.2" fill="var(--text-dim)" />
+        <line x1="292" y1="107" x2="308" y2="107" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="1 2" />
       </g>
-      <g class="hero-moving-shape shape-drift-2">
-        <line x1="-5" y1="0" x2="5" y2="0" stroke="var(--magenta)" stroke-width="1.2" />
-        <line x1="0" y1="-5" x2="0" y2="5" stroke="var(--magenta)" stroke-width="1.2" />
-        <rect x="-3" y="-3" width="6" height="6" fill="none" stroke="var(--magenta)" stroke-width="0.8" />
+
+      <!-- Stepped Calibration / Vernier Scale (Increased width & stroke) -->
+      <path id="flourishVernier" d="M 168 108 L 248 108 M 168 108 L 168 103 M 184 108 L 184 104 M 200 108 L 200 103 M 216 108 L 216 104 M 232 108 L 232 103 M 248 108 L 248 104" fill="none" stroke="var(--text-dim)" stroke-width="1.3" />
+
+      <!-- Tactical Diamond Accent Pip (Uniform transparency) -->
+      <polygon id="flourishDiamond" class="flourish-cmy flourish-pulse" points="412,14 416,18 412,22 408,18" fill="none" stroke="var(--cyan)" stroke-width="1.1" />
+
+      <!-- Telemetry Annotations in Micro Mono (EDA nudged left to clear corner bracket) -->
+      <text id="flourishEdaText" x="372" y="107" font-family="'JetBrains Mono', monospace" font-size="6.5" font-weight="600" fill="var(--text-dim)" letter-spacing="0.08em">EDA // BENCH</text>
+
+      <!-- Dynamic Accent Shapes Moving Around Hero Text (Color randomized) -->
+      <g class="hero-moving-shape shape-drift-1 flourish-cmy-group">
+        <polygon points="0,-7 6,0 0,7 -6,0" fill="none" stroke="var(--magenta)" stroke-width="1.3" />
+        <circle cx="0" cy="0" r="1.5" fill="var(--magenta)" />
       </g>
-      <g class="hero-moving-shape shape-drift-3">
-        <circle r="3" fill="none" stroke="var(--yellow)" stroke-width="1.2" />
-        <line x1="0" y1="-5" x2="0" y2="-8" stroke="var(--yellow)" stroke-width="1" />
+      <g class="hero-moving-shape shape-drift-2 flourish-cmy-group">
+        <line x1="-5" y1="0" x2="5" y2="0" stroke="var(--yellow)" stroke-width="1.2" />
+        <line x1="0" y1="-5" x2="0" y2="5" stroke="var(--yellow)" stroke-width="1.2" />
+        <rect x="-3" y="-3" width="6" height="6" fill="none" stroke="var(--yellow)" stroke-width="0.8" />
       </g>
-      <g class="hero-moving-shape shape-drift-4">
-        <path d="M -4 -3 L 4 -3 L 4 3 L -4 3" fill="none" stroke="var(--cyan)" stroke-width="1.1" />
+      <g class="hero-moving-shape shape-drift-3 flourish-cmy-group">
+        <circle r="3" fill="none" stroke="var(--cyan)" stroke-width="1.2" />
+        <line x1="0" y1="-5" x2="0" y2="-8" stroke="var(--cyan)" stroke-width="1" />
+      </g>
+      <g class="hero-moving-shape shape-drift-4 flourish-cmy-group">
+        <path d="M -4 -3 L 4 -3 L 4 3 L -4 3" fill="none" stroke="var(--yellow)" stroke-width="1.1" />
       </g>
     </g>
 
-    <g font-family="'JetBrains Mono', 'Inter', monospace" font-weight="700" font-size="82" letter-spacing="0">
+    <!-- Hero Letters Group (Shifted down with generous vertical padding above and below) -->
+    <g transform="translate(0, 14)" font-family="'JetBrains Mono', 'Inter', monospace" font-weight="700" font-size="82" letter-spacing="0">
       <!-- WEBER Stepped Luminance Underlay (Slots 1, 2, 3) -->
       <text x="164" y="70" text-anchor="middle" class="glyph-web-w" id="glyphW" fill="var(--weber-w)" opacity="1">W</text>
       <text x="232" y="70" text-anchor="middle" class="glyph-web-e" id="glyphE" fill="var(--weber-e1)" opacity="1">E</text>
       <text x="300" y="70" text-anchor="middle" class="glyph-web-b" id="glyphB" fill="var(--weber-b)" opacity="1">B</text>
 
-      <!-- Orbital Arc - Back Section (Yellow 2.4px Line & 5.2px Circle Occluded Behind Z) -->
-      <g transform="rotate(-22 300 46)">
+      <!-- Orbital Arc - Back Section (Yellow 2.4px Line & 5.2px Circle Occluded Behind Z, 75% Opacity) -->
+      <g transform="rotate(-22 300 46)" opacity="0.75">
         <path d="M 266,46 A 34,14 0 0,1 334,46" fill="none" stroke="var(--orbit-stroke)" stroke-width="2.4" stroke-dasharray="4 3"/>
         <g clip-path="url(#orbitBackClip)">
           <circle r="5.2" fill="var(--orbit-pip)">
@@ -113,8 +137,8 @@
       <!-- Z Glyph (Layered Between Back and Front Orbital Arcs) -->
       <text x="300" y="70" text-anchor="middle" class="glyph-z voltage-startup" id="glyphZ" fill="var(--yellow)">Z</text>
 
-      <!-- Orbital Arc - Front Section (Yellow 2.4px Line & 5.2px Circle Crossing IN FRONT of Z) -->
-      <g transform="rotate(-22 300 46)">
+      <!-- Orbital Arc - Front Section (Yellow 2.4px Line & 5.2px Circle Crossing IN FRONT of Z, 75% Opacity) -->
+      <g transform="rotate(-22 300 46)" opacity="0.75">
         <path d="M 334,46 A 34,14 0 0,1 266,46" fill="none" stroke="var(--orbit-stroke)" stroke-width="2.4" stroke-dasharray="4 3"/>
         <g clip-path="url(#orbitFrontClip)">
           <circle r="5.2" fill="var(--orbit-pip)">
@@ -233,6 +257,14 @@
 <div id="pageWrapper">
   <div class="content-divider"></div>
   <main>
+    <!-- Tactical Scroll Cue Indicator (Clean text with subtle continuous yellow arrow) -->
+    <div class="scroll-cue" id="scrollCue" aria-hidden="true">
+      <span class="scroll-cue-label">SYS.SCROLL // v0.1</span>
+      <svg class="scroll-cue-arrow" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+        <path d="M 3 6 L 8 11 L 13 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+
     <!-- Hero / Introductory Section -->
     <section class="tech-panel glow-container hero-section">
       <div class="glow-border-layer"></div>

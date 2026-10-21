@@ -155,16 +155,67 @@
     100% { opacity: 1; }
   }
 
+  @keyframes glitchChromatic {
+    0% { transform: translate(0, 0); filter: none; }
+    18% { transform: translate(-2.5px, 0.8px); filter: drop-shadow(2px 0 0 var(--magenta)) drop-shadow(-2px 0 0 var(--cyan)); }
+    38% { transform: translate(2px, -0.6px); filter: drop-shadow(-2px 0 0 var(--yellow)) drop-shadow(2px 0 0 var(--magenta)); }
+    58% { transform: translate(-1.5px, 0.4px); filter: drop-shadow(1.5px 0 0 var(--cyan)) drop-shadow(-1.5px 0 0 var(--yellow)); }
+    78% { transform: translate(1px, -0.2px); filter: none; }
+    100% { transform: translate(0, 0); filter: none; }
+  }
+
+  @keyframes glitchJitter {
+    0% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+    15% { transform: translate(-3.5px, 0.5px) skewX(-2.5deg); opacity: 0.7; }
+    35% { transform: translate(3px, -0.5px) skewX(2.5deg); opacity: 0.95; }
+    55% { transform: translate(-2px, 0.3px) skewX(-1.5deg); opacity: 0.4; }
+    75% { transform: translate(1.5px, -0.3px) skewX(1deg); opacity: 0.9; }
+    90% { transform: translate(-0.5px, 0) skewX(0deg); opacity: 1; }
+    100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+  }
+
+  @keyframes glitchStrobe {
+    0% { opacity: 1; filter: none; }
+    18% { opacity: 0.15; filter: drop-shadow(0 0 6px currentColor); }
+    30% { opacity: 0.95; filter: drop-shadow(0 0 10px currentColor); }
+    45% { opacity: 0.05; filter: none; }
+    60% { opacity: 0.85; filter: drop-shadow(0 0 4px currentColor); }
+    75% { opacity: 0.3; filter: none; }
+    88% { opacity: 1; filter: drop-shadow(0 0 8px currentColor); }
+    100% { opacity: 1; filter: none; }
+  }
+
+  @keyframes glitchCascade {
+    0% { transform: translateY(0); opacity: 1; }
+    25% { transform: translateY(-2px); opacity: 0.3; filter: drop-shadow(0 2px 0 var(--cyan)); }
+    50% { transform: translateY(2px); opacity: 0.9; filter: drop-shadow(0 -2px 0 var(--magenta)); }
+    75% { transform: translateY(-1px); opacity: 0.6; }
+    100% { transform: translateY(0); opacity: 1; filter: none; }
+  }
 
   .voltage-startup {
     animation: voltageStartup 0.45s cubic-bezier(0.2, 0.8, 0.4, 1);
   }
 
-
   .voltage-blink {
     animation: microVoltageBlink 0.35s ease;
   }
 
+  .glitch-chromatic {
+    animation: glitchChromatic 0.42s ease;
+  }
+
+  .glitch-jitter {
+    animation: glitchJitter 0.38s ease;
+  }
+
+  .glitch-strobe {
+    animation: glitchStrobe 0.36s ease;
+  }
+
+  .glitch-cascade {
+    animation: glitchCascade 0.4s ease;
+  }
 
   /* Misregistration on Hover for K, Y, Z, E, R */
   #heroLogo:hover .glyph-k {
@@ -199,7 +250,55 @@
   /* Hero Accent Flourishes */
   .hero-flourish {
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    opacity: 0.92;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hero-flourish.is-dimmed {
+    opacity: 0.15;
+  }
+
+  body.scrolled .hero-flourish {
+    opacity: 0.15;
+  }
+
+  #heroLogo:hover .hero-flourish,
+  .hero-flourish.is-active,
+  .hero-flourish.flourish-flicker {
+    opacity: 0.95 !important;
+    transition: opacity 0.2s ease !important;
+  }
+
+  /* Dynamic sizing and shaping overrides for desktop vs mobile */
+  .hero-flourish.is-mobile-flourish path,
+  .hero-flourish.is-mobile-flourish line,
+  .hero-flourish.is-mobile-flourish polygon {
+    stroke-width: 1.8px;
+  }
+
+  .hero-flourish.is-mobile-flourish text {
+    font-size: 7.5px;
+    font-weight: 700;
+  }
+
+  .hero-flourish.is-mobile-flourish .tactical-reticle {
+    transform: scale(1.35);
+  }
+
+  .hero-flourish.is-mobile-flourish .hero-moving-shape {
+    transform: scale(1.2);
+  }
+
+  @media (max-width: 680px) {
+    .hero-flourish path,
+    .hero-flourish line,
+    .hero-flourish polygon {
+      stroke-width: 1.8px;
+    }
+    .hero-flourish text {
+      font-size: 7.5px;
+      font-weight: 700;
+    }
   }
 
   @keyframes reticleFloat1 {
@@ -215,8 +314,8 @@
   }
 
   @keyframes flourishPulse {
-    0%, 100% { opacity: 0.85; transform: scale(1); }
-    50% { opacity: 0.35; transform: scale(0.92); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.92); }
   }
 
   .tactical-reticle.reticle-1 {
@@ -346,7 +445,7 @@
     font-family: 'Lexend', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   }
   body.font-dyslexic p,
-  body.font-dyslexic a,
+  body.font-dyslexic a:not(.subpage-brand-kyzer),
   body.font-dyslexic li,
   body.font-dyslexic label,
   body.font-dyslexic input,
@@ -358,7 +457,7 @@
   body.font-dyslexic strong,
   body.font-dyslexic em,
   body.font-dyslexic .body-text,
-  body.font-dyslexic span:not(.morph-char):not(.swatch-rect):not([class*="glyph"]):not([class*="pip"]) {
+  body.font-dyslexic span:not(.morph-char):not(.swatch-rect):not([class*="glyph"]):not([class*="pip"]):not(.subpage-brand-kyzer *) {
     font-family: 'Lexend', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     line-height: 1.68 !important;
   }
@@ -367,7 +466,7 @@
     font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   }
   body.font-high-visibility p,
-  body.font-high-visibility a,
+  body.font-high-visibility a:not(.subpage-brand-kyzer),
   body.font-high-visibility li,
   body.font-high-visibility label,
   body.font-high-visibility input,
@@ -379,7 +478,7 @@
   body.font-high-visibility strong,
   body.font-high-visibility em,
   body.font-high-visibility .body-text,
-  body.font-high-visibility span:not(.morph-char):not(.swatch-rect):not([class*="glyph"]):not([class*="pip"]) {
+  body.font-high-visibility span:not(.morph-char):not(.swatch-rect):not([class*="glyph"]):not([class*="pip"]):not(.subpage-brand-kyzer *) {
     font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     line-height: 1.65 !important;
     font-size: 1.02em;
@@ -391,6 +490,14 @@
   body.font-high-visibility h3,
   body.font-high-visibility h4 {
     font-weight: 700 !important;
+  }
+
+  /* Disable chromatic aberration hover effect on bottom bar / links in visibility mode */
+  body.font-high-visibility .chroma-hover:hover,
+  body.font-high-visibility .footer-col a:hover,
+  body.font-high-visibility .triple-footer a:hover,
+  body.font-high-visibility .footer-bottom-text a:hover {
+    text-shadow: none !important;
   }
 
 
