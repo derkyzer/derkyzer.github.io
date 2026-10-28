@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KYZER // Interactive Tool Container</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/theme.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<style>
+  /* Tool Container Layout */
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-color);
+  }
+
+  .tool-viewer-wrapper {
+    width: 95%;
+    max-width: 95vw;
+    margin: 72px auto 0 auto;
+    height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
+  }
+
+  .tool-viewer-container {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    border: 1px solid var(--panel-border-bright);
+    border-bottom: none;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  /* Tactical Controls Bar */
+  .tool-toolbar {
+    height: 46px;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    gap: 12px;
+    flex-shrink: 0;
+    z-index: 20;
+    user-select: none;
+  }
+
+  .tool-toolbar-left,
+  .tool-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .tool-meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    background: var(--panel-bg-alt);
+    border: 1px solid var(--panel-border);
+    padding: 5px 10px;
+    border-radius: 4px;
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-meta-badge .pip {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    animation: pipPulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pipPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .tool-btn {
+    background: var(--panel-bg-alt);
+    border: 1px solid var(--panel-border);
+    color: var(--text-color);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    border-radius: 4px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .tool-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+  }
+
+  .tool-btn.active {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  .tool-control-group {
+    display: inline-flex;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--panel-bg-alt);
+  }
+
+  .tool-control-group .tool-btn {
+    border: none;
+    border-radius: 0;
+    border-right: 1px solid var(--panel-border);
+    padding: 6px 9px;
+  }
+
+  .tool-control-group .tool-btn:last-child {
+    border-right: none;
+  }
+
+  /* Viewport & Iframe */
+  .tool-frame-viewport {
+    flex: 1 1 auto;
+    position: relative;
+    width: 100%;
+    height: calc(100% - 46px);
+    background: #000;
+    overflow: hidden;
+  }
+
+  #toolIframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    transform-origin: 0 0;
+    transition: transform 0.12s ease-out;
+  }
+
+  /* Loading Overlay */
+  .frame-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    z-index: 15;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .frame-loading-overlay.loaded {
+    opacity: 0;
+  }
+
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--panel-border-bright);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Fullscreen Mode */
+  .tool-viewer-container:fullscreen,
+  .tool-viewer-container:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  /* Responsive Rules */
+  @media (max-width: 900px) {
+    .tool-meta-badge {
+      max-width: 200px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .tool-viewer-wrapper {
+      width: 98%;
+      max-width: 98vw;
+      margin-top: 68px;
+      height: calc(100vh - 68px);
+      height: calc(100dvh - 68px);
+    }
+    .tool-toolbar {
+      padding: 0 8px;
+      gap: 6px;
+      height: 42px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tool-toolbar::-webkit-scrollbar {
+      display: none;
+    }
+    .tool-btn .btn-text {
+      display: none;
+    }
+    .tool-meta-badge {
+      max-width: 140px;
+      font-size: 10px;
+      padding: 4px 6px;
+    }
+  }
+</style>
+</head>
+
+<body class="dark-mode subpage">
+
+<!-- Calibrated Title Bar -->
+<header class="title-bar">
+  <div class="nav-colophon-tag">
+    <a href="../" class="subpage-brand-kyzer" aria-label="Return to KYZER Home" data-tooltip="KYZER // Home"><span class="morph-slot"><span class="swatch-rect rect-cyan"></span><span class="morph-char char-k">K</span></span><span class="morph-slot"><span class="swatch-rect rect-magenta"></span><span class="morph-char char-y">Y</span></span><span class="morph-slot"><span class="swatch-rect rect-yellow"></span><span class="morph-char char-z">Z</span></span><span class="morph-suffix"><span class="morph-char char-e">E</span><span class="morph-char char-r">R</span></span></a>
+  </div>
+
+  <div class="subpage-title-center mono" id="subpageHeaderTitle" style="font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase;">
+    MOD.04 // INTERACTIVE CONTAINER
+  </div>
+
+  <button class="a11y-toggle chroma-hover" id="a11yToggle" aria-label="Accessibility Settings" title="Accessibility Settings" data-tooltip="Accessibility Options">
+    <svg viewBox="0 0 160 160" role="img" aria-label="Accessibility Settings Icon">
+      <circle cx="80" cy="40" r="14" fill="var(--cyan)"></circle>
+      <path d="M 45 65 L 115 65 M 80 65 L 80 110 M 80 110 L 55 150 M 80 110 L 105 150" stroke="var(--yellow)" stroke-width="8" stroke-linecap="round"></path>
+    </svg>
+  </button>
+  <button class="tray-toggle chroma-hover" id="trayToggle" aria-label="Open Navigation Drawer">☰</button>
+</header>
+
+<!-- Drawer Tray -->
+<div class="content-tray" id="contentTray">
+  <nav class="icon-links">
+    <a href="../projects/" data-tooltip="Projects // GitHub">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient0" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="var(--cyan)" />
+            <stop offset="1" stop-color="var(--magenta)" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient0)" stroke-width="6" height="50" width="80" x="40" y="55"></rect>
+        <line stroke="url(#gradient0)" stroke-width="6" x1="55" x2="105" y1="40" y2="40"></line>
+        <circle cx="80" cy="80" fill="var(--cyan)" r="8"></circle>
+      </svg>
+    </a>
+    <a href="../blog/" data-tooltip="Dev Notes // Blog">
+      <svg class="icon" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="gradient1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="var(--magenta)" />
+            <stop offset="1" stop-color="var(--yellow)" />
+          </linearGradient>
+        </defs>
+        <rect fill="none" stroke="url(#gradient1)" stroke-width="6" height="70" width="60" x="50" y="45"></rect>
+        <line stroke="var(--heading-color)" stroke-width="4" x1="65" x2="95" y1="65" y2="65"></line>
+        <line stroke="var(--heading-color)" stroke-width="4" x1="65" x2="95" y1="85" y2="85"></line>
+        <line stroke="var(--heading-color)" stroke-width="4" x1="65" x2="85" y1="105" y2="105"></line>
+      </svg>
+    </a>
+    <a href="#" id="themeToggle" data-tooltip="Calibrate Theme">
+      <svg class="icon" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" fill="none" stroke="var(--yellow)" stroke-width="6" r="30"></circle>
+        <circle cx="80" cy="80" fill="var(--cyan)" r="14"></circle>
+        <line stroke="var(--magenta)" stroke-width="4" x1="80" x2="80" y1="35" y2="45"></line>
+        <line stroke="var(--magenta)" stroke-width="4" x1="80" x2="80" y1="115" y2="125"></line>
+        <line stroke="var(--magenta)" stroke-width="4" x1="35" x2="45" y1="80" y2="80"></line>
+        <line stroke="var(--magenta)" stroke-width="4" x1="115" x2="125" y1="80" y2="80"></line>
+      </svg>
+    </a>
+    <a href="../tools/" data-tooltip="Interactive Scripts & Tools" style="border-bottom: 2px solid var(--cyan);">
+      <svg class="icon" viewBox="0 0 160 160">
+        <polygon fill="none" stroke="var(--cyan)" stroke-width="6" points="80,45 115,115 45,115"></polygon>
+        <circle cx="80" cy="90" fill="var(--magenta)" r="10"></circle>
+      </svg>
+    </a>
+    <a href="../contact/" data-tooltip="Socials & Comms">
+      <svg class="icon" viewBox="0 0 160 160" role="img" aria-label="Contact Icon">
+        <title>Socials & Comms</title>
+        <rect fill="none" stroke="var(--yellow)" stroke-width="6" height="50" width="70" x="45" y="55"></rect>
+        <polyline fill="none" stroke="var(--cyan)" stroke-width="5" points="45,55 80,85 115,55"></polyline>
+      </svg>
+    </a>
+  </nav>
+</div>
+
+<!-- Accessibility Options Submenu -->
+<div class="tray-a11y-panel" id="a11yPanel" aria-label="Accessibility Controls">
+  <div class="tray-a11y-header">
+    <span>// ACCESSIBILITY CALIBRATION</span>
+    <span style="font-size: 9px; color: var(--text-dim);">SYS.CFG</span>
+  </div>
+  <label class="tray-a11y-row">
+    <span>Reduced Motion</span>
+    <input type="checkbox" id="a11yReduceMotion" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>High Contrast Reticle</span>
+    <input type="checkbox" id="a11yHighContrast" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>Disable Grid Distortion Waves</span>
+    <input type="checkbox" id="a11yDisableWaves" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>Dyslexic Font</span>
+    <input type="checkbox" id="a11yDyslexicFont" />
+  </label>
+  <label class="tray-a11y-row">
+    <span>High Visibility Font</span>
+    <input type="checkbox" id="a11yHighVisFont" />
+  </label>
+</div>
+
+<div class="tooltip" id="iconTooltip"></div>
+
+<!-- Tool Container (95% width, padding at top, extends down off-screen, no bottom content) -->
+<div class="tool-viewer-wrapper">
+  <div class="tool-viewer-container" id="toolViewerContainer">
+    <!-- Top Control Bar -->
+    <div class="tool-toolbar">
+      <div class="tool-toolbar-left">
+        <a href="./" class="tool-btn chroma-hover" id="backToCatalogBtn" title="Return to Tools Directory">
+          <span>←</span>
+          <span class="btn-text">CATALOG</span>
+        </a>
+        <div class="tool-meta-badge" id="toolMetaBadge" title="Tool Node Path">
+          <span class="pip"></span>
+          <span id="toolPathLabel">// INITIALIZING CONTAINER...</span>
+        </div>
+      </div>
+
+      <div class="tool-toolbar-right">
+        <!-- Zoom Controls -->
+        <div class="tool-control-group">
+          <button class="tool-btn chroma-hover" id="zoomOutBtn" aria-label="Zoom Out" title="Zoom Out (–)">−</button>
+          <button class="tool-btn chroma-hover" id="zoomResetBtn" aria-label="Reset Zoom" title="Reset Zoom (100%)">100%</button>
+          <button class="tool-btn chroma-hover" id="zoomInBtn" aria-label="Zoom In" title="Zoom In (+)">+</button>
+        </div>
+
+        <!-- Mute Audio Toggle -->
+        <button class="tool-btn chroma-hover" id="muteToggleBtn" aria-label="Toggle Audio Mute" title="Toggle Audio (M)">
+          <span id="muteIcon">🔊</span>
+          <span class="btn-text" id="muteLabel">MUTE</span>
+        </button>
+
+        <!-- Reload / Restart Simulation -->
+        <button class="tool-btn chroma-hover" id="reloadBtn" aria-label="Restart Applet" title="Restart / Reload (R)">
+          <span>↻</span>
+          <span class="btn-text">RESTART</span>
+        </button>
+
+        <!-- Fullscreen Mode -->
+        <button class="tool-btn chroma-hover" id="fullscreenToggleBtn" aria-label="Toggle Fullscreen" title="Toggle Fullscreen (F)">
+          <span id="fullscreenIcon">⛶</span>
+          <span class="btn-text" id="fullscreenLabel">FULLSCREEN</span>
+        </button>
+
+        <!-- Direct Standalone Raw URL -->
+        <a href="#" target="_blank" rel="noopener noreferrer" class="tool-btn chroma-hover" id="rawLinkBtn" aria-label="Open Standalone Page" title="Open Standalone in New Tab">
+          <span>↗</span>
+          <span class="btn-text">RAW</span>
+        </a>
+
+        <!-- Source on GitHub -->
+        <a href="#" target="_blank" rel="noopener noreferrer" class="tool-btn chroma-hover" id="githubLinkBtn" aria-label="View Source on GitHub" title="View Source on GitHub">
+          <span>⌥</span>
+          <span class="btn-text">GITHUB</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Viewport Container -->
+    <div class="tool-frame-viewport" id="frameViewport">
+      <div class="frame-loading-overlay" id="frameLoadingOverlay">
+        <div class="spinner"></div>
+        <span>INITIALIZING APLET NODE...</span>
+      </div>
+      <iframe
+        id="toolIframe"
+        src="about:blank"
+        title="Interactive Tool Applet"
+        allow="accelerometer; autoplay; camera; encrypted-media; fullscreen; geolocation; gyroscope; microphone; midi; xr-spatial-tracking"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/grid-shader.js" defer></script>
+<script src="../assets/js/core.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toolIframe = document.getElementById('toolIframe');
+  const toolPathLabel = document.getElementById('toolPathLabel');
+  const subpageHeaderTitle = document.getElementById('subpageHeaderTitle');
+  const frameLoadingOverlay = document.getElementById('frameLoadingOverlay');
+  const backToCatalogBtn = document.getElementById('backToCatalogBtn');
+  const rawLinkBtn = document.getElementById('rawLinkBtn');
+  const githubLinkBtn = document.getElementById('githubLinkBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const fullscreenToggleBtn = document.getElementById('fullscreenToggleBtn');
+  const fullscreenIcon = document.getElementById('fullscreenIcon');
+  const fullscreenLabel = document.getElementById('fullscreenLabel');
+  const muteToggleBtn = document.getElementById('muteToggleBtn');
+  const muteIcon = document.getElementById('muteIcon');
+  const muteLabel = document.getElementById('muteLabel');
+  const zoomInBtn = document.getElementById('zoomInBtn');
+  const zoomOutBtn = document.getElementById('zoomOutBtn');
+  const zoomResetBtn = document.getElementById('zoomResetBtn');
+  const viewerContainer = document.getElementById('toolViewerContainer');
+
+  // 1. Resolve Target Tool from Query Parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  let toolParam = urlParams.get('tool') || urlParams.get('file') || urlParams.get('t') || '';
+
+  // Default to jellyfish experiment if none specified
+  if (!toolParam) {
+    toolParam = '_experiments/render/jellyfish.html';
+  }
+
+  // Clean path: strip leading slashes or tools/ prefixes to normalize
+  toolParam = toolParam.replace(/^\.?\/?(tools\/)?/, '');
+
+  // Prevent directory traversal escape
+  if (toolParam.includes('../') || toolParam.startsWith('/')) {
+    toolParam = '_experiments/render/jellyfish.html';
+  }
+
+  const relativeSrc = `./${toolParam}`;
+  const githubSrc = `https://github.com/derkyzer/derkyzer.github.io/blob/main/tools/${toolParam}`;
+
+  // Preserve showhidden flag on back button if passed
+  const showHiddenParam = urlParams.get('showhidden') || urlParams.get('showHidden');
+  if (showHiddenParam) {
+    backToCatalogBtn.href = `./?showhidden=${encodeURIComponent(showHiddenParam)}`;
+  }
+
+  // Derive human-readable tool title
+  const pathSegments = toolParam.split('/');
+  const fileName = pathSegments[pathSegments.length - 1] || toolParam;
+  const toolBaseName = fileName.replace(/\.html$/i, '').replace(/[-_]/g, ' ').toUpperCase();
+
+  document.title = `KYZER // ${toolBaseName}`;
+  toolPathLabel.textContent = `// tools/${toolParam}`;
+  if (subpageHeaderTitle) {
+    subpageHeaderTitle.textContent = `MOD.04 // ${toolBaseName}`;
+  }
+
+  rawLinkBtn.href = relativeSrc;
+  githubLinkBtn.href = githubSrc;
+
+  // 2. Load iframe
+  toolIframe.src = relativeSrc;
+
+  toolIframe.addEventListener('load', () => {
+    frameLoadingOverlay.classList.add('loaded');
+    applyMuteState();
+  });
+
+  // 3. Reload button
+  reloadBtn.addEventListener('click', () => {
+    frameLoadingOverlay.classList.remove('loaded');
+    toolIframe.src = relativeSrc;
+  });
+
+  // 4. Zoom Controls
+  let zoomLevel = 1.0;
+  const ZOOM_STEP = 0.15;
+  const MIN_ZOOM = 0.4;
+  const MAX_ZOOM = 2.5;
+
+  function setZoom(newZoom) {
+    zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, parseFloat(newZoom.toFixed(2))));
+    zoomResetBtn.textContent = `${Math.round(zoomLevel * 100)}%`;
+    
+    // Scale the iframe while adjusting its dimensions so viewport remains completely covered
+    toolIframe.style.transform = `scale(${zoomLevel})`;
+    toolIframe.style.width = `${100 / zoomLevel}%`;
+    toolIframe.style.height = `${100 / zoomLevel}%`;
+  }
+
+  zoomInBtn.addEventListener('click', () => setZoom(zoomLevel + ZOOM_STEP));
+  zoomOutBtn.addEventListener('click', () => setZoom(zoomLevel - ZOOM_STEP));
+  zoomResetBtn.addEventListener('click', () => setZoom(1.0));
+
+  // 5. Mute Controls
+  let isMuted = false;
+
+  function applyMuteState() {
+    try {
+      const frameDoc = toolIframe.contentDocument || toolIframe.contentWindow?.document;
+      if (frameDoc) {
+        frameDoc.querySelectorAll('audio, video').forEach(el => {
+          el.muted = isMuted;
+        });
+      }
+    } catch {
+      // Cross-origin fallback
+    }
+  }
+
+  function toggleMute() {
+    isMuted = !isMuted;
+    muteToggleBtn.classList.toggle('active', isMuted);
+    muteIcon.textContent = isMuted ? '🔇' : '🔊';
+    muteLabel.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+    applyMuteState();
+  }
+
+  muteToggleBtn.addEventListener('click', toggleMute);
+
+  // 6. Fullscreen Controls
+  function toggleFullscreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (viewerContainer.requestFullscreen) {
+        viewerContainer.requestFullscreen();
+      } else if (viewerContainer.webkitRequestFullscreen) {
+        viewerContainer.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+
+  function updateFullscreenUI() {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    fullscreenToggleBtn.classList.toggle('active', isFs);
+    fullscreenIcon.textContent = isFs ? '✕' : '⛶';
+    fullscreenLabel.textContent = isFs ? 'EXIT' : 'FULLSCREEN';
+  }
+
+  fullscreenToggleBtn.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', updateFullscreenUI);
+  document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+
+  // 7. Keyboard Shortcuts (when not typing in an input)
+  window.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+    const key = e.key.toLowerCase();
+    if (key === 'f') {
+      e.preventDefault();
+      toggleFullscreen();
+    } else if (key === 'm') {
+      e.preventDefault();
+      toggleMute();
+    } else if (key === 'r') {
+      e.preventDefault();
+      frameLoadingOverlay.classList.remove('loaded');
+      toolIframe.src = relativeSrc;
+    } else if (key === '+' || key === '=') {
+      e.preventDefault();
+      setZoom(zoomLevel + ZOOM_STEP);
+    } else if (key === '-' || key === '_') {
+      e.preventDefault();
+      setZoom(zoomLevel - ZOOM_STEP);
+    } else if (key === '0') {
+      e.preventDefault();
+      setZoom(1.0);
+    }
+  });
+});
+</script>
+</body>
+</html>

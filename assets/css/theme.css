@@ -251,18 +251,29 @@
   .hero-flourish {
     pointer-events: none;
     opacity: 0.92;
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
   }
 
   .hero-flourish.is-dimmed {
     opacity: 0.15;
   }
 
+  /* Framing completely goes away when scrolled into the page or header */
   body.scrolled .hero-flourish {
-    opacity: 0.15;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
   }
 
-  #heroLogo:hover .hero-flourish,
+  /* Hover only activates on fine pointer devices, not mobile touch */
+  @media (hover: hover) and (pointer: fine) {
+    #heroLogo:hover .hero-flourish {
+      opacity: 0.95 !important;
+      transition: opacity 0.2s ease !important;
+    }
+  }
+
   .hero-flourish.is-active,
   .hero-flourish.flourish-flicker {
     opacity: 0.95 !important;

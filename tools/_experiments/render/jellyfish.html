@@ -1,103 +1,581 @@
-<!DOCTYPE html><html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Light Transport Playground – Bioluminescent Jelly</title>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        background: black;
-      }
-      canvas {
-        display: block;
-        touch-action: none;
-      }
-    </style>
-  </head>
-  <body>
-    <script type="module">
-      import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
-      import { OrbitControls } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/controls/OrbitControls';
-      import { EffectComposer } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/postprocessing/EffectComposer';
-      import { RenderPass } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/postprocessing/RenderPass';
-      import { UnrealBloomPass } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass';
-      import { ShaderPass } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/postprocessing/ShaderPass';
-      import { RGBShiftShader } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/shaders/RGBShiftShader';const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.z = 2.5;
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  document.body.appendChild(renderer.domElement);
-
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.enablePan = false;
-  controls.minDistance = 1.5;
-  controls.maxDistance = 4;
-
-  const geometry = new THREE.SphereGeometry(0.8, 64, 64);
-  const material = new THREE.MeshPhysicalMaterial({
-    color: 0x33ffaa,
-    roughness: 0.1,
-    transmission: 1,
-    thickness: 1.2,
-    ior: 1.4,
-    clearcoat: 0.8,
-    clearcoatRoughness: 0.1,
-    emissive: new THREE.Color(0x33ffaa),
-    emissiveIntensity: 0.5
-  });
-  const jelly = new THREE.Mesh(geometry, material);
-  scene.add(jelly);
-
-  const light = new THREE.PointLight(0x66ffcc, 2, 10);
-  light.position.set(1, 1.5, 2);
-  scene.add(light);
-
-  const ambient = new THREE.AmbientLight(0x111111);
-  scene.add(ambient);
-
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-
-  const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.5,
-    0.5,
-    0.8
-  );
-  composer.addPass(bloomPass);
-
-  const rgbShift = new ShaderPass(RGBShiftShader);
-  rgbShift.uniforms['amount'].value = 0.0015;
-  composer.addPass(rgbShift);
-
-  const clock = new THREE.Clock();
-
-  function animate() {
-    requestAnimationFrame(animate);
-    const t = clock.getElapsedTime();
-    jelly.scale.set(
-      1 + 0.05 * Math.sin(t * 2),
-      1 + 0.05 * Math.cos(t * 2.5),
-      1 + 0.05 * Math.sin(t * 1.5)
-    );
-    jelly.rotation.y += 0.002;
-    controls.update();
-    composer.render();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Abyss // Bioluminescent Jellyfish Shader Node</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
   }
-  animate();
+  body {
+    background: #020408;
+    overflow: hidden;
+    color: #e0f8ff;
+    font-family: 'JetBrains Mono', monospace, -apple-system, sans-serif;
+  }
+  #webgl-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+  }
 
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
-  });
+  /* Cybernetic Abyss Telemetry Overlay */
+  .telemetry-overlay {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    z-index: 10;
+    pointer-events: none;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: rgba(0, 255, 255, 0.75);
+    background: rgba(4, 10, 16, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    padding: 12px 16px;
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  }
+
+  .telemetry-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .telemetry-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 9px;
+  }
+
+  .telemetry-val {
+    color: #00ffff;
+    font-weight: 600;
+  }
+
+  .hud-pip {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00ffff;
+    box-shadow: 0 0 8px #00ffff;
+    animation: pulse 1.8s infinite alternate;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.3; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Interactive Shader Control Strip */
+  .controls-strip {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+    background: rgba(4, 10, 16, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    padding: 6px;
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+  }
+
+  .ctrl-btn {
+    background: rgba(0, 255, 255, 0.08);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    font-family: inherit;
+    font-size: 10px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .ctrl-btn:hover {
+    background: rgba(0, 255, 255, 0.25);
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+  }
+
+  .ctrl-btn.active {
+    background: #00ffff;
+    color: #020408;
+    font-weight: 700;
+  }
+
+  @media (max-width: 640px) {
+    .telemetry-overlay {
+      bottom: 70px;
+      left: 14px;
+      font-size: 10px;
+      padding: 8px 12px;
+    }
+    .controls-strip {
+      bottom: 14px;
+      right: 14px;
+      left: 14px;
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="webgl-canvas"></canvas>
+
+<div class="telemetry-overlay">
+  <div class="telemetry-row">
+    <span class="hud-pip"></span>
+    <span style="font-weight: 600; color: #fff;">SCYPHOZOA // RAYMARCHED GLSL</span>
+  </div>
+  <div class="telemetry-row">
+    <span class="telemetry-label">PROPULSION:</span>
+    <span class="telemetry-val" id="telemetryPulse">PULSING (1.2 Hz)</span>
+  </div>
+  <div class="telemetry-row">
+    <span class="telemetry-label">DISPERSION:</span>
+    <span class="telemetry-val" id="telemetryWavelength">480nm (CYAN)</span>
+  </div>
+  <div class="telemetry-row">
+    <span class="telemetry-label">DEPTH:</span>
+    <span class="telemetry-val">-2,480m ABYSSAL</span>
+  </div>
+</div>
+
+<div class="controls-strip">
+  <button class="ctrl-btn active" id="btnColorCyan">CYAN DEEP</button>
+  <button class="ctrl-btn" id="btnColorNeon">NEON CYBER</button>
+  <button class="ctrl-btn" id="btnColorEmerald">PHOSPHOR</button>
+  <button class="ctrl-btn" id="btnColorAbyss">VIOLET VOID</button>
+</div>
+
+<!-- Three.js with reliable CDN and import map -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+  }
+}
 </script>
 
-  </body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// 1. Scene, Camera, WebGL Renderer
+const canvas = document.getElementById('webgl-canvas');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x02060d, 0.08);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0.5, 3.8);
+
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  powerPreference: 'high-performance'
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxDistance = 6.5;
+controls.minDistance = 1.6;
+controls.target.set(0, 0.2, 0);
+
+// 2. Custom GLSL Shaders for Bioluminescent Jelly Bell
+const bellVertexShader = `
+  uniform float u_time;
+  uniform float u_pulse_speed;
+  varying vec3 v_normal;
+  varying vec3 v_view_dir;
+  varying vec2 v_uv;
+  varying vec3 v_world_pos;
+  varying float v_pulse_phase;
+
+  void main() {
+    v_uv = uv;
+    vec3 pos = position;
+
+    // Organic Swimming Propulsion Wave (bell contraction & expansion)
+    float t = u_time * u_pulse_speed;
+    float pulse = sin(t);
+    // Asymmetric pulse contraction (quick contraction, slow relaxation)
+    float contraction = pow(max(0.0, sin(t)), 2.5);
+    v_pulse_phase = contraction;
+
+    // Radius scaling based on height: rim expands and contracts dynamically
+    float heightFactor = clamp(1.0 - (pos.y + 0.5), 0.0, 1.2);
+    float rimWave = sin(pos.x * 12.0 + t * 2.0) * cos(pos.z * 12.0 + t * 2.0) * 0.04;
+    
+    // Contract the skirt during upstroke, flare out slightly during downstroke
+    pos.x *= 1.0 - contraction * 0.28 * heightFactor + rimWave * heightFactor;
+    pos.z *= 1.0 - contraction * 0.28 * heightFactor + rimWave * heightFactor;
+    pos.y += sin(t) * 0.12 - contraction * 0.1 * (1.0 - heightFactor);
+
+    vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+    v_world_pos = worldPos.xyz;
+    v_normal = normalize(normalMatrix * normal);
+    v_view_dir = normalize(cameraPosition - worldPos.xyz);
+
+    gl_Position = projectionMatrix * viewMatrix * worldPos;
+  }
+`;
+
+const bellFragmentShader = `
+  uniform float u_time;
+  uniform vec3 u_color_primary;
+  uniform vec3 u_color_secondary;
+  uniform vec3 u_color_core;
+  uniform float u_fresnel_power;
+  
+  varying vec3 v_normal;
+  varying vec3 v_view_dir;
+  varying vec2 v_uv;
+  varying vec3 v_world_pos;
+  varying float v_pulse_phase;
+
+  void main() {
+    vec3 normal = normalize(v_normal);
+    vec3 viewDir = normalize(v_view_dir);
+
+    // Fresnel Rim Glow (Limb Brightening in Translucent Organisms)
+    float fresnel = 1.0 - max(0.0, dot(normal, viewDir));
+    float rim = pow(fresnel, u_fresnel_power);
+
+    // Subsurface Scattering & Radial Depth (light shining through bell umbrella)
+    float sss = pow(fresnel, 1.6) * 1.4;
+
+    // Internal Neural Ring Waves (bioluminescent pulses racing through bell margin)
+    float nerveWave = sin(v_uv.y * 36.0 - u_time * 4.0) * 0.5 + 0.5;
+    float rhopaliaLobe = abs(sin(atan(v_world_pos.z, v_world_pos.x) * 8.0));
+    float biolumPulse = pow(nerveWave, 4.0) * pow(rhopaliaLobe, 2.0) * (0.8 + v_pulse_phase * 1.5);
+
+    // Color gradient mixing
+    vec3 baseColor = mix(u_color_primary, u_color_secondary, v_uv.y * 0.8);
+    vec3 finalGlow = mix(baseColor, u_color_core, rim * 0.6 + biolumPulse * 0.4);
+
+    // Iridescent Chromatic Dispersion
+    vec3 dispersion = vec3(
+      pow(fresnel, 2.8),
+      pow(fresnel, 2.4),
+      pow(fresnel, 2.0)
+    ) * u_color_primary * 1.6;
+
+    vec3 finalColor = finalGlow * (sss + 0.3) + dispersion + (u_color_core * biolumPulse * 2.0);
+
+    // Transparency: clear translucent top, glowing vibrant rims
+    float alpha = clamp(rim * 1.2 + sss * 0.45 + biolumPulse * 0.7, 0.15, 0.95);
+
+    gl_FragColor = vec4(finalColor, alpha);
+  }
+`;
+
+// 3. Construct Bell Geometry (Hemisphere Umbrella with Ruffled Skirt)
+const bellGeo = new THREE.SphereGeometry(1.0, 96, 48, 0, Math.PI * 2, 0, Math.PI * 0.65);
+const posAttr = bellGeo.attributes.position;
+for (let i = 0; i < posAttr.count; i++) {
+  let y = posAttr.getY(i);
+  posAttr.setY(i, y * 0.85);
+}
+bellGeo.computeVertexNormals();
+
+const bellUniforms = {
+  u_time: { value: 0 },
+  u_pulse_speed: { value: 2.2 },
+  u_color_primary: { value: new THREE.Color(0x00e5ff) },    // Deep Cyan
+  u_color_secondary: { value: new THREE.Color(0x0055ff) },  // Deep Ocean Blue
+  u_color_core: { value: new THREE.Color(0x70ffff) },       // Core Neon
+  u_fresnel_power: { value: 2.2 }
+};
+
+const bellMaterial = new THREE.ShaderMaterial({
+  vertexShader: bellVertexShader,
+  fragmentShader: bellFragmentShader,
+  uniforms: bellUniforms,
+  transparent: true,
+  side: THREE.DoubleSide,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+
+const bellMesh = new THREE.Mesh(bellGeo, bellMaterial);
+bellMesh.position.y = 0.5;
+scene.add(bellMesh);
+
+// 4. Internal Stomach / Gastrodermal Organs (Glowing Core)
+const coreGeo = new THREE.TorusGeometry(0.28, 0.08, 24, 48);
+const coreMat = new THREE.MeshBasicMaterial({
+  color: 0x00ffff,
+  transparent: true,
+  opacity: 0.85,
+  blending: THREE.AdditiveBlending
+});
+const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+coreMesh.rotation.x = Math.PI / 2;
+coreMesh.position.y = 0.45;
+scene.add(coreMesh);
+
+// 5. Flowing Oral Arms (Frilly Ribbons Hanging from Center)
+const oralArmsCount = 6;
+const oralArmMeshes = [];
+
+const armVertexShader = `
+  uniform float u_time;
+  uniform float u_phase_offset;
+  varying vec2 v_uv;
+
+  void main() {
+    v_uv = uv;
+    vec3 pos = position;
+
+    // Organic curling hydro-drag
+    float wave1 = sin(u_time * 2.0 - uv.y * 6.0 + u_phase_offset) * 0.18 * uv.y;
+    float wave2 = cos(u_time * 1.5 - uv.y * 4.0 + u_phase_offset) * 0.12 * uv.y;
+
+    pos.x += wave1;
+    pos.z += wave2;
+    pos.y -= uv.y * 0.2;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  }
+`;
+
+const armFragmentShader = `
+  uniform vec3 u_color;
+  varying vec2 v_uv;
+
+  void main() {
+    float edgeGlow = sin(v_uv.x * 3.14159);
+    float fadeOut = smoothstep(1.0, 0.2, v_uv.y);
+    vec3 col = u_color * (edgeGlow * 1.4 + 0.2);
+    gl_FragColor = vec4(col, fadeOut * 0.75);
+  }
+`;
+
+for (let i = 0; i < oralArmsCount; i++) {
+  const angle = (i / oralArmsCount) * Math.PI * 2;
+  const radius = 0.22;
+  const armPlane = new THREE.PlaneGeometry(0.35, 1.8, 16, 48);
+  const armMat = new THREE.ShaderMaterial({
+    vertexShader: armVertexShader,
+    fragmentShader: armFragmentShader,
+    uniforms: {
+      u_time: { value: 0 },
+      u_phase_offset: { value: angle },
+      u_color: { value: new THREE.Color(0x33ffff) }
+    },
+    transparent: true,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  const armMesh = new THREE.Mesh(armPlane, armMat);
+  armMesh.position.set(Math.cos(angle) * radius, 0.35, Math.sin(angle) * radius);
+  armMesh.rotation.y = angle + Math.PI / 2;
+  scene.add(armMesh);
+  oralArmMeshes.push(armMesh);
+}
+
+// 6. Hundreds of Bioluminescent Trailing Tentacles (Instanced Lines)
+const tentacleCount = 72;
+const tentacleSegments = 32;
+const tentacleBaseAngles = new Float32Array(tentacleCount);
+const tentacleBaseRadii = new Float32Array(tentacleCount);
+
+for (let i = 0; i < tentacleCount; i++) {
+  tentacleBaseAngles[i] = (i / tentacleCount) * Math.PI * 2;
+  tentacleBaseRadii[i] = 0.88 + (Math.random() - 0.5) * 0.08;
+}
+
+const tentacleMat = new THREE.LineBasicMaterial({
+  color: 0x00ffff,
+  transparent: true,
+  opacity: 0.65,
+  blending: THREE.AdditiveBlending
+});
+
+const tentacleLines = [];
+for (let i = 0; i < tentacleCount; i++) {
+  const geo = new THREE.BufferGeometry();
+  const pts = new Float32Array(tentacleSegments * 3);
+  geo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+  const line = new THREE.Line(geo, tentacleMat);
+  scene.add(line);
+  tentacleLines.push({ line, geo, pts, angle: tentacleBaseAngles[i], radius: tentacleBaseRadii[i] });
+}
+
+// 7. Ambient Bioluminescent Plankton & Marine Snow
+const snowCount = 400;
+const snowGeo = new THREE.BufferGeometry();
+const snowPositions = new Float32Array(snowCount * 3);
+
+for (let i = 0; i < snowCount * 3; i += 3) {
+  snowPositions[i] = (Math.random() - 0.5) * 8;
+  snowPositions[i + 1] = (Math.random() - 0.5) * 8;
+  snowPositions[i + 2] = (Math.random() - 0.5) * 8;
+}
+snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+
+const snowMat = new THREE.PointsMaterial({
+  color: 0x66ffff,
+  size: 0.035,
+  transparent: true,
+  opacity: 0.5,
+  blending: THREE.AdditiveBlending
+});
+const snowParticles = new THREE.Points(snowGeo, snowMat);
+scene.add(snowParticles);
+
+// 8. Dynamic Lighting
+const pointLight = new THREE.PointLight(0x00ffff, 3.5, 8);
+pointLight.position.set(0, 0.4, 0);
+scene.add(pointLight);
+
+// 9. Interactive Color Palettes
+const palettes = {
+  cyan: {
+    primary: new THREE.Color(0x00e5ff),
+    secondary: new THREE.Color(0x0055ff),
+    core: new THREE.Color(0x70ffff),
+    label: '480nm (CYAN)'
+  },
+  neon: {
+    primary: new THREE.Color(0xff00aa),
+    secondary: new THREE.Color(0x00ffff),
+    core: new THREE.Color(0xffff00),
+    label: 'RGB HYBRID (NEON)'
+  },
+  emerald: {
+    primary: new THREE.Color(0x00ff88),
+    secondary: new THREE.Color(0x008855),
+    core: new THREE.Color(0x88ffcc),
+    label: '520nm (EMERALD)'
+  },
+  abyss: {
+    primary: new THREE.Color(0xaa00ff),
+    secondary: new THREE.Color(0x330088),
+    core: new THREE.Color(0xff55ff),
+    label: '410nm (VIOLET VOID)'
+  }
+};
+
+function applyPalette(key) {
+  const p = palettes[key];
+  if (!p) return;
+  bellUniforms.u_color_primary.value.copy(p.primary);
+  bellUniforms.u_color_secondary.value.copy(p.secondary);
+  bellUniforms.u_color_core.value.copy(p.core);
+  coreMat.color.copy(p.core);
+  pointLight.color.copy(p.primary);
+  tentacleMat.color.copy(p.primary);
+  snowMat.color.copy(p.core);
+  oralArmMeshes.forEach(m => m.material.uniforms.u_color.value.copy(p.primary));
+  document.getElementById('telemetryWavelength').textContent = p.label;
+}
+
+document.getElementById('btnColorCyan').addEventListener('click', (e) => {
+  setActiveButton(e.target);
+  applyPalette('cyan');
+});
+document.getElementById('btnColorNeon').addEventListener('click', (e) => {
+  setActiveButton(e.target);
+  applyPalette('neon');
+});
+document.getElementById('btnColorEmerald').addEventListener('click', (e) => {
+  setActiveButton(e.target);
+  applyPalette('emerald');
+});
+document.getElementById('btnColorAbyss').addEventListener('click', (e) => {
+  setActiveButton(e.target);
+  applyPalette('abyss');
+});
+
+function setActiveButton(activeBtn) {
+  document.querySelectorAll('.ctrl-btn').forEach(btn => btn.classList.remove('active'));
+  activeBtn.classList.add('active');
+}
+
+// 10. Animation Loop & Physics
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  bellUniforms.u_time.value = t;
+  oralArmMeshes.forEach(m => m.material.uniforms.u_time.value = t);
+
+  const bobbing = Math.sin(t * 1.1) * 0.15;
+  bellMesh.position.y = 0.5 + bobbing;
+  coreMesh.position.y = 0.45 + bobbing;
+  oralArmMeshes.forEach(m => m.position.y = 0.35 + bobbing);
+
+  const corePulse = 1.0 + Math.sin(t * 2.2) * 0.15;
+  coreMesh.scale.set(corePulse, corePulse, corePulse);
+
+  tentacleLines.forEach((tData) => {
+    const { geo, pts, angle, radius } = tData;
+    const baseOriginX = Math.cos(angle) * radius;
+    const baseOriginZ = Math.sin(angle) * radius;
+    const baseOriginY = 0.35 + bobbing;
+
+    for (let s = 0; s < tentacleSegments; s++) {
+      const segRatio = s / (tentacleSegments - 1);
+      const lag = s * 0.08;
+      const trailX = baseOriginX + Math.sin(t * 2.0 - lag + angle) * (0.04 + segRatio * 0.28);
+      const trailZ = baseOriginZ + Math.cos(t * 1.8 - lag + angle) * (0.04 + segRatio * 0.28);
+      const trailY = baseOriginY - segRatio * 2.2 + Math.sin(t * 1.5 - lag) * 0.06;
+
+      pts[s * 3] = trailX;
+      pts[s * 3 + 1] = trailY;
+      pts[s * 3 + 2] = trailZ;
+    }
+    geo.attributes.position.needsUpdate = true;
+  });
+
+  const snowPos = snowGeo.attributes.position.array;
+  for (let i = 1; i < snowCount * 3; i += 3) {
+    snowPos[i] -= 0.003;
+    if (snowPos[i] < -4) snowPos[i] = 4;
+  }
+  snowGeo.attributes.position.needsUpdate = true;
+
+  bellMesh.rotation.y = t * 0.04;
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+// 11. Viewport Resizing
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+</script>
+  <script src="https://derkyzer.com/assets/js/standalone-nav.js" defer></script>
+</body>
 </html>

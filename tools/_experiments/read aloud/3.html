@@ -87,7 +87,8 @@
                     </head>
                     <body>
                         ${formattedContent}
-                    </body>
+                      <script src="https://derkyzer.com/assets/js/standalone-nav.js" defer></script>
+</body>
                     </html>`;
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 window.generatedBlob = blob; // Save blob for downloading
@@ -120,5 +121,6 @@
             }
         });
     </script>
+  <script src="https://derkyzer.com/assets/js/standalone-nav.js" defer></script>
 </body>
 </html>

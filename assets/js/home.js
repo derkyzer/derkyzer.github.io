@@ -154,7 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setTimeout(() => {
         heroFlourish.classList.remove('flourish-flicker');
-        if (!heroLogo || !heroLogo.matches(':hover')) {
+        const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        if (!hasFinePointer || !heroLogo || !heroLogo.matches(':hover')) {
           heroFlourish.classList.remove('is-active');
         }
       }, 500);
@@ -179,8 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 3200);
 
-  // Return to full opacity on mouseover, fade down on mouseleave
-  if (heroLogo && heroFlourish) {
+  // Return to full opacity on mouseover (desktop fine-pointer only), fade down on mouseleave
+  const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (hasFinePointer && heroLogo && heroFlourish) {
     heroLogo.addEventListener('mouseenter', () => {
       heroFlourish.classList.add('is-active');
     });
@@ -288,17 +290,17 @@ document.addEventListener('DOMContentLoaded', () => {
     heroLogo.style.transform = `translate(-50%, -50%) scale(${scale})`;
     heroLogo.style.width = `${width}px`;
 
-    // Center scroll cue exactly halfway between hero text and content box for easy access
+    // Center scroll cue exactly halfway between hero text and content box for easy access on all devices
     const scrollCue = document.getElementById('scrollCue');
     if (scrollCue && !body.classList.contains('subpage')) {
-      const heroBottom = currentY + (56 * scale);
-      const contentTop = window.innerHeight - peekOffset - sy;
-      const cueY = Math.round(heroBottom + (contentTop - heroBottom) / 2);
-      scrollCue.style.top = Math.max(heroBottom + 12, cueY) + 'px';
+      const heroSection = document.querySelector('.hero-section');
+      const heroRect = heroLogo.getBoundingClientRect();
+      const contentRect = heroSection ? heroSection.getBoundingClientRect() : null;
+      if (contentRect) {
+        const cueY = Math.round(heroRect.bottom + (contentRect.top - heroRect.bottom) / 2);
+        scrollCue.style.top = cueY + 'px';
+      }
     }
-    heroLogo.style.top = currentY + 'px';
-    heroLogo.style.transform = `translate(-50%, -50%) scale(${scale})`;
-    heroLogo.style.width = `${width}px`;
 
     // Reversed W E B visibility: Visible only when hero is big (t=0) and fades out before entering top bar
     if (glyphW && glyphE && glyphB) {
@@ -309,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Scroll state: Only mark as scrolled when actually scrolling down past top hero zone
-    if (sy > 25 || t > 0.06) {
+    if (sy > 15 || t > 0.04) {
       body.classList.add('scrolled');
     } else {
       body.classList.remove('scrolled');
