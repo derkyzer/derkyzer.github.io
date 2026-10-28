@@ -321,11 +321,31 @@
     '.tool-node-card',
     '.contact-card',
     '.direct-subscribe-strip',
-    '.subpage-hero'
+    '.subpage-hero',
+    '.tools-explorer'
   ].join(', ');
 
   let lastHoveredElement = null;
   let lastBoxRect = { x: 0, y: 0 };
+  let isTransitioning = false;
+  let transitionTimeout = null;
+
+  let activeResizeObserver = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    activeResizeObserver = new ResizeObserver(() => {
+      if (activeHoverElement) {
+        updateHoveredBox();
+      }
+    });
+  }
+
+  function observeElement(el) {
+    if (!activeResizeObserver) return;
+    activeResizeObserver.disconnect();
+    if (el) {
+      activeResizeObserver.observe(el);
+    }
+  }
 
   function updateHoveredBox() {
     if (activeHoverElement && activeHoverElement.isConnected) {
@@ -359,6 +379,7 @@
     } else {
       isHovered = false;
       lastHoveredElement = null;
+      observeElement(null);
     }
   }
 
@@ -366,6 +387,7 @@
     const card = e.target.closest(CARD_SELECTORS);
     if (card) {
       activeHoverElement = card;
+      observeElement(card);
       updateHoveredBox();
     }
   }, { passive: true });
@@ -373,16 +395,45 @@
   document.addEventListener('mouseout', (e) => {
     const card = e.target.closest(CARD_SELECTORS);
     if (card && card === activeHoverElement) {
+      // If moving between child elements inside the same active card/container, maintain aura!
+      if (e.relatedTarget && card.contains(e.relatedTarget)) {
+        return;
+      }
       const related = e.relatedTarget ? e.relatedTarget.closest(CARD_SELECTORS) : null;
       if (!related) {
         activeHoverElement = null;
         isHovered = false;
         lastHoveredElement = null;
+        observeElement(null);
       } else {
         activeHoverElement = related;
+        observeElement(related);
         updateHoveredBox();
       }
     }
+  }, { passive: true });
+
+  document.addEventListener('transitionstart', () => {
+    if (activeHoverElement) {
+      isTransitioning = true;
+      clearTimeout(transitionTimeout);
+    }
+  }, { passive: true });
+
+  document.addEventListener('transitionend', () => {
+    if (activeHoverElement) {
+      clearTimeout(transitionTimeout);
+      transitionTimeout = setTimeout(() => {
+        isTransitioning = false;
+        updateHoveredBox();
+      }, 60);
+      updateHoveredBox();
+    }
+  }, { passive: true });
+
+  document.addEventListener('transitioncancel', () => {
+    isTransitioning = false;
+    if (activeHoverElement) updateHoveredBox();
   }, { passive: true });
 
   window.addEventListener('scroll', updateHoveredBox, { passive: true });
@@ -404,8 +455,8 @@
   function render() {
     if (!gl || !program) return;
 
-    // Refresh box position during active scrolling only, eliminating per-frame reflows
-    if (activeHoverElement && isScrolling) {
+    // Refresh box position during active scrolling or transitions, eliminating per-frame reflows
+    if (activeHoverElement && (isScrolling || isTransitioning)) {
       updateHoveredBox();
     }
 

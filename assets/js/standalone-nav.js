@@ -34,7 +34,7 @@
     }
 
     const homeUrl = `${origin}/`;
-    const catalogUrl = `${origin}/tools/`;
+    const catalogUrl = `${origin}/tools/index.html`;
     const containerUrl = `${origin}/tools/view.html?tool=${encodeURIComponent(toolParam)}`;
 
     // 3. Inject Styles

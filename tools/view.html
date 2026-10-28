@@ -378,7 +378,7 @@
     <!-- Top Control Bar -->
     <div class="tool-toolbar">
       <div class="tool-toolbar-left">
-        <a href="./" class="tool-btn chroma-hover" id="backToCatalogBtn" title="Return to Tools Directory">
+        <a href="./index.html" class="tool-btn chroma-hover" id="backToCatalogBtn" title="Return to Tools Directory">
           <span>←</span>
           <span class="btn-text">CATALOG</span>
         </a>
@@ -488,11 +488,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const relativeSrc = `./${toolParam}`;
   const githubSrc = `https://github.com/derkyzer/derkyzer.github.io/blob/main/tools/${toolParam}`;
 
-  // Preserve showhidden flag on back button if passed
+  // Preserve showhidden flag on back button if passed, pointing explicitly to index.html
   const showHiddenParam = urlParams.get('showhidden') || urlParams.get('showHidden');
-  if (showHiddenParam) {
-    backToCatalogBtn.href = `./?showhidden=${encodeURIComponent(showHiddenParam)}`;
-  }
+  backToCatalogBtn.href = showHiddenParam
+    ? `./index.html?showhidden=${encodeURIComponent(showHiddenParam)}`
+    : './index.html';
 
   // Derive human-readable tool title
   const pathSegments = toolParam.split('/');

@@ -47,7 +47,7 @@
   /* Spotlight Grid Section */
   .spotlight-section {
     margin-top: 24px;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
   }
 
   .spotlight-header {
@@ -143,17 +143,20 @@
     box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
   }
 
-  /* Framed Folder Panels with Smooth Dynamic Accordion */
+  /* Framed Folders as Sleek Containers with Flush Topbar Header */
   .tools-explorer {
     margin-top: 24px;
     width: 100%;
+    border-radius: 6px;
   }
 
   .folder-frame {
+    position: relative;
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     border-radius: 6px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
+    padding: 0;
     width: 100%;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -169,12 +172,13 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 12px 18px;
+    padding: 10px 14px;
     background: var(--panel-bg-alt);
+    border: none;
     border-bottom: 1px solid var(--panel-border);
     color: var(--cyan);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.08em;
     user-select: none;
@@ -184,20 +188,20 @@
   }
 
   .folder-header:hover {
-    background: rgba(0, 255, 255, 0.04);
+    background: rgba(0, 255, 255, 0.05);
     color: var(--heading-color);
   }
 
   .folder-header-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .folder-header-meta {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .folder-count-badge {
@@ -207,29 +211,30 @@
     color: var(--text-dim);
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 3px;
   }
 
   .folder-icon {
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
-    font-size: 10px;
+    font-size: 9px;
   }
 
+  /* When collapsed: flush topbar with no bottom line and zero interior padding */
   .folder-frame.collapsed .folder-icon {
     transform: rotate(-90deg);
   }
 
   .folder-frame.collapsed .folder-header {
-    border-bottom-color: transparent;
+    border-bottom: none;
   }
 
   /* Smooth dynamic resizing for collapse / expand */
   .folder-anim-wrapper {
     display: grid;
     grid-template-rows: 1fr;
-    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
     opacity: 1;
   }
 
@@ -244,10 +249,10 @@
   }
 
   .folder-body-inner {
-    padding: 18px;
+    padding: 10px 14px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 12px;
     box-sizing: border-box;
     width: 100%;
   }
@@ -255,7 +260,7 @@
   .folder-subfolders-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -263,7 +268,7 @@
   .folder-files-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -272,13 +277,13 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
   }
 
   .folder-root-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
     width: 100%;
   }
 
@@ -573,7 +578,7 @@
     </div>
 
     <!-- Dynamic Directory Tree Explorer -->
-    <div id="toolsContainer" class="tools-explorer">
+    <div id="toolsContainer" class="tools-explorer glow-container">
       <div class="no-tools-panel tech-panel glow-container">
         <div class="loading-spinner"></div>
         RECURSIVELY QUERYING REPOSITORY CONTENTS VIA GITHUB API...
@@ -677,8 +682,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function createFolderStructure(tools) {
     const structure = {};
+    const ignoredFiles = ['index.html', 'view.html', 'viewer.html'];
+
     tools.forEach(tool => {
       const parts = tool.path.split('/');
+      // Must have at least one directory part (e.g. applets/... or _experiments/...)
+      if (parts.length <= 1) return;
+      const fileName = parts[parts.length - 1];
+      if (ignoredFiles.includes(fileName)) return;
+
       let current = structure;
       for (let i = 0; i < parts.length - 1; i++) {
         if (!current[parts[i]]) {
@@ -686,10 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         current = current[parts[i]].items;
       }
-      const fileName = parts[parts.length - 1];
-      if (fileName !== 'index.html') {
-        current[fileName] = { type: 'file', ...tool };
-      }
+      current[fileName] = { type: 'file', ...tool };
     });
     return structure;
   }
@@ -703,16 +712,44 @@ document.addEventListener('DOMContentLoaded', () => {
     return count;
   }
 
-  function createFolderElement(name, totalFiles = 0, isRoot = false) {
+  const COLLAPSED_STORAGE_KEY = 'kyzer_collapsed_folders';
+
+  function getCollapsedFolders() {
+    try {
+      return JSON.parse(localStorage.getItem(COLLAPSED_STORAGE_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  function setFolderCollapsedState(folderPath, isCollapsed) {
+    if (!folderPath) return;
+    try {
+      const set = new Set(getCollapsedFolders());
+      if (isCollapsed) {
+        set.add(folderPath);
+      } else {
+        set.delete(folderPath);
+      }
+      localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify(Array.from(set)));
+    } catch {}
+  }
+
+  function createFolderElement(name, totalFiles = 0, isRoot = false, folderFullPath = '') {
     const folder = document.createElement('div');
-    folder.className = isRoot ? 'folder-root' : 'folder-frame tech-panel';
+    folder.className = isRoot ? 'folder-root glow-container' : 'folder-frame';
 
     if (!isRoot) {
+      const isInitiallyCollapsed = folderFullPath && getCollapsedFolders().includes(folderFullPath);
+      if (isInitiallyCollapsed) {
+        folder.classList.add('collapsed');
+      }
+
       const header = document.createElement('div');
       header.className = 'folder-header';
       header.setAttribute('role', 'button');
       header.setAttribute('tabindex', '0');
-      header.setAttribute('aria-expanded', 'true');
+      header.setAttribute('aria-expanded', isInitiallyCollapsed ? 'false' : 'true');
       header.innerHTML = `
         <div class="folder-header-title">
           <span class="folder-icon">▼</span>
@@ -726,6 +763,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const toggle = () => {
         const isCollapsed = folder.classList.toggle('collapsed');
         header.setAttribute('aria-expanded', !isCollapsed);
+        if (folderFullPath) {
+          setFolderCollapsedState(folderFullPath, isCollapsed);
+        }
+        if (window.GridShader && window.GridShader.updateBox) {
+          window.GridShader.updateBox();
+        }
       };
 
       header.addEventListener('click', toggle);
@@ -773,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullPath = `${path}${name}`;
         const hiddenQuery = showHidden ? '&showhidden=true' : '';
         card.href = `./view.html?tool=${encodeURIComponent(fullPath)}${hiddenQuery}`;
-        card.className = 'tool-card tech-panel glow-container';
+        card.className = 'tool-card';
         card.innerHTML = `
           <div class="bracket-tl"></div>
           <div class="bracket-tr"></div>
@@ -796,14 +839,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const subfoldersContainer = document.createElement('div');
       subfoldersContainer.className = 'folder-subfolders-container';
       folders.forEach(([name, item]) => {
+        const fullFolderPath = `${path}${name}`;
         const total = countFiles(item.items);
-        const { folder, content } = createFolderElement(name, total, false);
+        const { folder, content } = createFolderElement(name, total, false, fullFolderPath);
         subfoldersContainer.appendChild(folder);
         renderStructure(item.items, content, `${path}${name}/`);
       });
       container.appendChild(subfoldersContainer);
     }
   }
+
+  const fallbackTools = [
+    // Public Applets (Standard Nodes)
+    { name: 'jellyfish.html', path: 'applets/render/jellyfish.html', date: '2026-10-27' },
+    { name: 'light.html', path: 'applets/render/light.html', date: '2026-10-27' },
+    { name: 'snake.html', path: 'applets/games/snake.html', date: '2026-10-27' },
+    { name: 'funkware.html', path: 'applets/synth/funkware.html', date: '2026-10-27' },
+    // Semi-Public / Hidden Sandbox Nodes
+    { name: 'jellyfish.html', path: '_experiments/render/jellyfish.html', date: '2026-10-25' },
+    { name: 'jellyfish2.html', path: '_experiments/render/jellyfish2.html', date: '2026-10-25' },
+    { name: 'light.html', path: '_experiments/render/light.html', date: '2026-10-25' },
+    { name: 'snake.html', path: '_experiments/games/snake.html', date: '2026-10-24' },
+    { name: 'funkware.html', path: '_experiments/funkware/funkware.html', date: '2026-10-23' },
+    { name: 'funkware2.html', path: '_experiments/funkware/funkware2.html', date: '2026-10-23' },
+    { name: '1.html', path: '_experiments/read aloud/1.html', date: '2026-10-20' },
+    { name: '2.html', path: '_experiments/read aloud/2.html', date: '2026-10-20' },
+    { name: '3.html', path: '_experiments/read aloud/3.html', date: '2026-10-20' },
+    { name: '4.html', path: '_experiments/read aloud/4.html', date: '2026-10-20' },
+    { name: '1.html', path: '_experiments/other/1.html', date: '2026-10-18' },
+    { name: '2.html', path: '_experiments/other/2.html', date: '2026-10-18' },
+    { name: '3.html', path: '_experiments/other/3.html', date: '2026-10-18' },
+    { name: 'blog.html', path: '_experiments/oldsite/blog.html', date: '2026-10-15' },
+    { name: 'contact.html', path: '_experiments/oldsite/contact.html', date: '2026-10-15' },
+    { name: 'projects.html', path: '_experiments/oldsite/projects.html', date: '2026-10-15' }
+  ];
 
   async function fetchTools() {
     try {
@@ -821,7 +890,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if (item.type === 'dir') {
             const subItems = await fetchDirectory(item.path);
             results = results.concat(subItems);
-          } else if (item.name.endsWith('.html') && item.name !== 'index.html') {
+          } else if (path !== 'tools' && item.name.endsWith('.html') && !['index.html', 'view.html', 'viewer.html'].includes(item.name)) {
+            // ONLY include .html files inside subdirectories, never root files
             results.push({
               name: item.name,
               path: item.path.replace(/^tools\//, ''),
@@ -833,8 +903,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const tools = await fetchDirectory('tools');
+
+      // Merge local manifest tools (so applets/ displays immediately before git push)
+      const existingPaths = new Set(tools.map(t => t.path));
+      fallbackTools.forEach(fb => {
+        if (!existingPaths.has(fb.path)) {
+          tools.push(fb);
+        }
+      });
+
       const filtered = filterTools(tools);
       const toolsWithDates = await Promise.all(filtered.map(async tool => {
+        if (tool.date) return tool;
         try {
           const commitResponse = await fetch(`https://api.github.com/repos/derkyzer/derkyzer.github.io/commits?path=tools/${tool.path}&page=1&per_page=1`);
           const commits = await commitResponse.json();
@@ -849,34 +929,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       rawToolsList = toolsWithDates;
       displayTools(rawToolsList);
-      updateSpotlights(rawToolsList);
+      updateSpotlights(fallbackTools.concat(rawToolsList));
 
     } catch (error) {
       console.warn('Error querying tools via GitHub API, using local manifest index:', error);
-      const fallbackTools = [
-        // Public Applets (Standard Nodes)
-        { name: 'jellyfish.html', path: 'applets/render/jellyfish.html', date: '2026-10-27' },
-        { name: 'light.html', path: 'applets/render/light.html', date: '2026-10-27' },
-        { name: 'snake.html', path: 'applets/games/snake.html', date: '2026-10-27' },
-        { name: 'funkware.html', path: 'applets/synth/funkware.html', date: '2026-10-27' },
-        // Semi-Public / Hidden Sandbox Nodes
-        { name: 'jellyfish.html', path: '_experiments/render/jellyfish.html', date: '2026-10-25' },
-        { name: 'jellyfish2.html', path: '_experiments/render/jellyfish2.html', date: '2026-10-25' },
-        { name: 'light.html', path: '_experiments/render/light.html', date: '2026-10-25' },
-        { name: 'snake.html', path: '_experiments/games/snake.html', date: '2026-10-24' },
-        { name: 'funkware.html', path: '_experiments/funkware/funkware.html', date: '2026-10-23' },
-        { name: 'funkware2.html', path: '_experiments/funkware/funkware2.html', date: '2026-10-23' },
-        { name: '1.html', path: '_experiments/read aloud/1.html', date: '2026-10-20' },
-        { name: '2.html', path: '_experiments/read aloud/2.html', date: '2026-10-20' },
-        { name: '3.html', path: '_experiments/read aloud/3.html', date: '2026-10-20' },
-        { name: '4.html', path: '_experiments/read aloud/4.html', date: '2026-10-20' },
-        { name: '1.html', path: '_experiments/other/1.html', date: '2026-10-18' },
-        { name: '2.html', path: '_experiments/other/2.html', date: '2026-10-18' },
-        { name: '3.html', path: '_experiments/other/3.html', date: '2026-10-18' },
-        { name: 'blog.html', path: '_experiments/oldsite/blog.html', date: '2026-10-15' },
-        { name: 'contact.html', path: '_experiments/oldsite/contact.html', date: '2026-10-15' },
-        { name: 'projects.html', path: '_experiments/oldsite/projects.html', date: '2026-10-15' }
-      ];
       rawToolsList = filterTools(fallbackTools);
       displayTools(rawToolsList);
       updateSpotlights(fallbackTools);
@@ -887,9 +943,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('spotlightGrid');
     if (!grid) return;
 
-    // Strict Rule: Spotlight ALWAYS appears, but ONLY pulls from standard public stuff (never from any _ folder)
-    const publicOnly = (toolsList || []).filter(t => !t.path.split('/').some(seg => seg.startsWith('_')));
+    // Strict Rule: Spotlight ALWAYS appears, but ONLY pulls from standard public stuff (never from any _ folder, and never root view.html/viewer.html)
+    const publicOnly = (toolsList || fallbackTools).filter(t => {
+      const parts = t.path.split('/');
+      if (parts.length <= 1) return false;
+      if (parts.some(seg => seg.startsWith('_'))) return false;
+      const fileName = parts[parts.length - 1];
+      if (['view.html', 'viewer.html', 'index.html'].includes(fileName)) return false;
+      return true;
+    });
 
+    /*
+    // Temporarily held jellyfish spotlight item commented out per instruction
     const flagship = {
       tag: 'RENDER // 3D SHADER',
       pip: 'pip-cyan',
@@ -897,14 +962,14 @@ document.addEventListener('DOMContentLoaded', () => {
       desc: 'Top-tier Raymarched GLSL bioluminescent jellyfish with subsurface scattering, procedural bell swimming hydrodynamics, and iridescent dispersion.',
       path: 'applets/render/jellyfish.html'
     };
+    */
 
-    // Filter candidate nodes excluding flagship and excluding any hidden/underscore directories
-    const candidates = publicOnly.filter(t => !t.path.includes('jellyfish.html'));
-    const shuffled = [...candidates].sort(() => 0.5 - Math.random());
-    const picked = shuffled.slice(0, 2);
+    // Randomize all 3 spotlight slots from standard public tools
+    const shuffled = [...publicOnly].sort(() => 0.5 - Math.random());
+    const picked = shuffled.slice(0, 3);
 
-    const cardsData = [flagship];
-    const pipColors = ['pip-magenta', 'pip-yellow'];
+    const cardsData = [];
+    const pipColors = ['pip-cyan', 'pip-magenta', 'pip-yellow'];
 
     if (picked.length > 0) {
       picked.forEach((tool, idx) => {
@@ -927,17 +992,24 @@ document.addEventListener('DOMContentLoaded', () => {
       // Fallback public cards if no other public tools are scanned yet
       cardsData.push({
         tag: 'GAMES // 2D CANVAS',
-        pip: 'pip-magenta',
+        pip: 'pip-cyan',
         title: 'Retro Snake Arcade',
         desc: 'Tactical 2D matrix arcade simulation with swipe and arrow navigation, dynamic boundary collision, and score telemetry.',
         path: 'applets/games/snake.html'
       });
       cardsData.push({
         tag: 'SYNTH // AUDIOVISUAL',
-        pip: 'pip-yellow',
+        pip: 'pip-magenta',
         title: 'Funkware NeoByte Terminal',
         desc: 'Retro-futuristic cybernetic experience featuring city parallax overlays, synthwave typography, and dynamic multimedia soundscapes.',
         path: 'applets/synth/funkware.html'
+      });
+      cardsData.push({
+        tag: 'RENDER // 3D GLSL',
+        pip: 'pip-yellow',
+        title: 'Bioluminescent Jellyfish',
+        desc: 'Raymarched GLSL bioluminescent jellyfish simulation node with subsurface scattering and fluid dynamics.',
+        path: 'applets/render/jellyfish.html'
       });
     }
 
@@ -996,6 +1068,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const filtered = rawToolsList.filter(t => t.name.toLowerCase().includes(q) || t.path.toLowerCase().includes(q));
         displayTools(filtered);
+      }
+      if (window.GridShader && window.GridShader.updateBox) {
+        window.GridShader.updateBox();
       }
     });
   }
