@@ -854,6 +854,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.warn('Error querying tools via GitHub API, using local manifest index:', error);
       const fallbackTools = [
+        // Public Applets (Standard Nodes)
+        { name: 'jellyfish.html', path: 'applets/render/jellyfish.html', date: '2026-10-27' },
+        { name: 'light.html', path: 'applets/render/light.html', date: '2026-10-27' },
+        { name: 'snake.html', path: 'applets/games/snake.html', date: '2026-10-27' },
+        { name: 'funkware.html', path: 'applets/synth/funkware.html', date: '2026-10-27' },
+        // Semi-Public / Hidden Sandbox Nodes
         { name: 'jellyfish.html', path: '_experiments/render/jellyfish.html', date: '2026-10-25' },
         { name: 'jellyfish2.html', path: '_experiments/render/jellyfish2.html', date: '2026-10-25' },
         { name: 'light.html', path: '_experiments/render/light.html', date: '2026-10-25' },
@@ -873,46 +879,67 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
       rawToolsList = filterTools(fallbackTools);
       displayTools(rawToolsList);
-      updateSpotlights(rawToolsList);
+      updateSpotlights(fallbackTools);
     }
   }
 
-  function updateSpotlights(tools) {
+  function updateSpotlights(toolsList) {
     const grid = document.getElementById('spotlightGrid');
-    if (!grid || !tools || tools.length === 0) return;
+    if (!grid) return;
+
+    // Strict Rule: Spotlight ALWAYS appears, but ONLY pulls from standard public stuff (never from any _ folder)
+    const publicOnly = (toolsList || []).filter(t => !t.path.split('/').some(seg => seg.startsWith('_')));
 
     const flagship = {
       tag: 'RENDER // 3D SHADER',
       pip: 'pip-cyan',
       title: 'Bioluminescent Jellyfish',
       desc: 'Top-tier Raymarched GLSL bioluminescent jellyfish with subsurface scattering, procedural bell swimming hydrodynamics, and iridescent dispersion.',
-      path: '_experiments/render/jellyfish.html'
+      path: 'applets/render/jellyfish.html'
     };
 
-    // Filter candidate nodes for random slots 2 & 3
-    const candidates = tools.filter(t => !t.path.includes('jellyfish.html'));
+    // Filter candidate nodes excluding flagship and excluding any hidden/underscore directories
+    const candidates = publicOnly.filter(t => !t.path.includes('jellyfish.html'));
     const shuffled = [...candidates].sort(() => 0.5 - Math.random());
     const picked = shuffled.slice(0, 2);
 
     const cardsData = [flagship];
     const pipColors = ['pip-magenta', 'pip-yellow'];
 
-    picked.forEach((tool, idx) => {
-      const parts = tool.path.split('/');
-      const category = (parts.length > 2 ? parts[1] : 'APLET').toUpperCase();
-      const displayName = tool.name
-        .replace('.html', '')
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase());
+    if (picked.length > 0) {
+      picked.forEach((tool, idx) => {
+        const parts = tool.path.split('/');
+        const category = (parts.length > 2 ? parts[parts.length - 2] : 'APLET').toUpperCase();
+        const displayName = tool.name
+          .replace('.html', '')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
 
-      cardsData.push({
-        tag: `${category} // INTERACTIVE`,
-        pip: pipColors[idx % pipColors.length],
-        title: displayName,
-        desc: `Autonomous interactive utility node located at // tools/${tool.path}. Ready for execution in the containerized runner.`,
-        path: tool.path
+        cardsData.push({
+          tag: `${category} // INTERACTIVE`,
+          pip: pipColors[idx % pipColors.length],
+          title: displayName,
+          desc: `Autonomous public interactive utility node located at // tools/${tool.path}. Ready for execution in the containerized runner.`,
+          path: tool.path
+        });
       });
-    });
+    } else {
+      // Fallback public cards if no other public tools are scanned yet
+      cardsData.push({
+        tag: 'GAMES // 2D CANVAS',
+        pip: 'pip-magenta',
+        title: 'Retro Snake Arcade',
+        desc: 'Tactical 2D matrix arcade simulation with swipe and arrow navigation, dynamic boundary collision, and score telemetry.',
+        path: 'applets/games/snake.html'
+      });
+      cardsData.push({
+        tag: 'SYNTH // AUDIOVISUAL',
+        pip: 'pip-yellow',
+        title: 'Funkware NeoByte Terminal',
+        desc: 'Retro-futuristic cybernetic experience featuring city parallax overlays, synthwave typography, and dynamic multimedia soundscapes.',
+        path: 'applets/synth/funkware.html'
+      });
+    }
 
     grid.innerHTML = cardsData.map(c => `
       <div class="spotlight-card tech-panel glow-container">
