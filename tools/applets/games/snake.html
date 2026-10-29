@@ -1,310 +1,844 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Snake Game</title>
-    <style>
-        body {
-            background-color: #222;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            overflow: hidden; /* Prevents scrolling on small screens */
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CMYK // TACTICAL SNAKE</title>
+  <style>
+    :root {
+      --c-cyan: #00e5ff;
+      --c-magenta: #ff007f;
+      --c-yellow: #ffe600;
+      --c-black: #0c0d10;
+      --c-paper: #ecebe4;
+      --c-grid: rgba(12, 13, 16, 0.08);
+      --c-accent: rgba(12, 13, 16, 0.35);
+      --font-mono: "SF Mono", "Consolas", "Roboto Mono", "Courier New", monospace;
+    }
 
-        canvas {
-            background-color: #333;
-            border: 1px solid #555;
-            box-shadow: 0 0 10px #000;
-            touch-action: none; /* Prevents default gestures on touch */
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-        @media (max-width: 600px) {
-            canvas {
-                width: 100%;
-                height: auto;
-            }
-        }
-    </style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--c-paper);
+      color: var(--c-black);
+      font-family: var(--font-mono);
+      touch-action: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--c-paper);
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Tactical HUD Overlay */
+    .hud-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 16px 20px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 10;
+    }
+
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--c-accent);
+      padding-bottom: 8px;
+    }
+
+    .telemetry-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .telemetry-title {
+      font-weight: 700;
+      color: var(--c-black);
+    }
+
+    .telemetry-sub {
+      color: rgba(12, 13, 16, 0.55);
+      font-size: 9px;
+    }
+
+    .hud-score-cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    .score-readout {
+      font-size: 26px;
+      color: var(--c-black);
+    }
+
+    .hud-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid var(--c-accent);
+      padding-top: 8px;
+    }
+
+    .ratio-tracker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    .ratio-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .plate-readout {
+      display: flex;
+      gap: 12px;
+      font-weight: 700;
+    }
+    .plate-c { color: #009ab0; }
+    .plate-m { color: #d6006e; }
+    .plate-y { color: #a89200; }
+    .plate-k { color: #0c0d10; }
+
+    /* On-Screen Touch Vector Guides (Virtual Swipe Surface) */
+    .touch-surface-guide {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 100px;
+      height: 100px;
+      border: 1px dashed var(--c-accent);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+    }
+  </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const context = canvas.getContext('2d');
+  <div id="game-container">
+    <canvas id="viewport"></canvas>
 
-    // Game variables
-    const gridSize = 20;
-    const tileCountX = Math.floor(canvas.width / gridSize);
-    const tileCountY = Math.floor(canvas.height / gridSize);
+    <div class="touch-surface-guide">
+      <span>SWIPE</span>
+    </div>
 
-    let snake = [];
-    let direction = { x: 0, y: 0 };
-    let food = {};
-    let gameInterval;
-    let gameRunning = false;
-    let score = 0;
+    <div class="hud-layer">
+      <header class="hud-header">
+        <div class="telemetry-block">
+          <span class="telemetry-title">SYS // CMYK-RIBBON-SNAKE</span>
+          <span class="telemetry-sub" id="disp-fps">STATUS: 60.0 FPS // RUNTIME LIVE</span>
+        </div>
 
-    // For touch controls (drag/swipe)
-    let touchStartX = null;
-    let touchStartY = null;
+        <div class="hud-score-cluster">
+          <span class="telemetry-sub">RIBBON LENGTH</span>
+          <span class="score-readout" id="disp-length">005 NODES</span>
+        </div>
 
-    // Desktop controls
-    document.addEventListener('keydown', keyDown);
+        <div class="telemetry-block" style="text-align: right;">
+          <span class="telemetry-title" id="disp-target">FEED: C-NODE (15°)</span>
+          <span class="telemetry-sub" id="disp-k-state">STATE: MULTI-LAYER CMY</span>
+        </div>
+      </header>
 
-    // Start/Restart on click/tap
-    canvas.addEventListener('mousedown', tryStartGame);
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+      <div></div>
 
-    function tryStartGame() {
-        if (!gameRunning) startGame();
+      <footer class="hud-footer">
+        <div class="ratio-tracker">
+          <span class="plate-c">C: <span id="disp-count-c">0</span></span>
+          <span class="plate-m">M: <span id="disp-count-m">0</span></span>
+          <span class="plate-y">Y: <span id="disp-count-y">0</span></span>
+          <span class="plate-k">K-SURGE: <span id="disp-k-timer">READY</span></span>
+        </div>
+
+        <div class="plate-readout">
+          <span class="plate-c">15°</span>
+          <span class="plate-m">75°</span>
+          <span class="plate-y">00°</span>
+          <span class="plate-k">45°</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       TACTICAL AUDIO ENGINE (Web Audio API Synthesizer)
+       Tactile offset-press acoustics: Mechanical paper feed indexing ticks,
+       resonant pigment-ingestion chirps, and sub-harmonic K-surge booms.
+       ========================================================================== */
+    class SnakeAudioEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContextClass();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // Discrete mechanical stepper tick on each grid step
+      playStepTick() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(120, t + 0.015);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, t);
+        filter.Q.setValueAtTime(6.0, t);
+
+        gain.gain.setValueAtTime(0.04, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.018);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.018);
+      }
+
+      // High-precision ink assimilation chirp
+      playInkPickup(colorType = 'CYAN') {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        let baseFreq = 520;
+        if (colorType === 'MAGENTA') baseFreq = 660;
+        else if (colorType === 'YELLOW') baseFreq = 780;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(baseFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.6, t + 0.07);
+
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.075);
+      }
+
+      // K-Surge full process compression detonation or crash boom
+      playSubBoom() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(88, t);
+        osc.frequency.exponentialRampToValueAtTime(22, t + 0.45);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(120, t);
+        filter.frequency.exponentialRampToValueAtTime(36, t + 0.4);
+
+        gain.gain.setValueAtTime(0.36, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.48);
+      }
     }
 
-    function startGame() {
-        gameRunning = true;
-        resetGame();
-    }
+    /* ==========================================================================
+       TACTICAL SIMULATION & SNAKE ENGINE
+       Grid-based ribbon dynamics, subtractive segment blending, CMY ratio tracking,
+       K-Surge invulnerability state, swipe/keyboard handling, and bleed trails.
+       ========================================================================== */
+    const audio = new SnakeAudioEngine();
 
-    function resetGame() {
-        score = 0;
-        snake = [];
-        snake.push({ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) });
+    const COLOR_DEFS = {
+      CYAN:    { name: 'C-NODE (15°)', hex: '#00e5ff', rgb: [0.0, 0.9, 1.0] },
+      MAGENTA: { name: 'M-NODE (75°)', hex: '#ff007f', rgb: [1.0, 0.0, 0.5] },
+      YELLOW:  { name: 'Y-NODE (00°)', hex: '#ffe600', rgb: [1.0, 0.9, 0.0] },
+      KEY:     { name: 'K-VOID (45°)', hex: '#0c0d10', rgb: [0.05, 0.05, 0.06] }
+    };
 
-        // Random initial direction
-        const directions = [
-            { x: 0, y: -1 }, // Up
-            { x: 0, y: 1 },  // Down
-            { x: -1, y: 0 }, // Left
-            { x: 1, y: 0 }   // Right
+    class SnakeSimulation {
+      constructor() {
+        this.buffer = document.createElement('canvas');
+        this.ctx = this.buffer.getContext('2d');
+
+        this.width = 1280;
+        this.height = 720;
+        this.buffer.width = this.width;
+        this.buffer.height = this.height;
+
+        this.gridSize = 24;
+        this.cols = Math.floor(this.width / this.gridSize);
+        this.rows = Math.floor(this.height / this.gridSize);
+
+        this.stepInterval = 95; // Milliseconds per grid step
+        this.lastStepTime = 0;
+
+        // Ink balance tracking
+        this.counts = { CYAN: 0, MAGENTA: 0, YELLOW: 0 };
+        this.kSurgeDuration = 0; // Frames of K-surge remaining
+
+        this.initInput();
+        this.resetGame();
+      }
+
+      initInput() {
+        window.addEventListener('keydown', (e) => {
+          audio.init();
+          const k = e.key.toLowerCase();
+          if ((k === 'w' || k === 'arrowup') && this.dir.y === 0) this.nextDir = { x: 0, y: -1 };
+          else if ((k === 's' || k === 'arrowdown') && this.dir.y === 0) this.nextDir = { x: 0, y: 1 };
+          else if ((k === 'a' || k === 'arrowleft') && this.dir.x === 0) this.nextDir = { x: -1, y: 0 };
+          else if ((k === 'd' || k === 'arrowright') && this.dir.x === 0) this.nextDir = { x: 1, y: 0 };
+        });
+
+        // Touch Vector Swipe Engine
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        window.addEventListener('touchstart', (e) => {
+          audio.init();
+          if (e.touches.length > 0) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 0) return;
+          const dx = e.touches[0].clientX - touchStartX;
+          const dy = e.touches[0].clientY - touchStartY;
+          const absDx = Math.abs(dx);
+          const absDy = Math.abs(dy);
+
+          if (Math.max(absDx, absDy) > 28) {
+            if (absDx > absDy) {
+              if (dx > 0 && this.dir.x === 0) this.nextDir = { x: 1, y: 0 };
+              else if (dx < 0 && this.dir.x === 0) this.nextDir = { x: -1, y: 0 };
+            } else {
+              if (dy > 0 && this.dir.y === 0) this.nextDir = { x: 0, y: 1 };
+              else if (dy < 0 && this.dir.y === 0) this.nextDir = { x: 0, y: -1 };
+            }
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+      }
+
+      resetGame() {
+        const startX = Math.floor(this.cols / 2);
+        const startY = Math.floor(this.rows / 2);
+
+        this.snake = [
+          { x: startX, y: startY, color: 'CYAN' },
+          { x: startX - 1, y: startY, color: 'MAGENTA' },
+          { x: startX - 2, y: startY, color: 'YELLOW' },
+          { x: startX - 3, y: startY, color: 'CYAN' },
+          { x: startX - 4, y: startY, color: 'MAGENTA' }
         ];
-        direction = directions[Math.floor(Math.random() * directions.length)];
 
-        placeFood();
+        this.dir = { x: 1, y: 0 };
+        this.nextDir = { x: 1, y: 0 };
+        this.counts = { CYAN: 2, MAGENTA: 2, YELLOW: 1 };
+        this.kSurgeDuration = 0;
+        this.spawnTarget();
+        this.updateHUD();
+      }
 
-        if (gameInterval) clearInterval(gameInterval);
-        gameInterval = setInterval(gameLoop, 100);
-    }
+      spawnTarget() {
+        const palette = ['CYAN', 'MAGENTA', 'YELLOW'];
+        const chosenColor = palette[Math.floor(Math.random() * palette.length)];
 
-    function keyDown(event) {
-        if (!gameRunning && event.key === ' ') {
-            startGame();
-            return;
+        let valid = false;
+        let candidate = { x: 0, y: 0 };
+
+        while (!valid) {
+          candidate.x = Math.floor(Math.random() * (this.cols - 4)) + 2;
+          candidate.y = Math.floor(Math.random() * (this.rows - 4)) + 2;
+          valid = !this.snake.some(seg => seg.x === candidate.x && seg.y === candidate.y);
         }
 
-        if (!gameRunning) return;
+        this.target = {
+          x: candidate.x,
+          y: candidate.y,
+          color: chosenColor
+        };
+      }
 
-        switch (event.key) {
-            case 'w':
-                if (direction.y === 0) direction = { x: 0, y: -1 };
-                break;
-            case 's':
-                if (direction.y === 0) direction = { x: 0, y: 1 };
-                break;
-            case 'a':
-                if (direction.x === 0) direction = { x: -1, y: 0 };
-                break;
-            case 'd':
-                if (direction.x === 0) direction = { x: 1, y: 0 };
-                break;
+      updateHUD() {
+        const lenElem = document.getElementById('disp-length');
+        const targetElem = document.getElementById('disp-target');
+        const kElem = document.getElementById('disp-k-state');
+        const cCount = document.getElementById('disp-count-c');
+        const mCount = document.getElementById('disp-count-m');
+        const yCount = document.getElementById('disp-count-y');
+        const kTimer = document.getElementById('disp-k-timer');
+
+        if (lenElem) lenElem.textContent = `${String(this.snake.length).padStart(3, '0')} NODES`;
+        if (targetElem) targetElem.textContent = `FEED: ${COLOR_DEFS[this.target.color].name}`;
+
+        if (cCount) cCount.textContent = this.counts.CYAN;
+        if (mCount) mCount.textContent = this.counts.MAGENTA;
+        if (yCount) yCount.textContent = this.counts.YELLOW;
+
+        if (this.kSurgeDuration > 0) {
+          if (kElem) kElem.textContent = 'STATE: K-SURGE INVULNERABLE';
+          if (kTimer) kTimer.textContent = `${(this.kSurgeDuration / 10).toFixed(1)}S ACTIVE`;
+        } else {
+          if (kElem) kElem.textContent = 'STATE: MULTI-LAYER CMY';
+          const minTriad = Math.min(this.counts.CYAN, this.counts.MAGENTA, this.counts.YELLOW);
+          if (kTimer) kTimer.textContent = minTriad >= 1 ? 'READY (EAT INK)' : 'NEED TRIAD';
         }
-    }
+      }
 
-    function placeFood() {
-        food = {
-            x: Math.floor(Math.random() * tileCountX),
-            y: Math.floor(Math.random() * tileCountY)
+      step() {
+        this.dir = { ...this.nextDir };
+        const head = this.snake[0];
+        const newHead = {
+          x: head.x + this.dir.x,
+          y: head.y + this.dir.y,
+          color: this.target.color
         };
 
-        // Make sure food is not on the snake
-        for (let segment of snake) {
-            if (segment.x === food.x && segment.y === food.y) {
-                placeFood();
-                return;
-            }
+        // K-Surge Countdown
+        if (this.kSurgeDuration > 0) {
+          this.kSurgeDuration--;
         }
-    }
 
-    function gameLoop() {
-        if (!gameRunning) {
-            clearInterval(gameInterval);
-            drawGame();
-            drawGameOver();
+        // Perimeter Boundary Handling
+        if (newHead.x < 0 || newHead.x >= this.cols || newHead.y < 0 || newHead.y >= this.rows) {
+          if (this.kSurgeDuration > 0) {
+            // Wrap through screen boundaries during K-Surge
+            newHead.x = (newHead.x + this.cols) % this.cols;
+            newHead.y = (newHead.y + this.rows) % this.rows;
+          } else {
+            audio.playSubBoom();
+            this.resetGame();
             return;
+          }
         }
 
-        const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-
-        // Wrap around edges
-        if (head.x < 0) head.x = tileCountX - 1;
-        if (head.x >= tileCountX) head.x = 0;
-        if (head.y < 0) head.y = tileCountY - 1;
-        if (head.y >= tileCountY) head.y = 0;
-
-        // Check collision with self
-        for (let segment of snake) {
-            if (head.x === segment.x && head.y === segment.y) {
-                // Game over
-                gameRunning = false;
-                break;
-            }
-        }
-
-        if (gameRunning) {
-            snake.unshift(head);
-
-            // Check if snake eats food
-            if (head.x === food.x && head.y === food.y) {
-                placeFood();
-                score += 10;
-            } else {
-                snake.pop();
-            }
-        }
-
-        drawGame();
-
-        if (!gameRunning) {
-            drawGameOver();
-            clearInterval(gameInterval);
-        }
-    }
-
-    function drawGame() {
-        // Clear canvas
-        context.fillStyle = '#333';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw grid lines
-        context.strokeStyle = '#444';
-        context.lineWidth = 1;
-        for (let x = 0; x < canvas.width; x += gridSize) {
-            context.beginPath();
-            context.moveTo(x, 0);
-            context.lineTo(x, canvas.height);
-            context.stroke();
-        }
-        for (let y = 0; y < canvas.height; y += gridSize) {
-            context.beginPath();
-            context.moveTo(0, y);
-            context.lineTo(canvas.width, y);
-            context.stroke();
-        }
-
-        // Draw snake
-        for (let i = 0; i < snake.length; i++) {
-            context.fillStyle = i === 0 ? '#0f0' : '#0a0';
-            context.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
-        }
-
-        // Draw food
-        context.fillStyle = '#f00';
-        context.beginPath();
-        context.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
-        context.fill();
-
-        // Draw score
-        context.fillStyle = '#fff';
-        context.font = '20px Arial';
-        context.fillText('Score: ' + score, canvas.width - 80, 20);
-    }
-
-    function drawGameOver() {
-        context.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        context.fillStyle = '#fff';
-        context.font = '48px Arial';
-        context.textAlign = 'center';
-        context.fillText('Game Over', canvas.width / 2, canvas.height / 2);
-        context.font = '24px Arial';
-        context.fillText('Tap to restart', canvas.width / 2, canvas.height / 2 + 40);
-    }
-
-    // Initial instructions
-    drawInitialMessage();
-
-    function drawInitialMessage() {
-        context.fillStyle = '#333';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        // grid
-        context.strokeStyle = '#444';
-        context.lineWidth = 1;
-        for (let x = 0; x < canvas.width; x += gridSize) {
-            context.beginPath();
-            context.moveTo(x, 0);
-            context.lineTo(x, canvas.height);
-            context.stroke();
-        }
-        for (let y = 0; y < canvas.height; y += gridSize) {
-            context.beginPath();
-            context.moveTo(0, y);
-            context.lineTo(canvas.width, y);
-            context.stroke();
-        }
-
-        context.fillStyle = '#fff';
-        context.font = '24px Arial';
-        context.textAlign = 'center';
-        context.fillText('Tap to start', canvas.width / 2, canvas.height / 2);
-        context.font = '16px Arial';
-        context.fillText('Drag (swipe) to change direction on mobile', canvas.width / 2, canvas.height / 2 + 30);
-        context.fillText('Use w,a,s,d keys on desktop', canvas.width / 2, canvas.height / 2 + 50);
-    }
-
-    // Touch handlers for swipe-based direction
-    function handleTouchStart(e) {
-        e.preventDefault();
-        if (!gameRunning) {
-            startGame();
+        // Self-Collision Check
+        const selfHitIdx = this.snake.findIndex(seg => seg.x === newHead.x && seg.y === newHead.y);
+        if (selfHitIdx !== -1) {
+          if (this.kSurgeDuration > 0) {
+            // Sever and absorb self tail during K-Surge
+            const severed = this.snake.splice(selfHitIdx);
+            severed.forEach(seg => {
+              if (this.counts[seg.color] > 0) this.counts[seg.color]--;
+            });
+            audio.playSubBoom();
+          } else {
+            audio.playSubBoom();
+            this.resetGame();
             return;
+          }
         }
-        const touch = e.touches[0];
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-    }
 
-    function handleTouchMove(e) {
-        // Prevent scrolling
-        e.preventDefault();
-    }
+        // Advance Ribbon Body
+        this.snake.unshift(newHead);
+        audio.playStepTick();
 
-    function handleTouchEnd(e) {
-        if (!gameRunning) return;
-        // Determine direction based on swipe
-        // If there's no movement, don't change direction
-        if (touchStartX === null || touchStartY === null) return;
+        // Feed Pigment Node Collision
+        if (newHead.x === this.target.x && newHead.y === this.target.y) {
+          audio.playInkPickup(this.target.color);
+          this.counts[this.target.color]++;
 
-        const touch = (e.changedTouches && e.changedTouches[0]) || null;
-        if (!touch) return;
+          // Evaluate Triad Formation (Equal C, M, and Y triggers K-Surge)
+          if (this.counts.CYAN >= 1 && this.counts.MAGENTA >= 1 && this.counts.YELLOW >= 1) {
+            this.counts.CYAN--;
+            this.counts.MAGENTA--;
+            this.counts.YELLOW--;
+            this.kSurgeDuration = 80; // ~8 seconds of K-Surge
+            audio.playSubBoom();
+          }
 
-        const dx = touch.clientX - touchStartX;
-        const dy = touch.clientY - touchStartY;
-
-        // Reset touch start positions
-        touchStartX = null;
-        touchStartY = null;
-
-        // If swipe is too small, ignore
-        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-
-        // Determine direction
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // Horizontal swipe
-            if (dx > 0 && direction.x === 0) direction = { x: 1, y: 0 };
-            if (dx < 0 && direction.x === 0) direction = { x: -1, y: 0 };
+          this.spawnTarget();
         } else {
-            // Vertical swipe
-            if (dy > 0 && direction.y === 0) direction = { x: 0, y: 1 };
-            if (dy < 0 && direction.y === 0) direction = { x: 0, y: -1 };
+          const tail = this.snake.pop();
+          // Keep count aligned with current tail
+          if (tail.color && this.counts[tail.color] > 0 && this.kSurgeDuration === 0) {
+            // Balanced growth
+          }
         }
+
+        this.updateHUD();
+      }
+
+      update(now) {
+        const interval = this.kSurgeDuration > 0 ? this.stepInterval * 0.72 : this.stepInterval;
+        if (now - this.lastStepTime >= interval) {
+          this.step();
+          this.lastStepTime = now;
+        }
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#ecebe4';
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        // Technical Grid Matrix
+        ctx.strokeStyle = 'rgba(12, 13, 16, 0.05)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < this.width; x += this.gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, this.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < this.height; y += this.gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(this.width, y);
+          ctx.stroke();
+        }
+
+        // Perimeter Technical Border
+        ctx.strokeStyle = '#0c0d10';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, this.width - 2, this.height - 2);
+
+        // Feed Target (Concentric Process Dot + Registration Crosshair)
+        const tgtPixelX = this.target.x * this.gridSize + this.gridSize / 2;
+        const tgtPixelY = this.target.y * this.gridSize + this.gridSize / 2;
+
+        ctx.fillStyle = COLOR_DEFS[this.target.color].hex;
+        ctx.beginPath();
+        ctx.arc(tgtPixelX, tgtPixelY, this.gridSize * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#0c0d10';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(tgtPixelX - this.gridSize * 0.5, tgtPixelY);
+        ctx.lineTo(tgtPixelX + this.gridSize * 0.5, tgtPixelY);
+        ctx.moveTo(tgtPixelX, tgtPixelY - this.gridSize * 0.5);
+        ctx.lineTo(tgtPixelX, tgtPixelY + this.gridSize * 0.5);
+        ctx.stroke();
+
+        // Ribbon Snake Segments
+        const isK = this.kSurgeDuration > 0;
+        for (let i = this.snake.length - 1; i >= 0; i--) {
+          const seg = this.snake[i];
+          const px = seg.x * this.gridSize;
+          const py = seg.y * this.gridSize;
+
+          if (isK) {
+            // Carbon Black monolithic bar during K-Surge
+            ctx.fillStyle = '#0c0d10';
+            ctx.fillRect(px + 1, py + 1, this.gridSize - 2, this.gridSize - 2);
+          } else {
+            // Process Plate Segment
+            ctx.fillStyle = COLOR_DEFS[seg.color].hex;
+            ctx.fillRect(px + 1, py + 1, this.gridSize - 2, this.gridSize - 2);
+
+            // Subtractive edge contour
+            ctx.strokeStyle = '#0c0d10';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 2, py + 2, this.gridSize - 4, this.gridSize - 4);
+          }
+
+          // Optical Registration Pip on Head
+          if (i === 0) {
+            ctx.fillStyle = isK ? '#ffffff' : '#0c0d10';
+            ctx.beginPath();
+            ctx.arc(px + this.gridSize / 2, py + this.gridSize / 2, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
     }
-</script>
-  <script src="https://derkyzer.com/assets/js/standalone-nav.js" defer></script>
+
+    /* ==========================================================================
+       WEBGL POST-PROCESSING ENGINE & CMYK GLSL SHADER
+       Deconstructs the rasterized ribbon canvas into separate subtractive plates,
+       computes screen rosettes at litho angles (15°, 75°, 0°, 45°), applies 
+       subtractive ink blending over cardstock, and drives dynamic registration 
+       drift from the snake's locomotion velocity and active K-surge state.
+       ========================================================================== */
+    const VS_SOURCE = `
+      attribute vec2 a_position;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = (a_position + 1.0) * 0.5;
+        v_uv.y = 1.0 - v_uv.y;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+
+    const FS_SOURCE = `
+      precision mediump float;
+      uniform sampler2D u_texture;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform float u_k_surge;
+      varying vec2 v_uv;
+
+      vec2 rotateUV(vec2 uv, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        mat2 m = mat2(c, -s, s, c);
+        return m * (uv - 0.5) + 0.5;
+      }
+
+      float halftoneDot(vec2 uv, float angle, float frequency, float channelVal) {
+        vec2 rotUV = rotateUV(uv, angle) * (u_resolution / frequency);
+        vec2 grid = fract(rotUV) - 0.5;
+        float dist = length(grid);
+        float radius = sqrt(clamp(channelVal, 0.0, 1.0)) * 0.48;
+        return smoothstep(radius + 0.06, radius - 0.06, dist);
+      }
+
+      void main() {
+        // Registration displacement amplifies under K-surge velocity
+        float baseShift = 0.0016 + (u_k_surge * 0.0035);
+        vec2 cShift = vec2( baseShift,  0.0);
+        vec2 mShift = vec2(-baseShift * 0.5,  baseShift * 0.866);
+        vec2 yShift = vec2(-baseShift * 0.5, -baseShift * 0.866);
+
+        // Plate sampling
+        vec4 sampleC = texture2D(u_texture, v_uv + cShift);
+        vec4 sampleM = texture2D(u_texture, v_uv + mShift);
+        vec4 sampleY = texture2D(u_texture, v_uv + yShift);
+        vec4 sampleK = texture2D(u_texture, v_uv);
+
+        // Map RGB to Subtractive CMY
+        float cVal = 1.0 - sampleC.r;
+        float mVal = 1.0 - sampleM.g;
+        float yVal = 1.0 - sampleY.b;
+
+        // Extract Carbon Key (K) component
+        float kVal = min(cVal, min(mVal, yVal));
+        if (kVal > 0.001) {
+          cVal = clamp((cVal - kVal) / (1.0 - kVal), 0.0, 1.0);
+          mVal = clamp((mVal - kVal) / (1.0 - kVal), 0.0, 1.0);
+          yVal = clamp((yVal - kVal) / (1.0 - kVal), 0.0, 1.0);
+        } else {
+          kVal = 0.0;
+        }
+
+        // Add explicit black elements from the source
+        float directK = 1.0 - max(sampleK.r, max(sampleK.g, sampleK.b));
+        kVal = max(kVal, directK);
+
+        // Process angles: Cyan 15°, Magenta 75°, Yellow 0°, Key 45°
+        float freq = 6.2;
+        float dotC = halftoneDot(v_uv, 0.2618, freq, cVal);
+        float dotM = halftoneDot(v_uv, 1.3090, freq, mVal);
+        float dotY = halftoneDot(v_uv, 0.0000, freq, yVal);
+        float dotK = halftoneDot(v_uv, 0.7854, freq, kVal);
+
+        // Subtractive laydown on raw cardstock
+        vec3 paper = vec3(0.925, 0.921, 0.894);
+        vec3 outColor = paper;
+
+        outColor *= mix(vec3(1.0), vec3(0.0, 0.9, 1.0), dotC * cVal);
+        outColor *= mix(vec3(1.0), vec3(1.0, 0.0, 0.5), dotM * mVal);
+        outColor *= mix(vec3(1.0), vec3(1.0, 0.9, 0.0), dotY * yVal);
+        outColor *= mix(vec3(1.0), vec3(0.05, 0.05, 0.06), dotK * kVal);
+
+        // Substrate microscopic fiber grain
+        float grain = fract(sin(dot(v_uv * u_resolution, vec2(12.9898, 78.233))) * 43758.5453);
+        outColor -= grain * 0.022;
+
+        gl_FragColor = vec4(outColor, 1.0);
+      }
+    `;
+
+    class TacticalSnakeRenderer {
+      constructor(canvas, sim) {
+        this.canvas = canvas;
+        this.sim = sim;
+        this.gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+
+        if (!this.gl) {
+          console.error('WebGL context initialization failed.');
+          return;
+        }
+
+        this.initGL();
+        this.initTexture();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+      }
+
+      compileShader(type, source) {
+        const gl = this.gl;
+        const s = gl.createShader(type);
+        gl.shaderSource(s, source);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error('Shader compilation fault:', gl.getShaderInfoLog(s));
+          gl.deleteShader(s);
+          return null;
+        }
+        return s;
+      }
+
+      initGL() {
+        const gl = this.gl;
+        const vs = this.compileShader(gl.VERTEX_SHADER, VS_SOURCE);
+        const fs = this.compileShader(gl.FRAGMENT_SHADER, FS_SOURCE);
+
+        this.program = gl.createProgram();
+        gl.attachShader(this.program, vs);
+        gl.attachShader(this.program, fs);
+        gl.linkProgram(this.program);
+
+        if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+          console.error('Program linking fault:', gl.getProgramInfoLog(this.program));
+          return;
+        }
+
+        gl.useProgram(this.program);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array([-1, -1,  1, -1, -1,  1, -1,  1,  1, -1,  1,  1]),
+          gl.STATIC_DRAW
+        );
+
+        const aPosition = gl.getAttribLocation(this.program, 'a_position');
+        gl.enableVertexAttribArray(aPosition);
+        gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+        this.uResolution = gl.getUniformLocation(this.program, 'u_resolution');
+        this.uTime = gl.getUniformLocation(this.program, 'u_time');
+        this.uKSurge = gl.getUniformLocation(this.program, 'u_k_surge');
+      }
+
+      initTexture() {
+        const gl = this.gl;
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      }
+
+      draw(now) {
+        const gl = this.gl;
+        gl.useProgram(this.program);
+
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.sim.buffer);
+
+        gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
+        gl.uniform1f(this.uTime, now * 0.001);
+        gl.uniform1f(this.uKSurge, this.sim.kSurgeDuration > 0 ? 1.0 : 0.0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+    }
+
+    /* ==========================================================================
+       MAIN RUNTIME LOOP
+       Synchronizes fixed grid-step simulation with the screen refresh cycle.
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      const sim = new SnakeSimulation();
+      const canvas = document.getElementById('viewport');
+      const renderer = new TacticalSnakeRenderer(canvas, sim);
+
+      let lastTime = performance.now();
+      let frameCount = 0;
+      let lastFpsCheck = lastTime;
+      const fpsElem = document.getElementById('disp-fps');
+
+      function loop(now) {
+        lastTime = now;
+
+        sim.update(now);
+        sim.render();
+        renderer.draw(now);
+
+        frameCount++;
+        if (now - lastFpsCheck >= 1000) {
+          const fps = ((frameCount * 1000) / (now - lastFpsCheck)).toFixed(1);
+          if (fpsElem) fpsElem.textContent = `STATUS: ${fps} FPS // RUNTIME LIVE`;
+          frameCount = 0;
+          lastFpsCheck = now;
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      requestAnimationFrame(loop);
+    });
+  </script>
 </body>
 </html>
