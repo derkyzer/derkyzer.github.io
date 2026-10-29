@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CMYK // TACTICAL PROCESS SUDOKU</title>
+  <style>
+    :root {
+      --c-cyan: #00e5ff;
+      --c-magenta: #ff007f;
+      --c-yellow: #ffe600;
+      --c-black: #0c0d10;
+      --c-paper: #ecebe4;
+      --c-paper-grid: rgba(12, 13, 16, 0.12);
+      --c-paper-major: rgba(12, 13, 16, 0.85);
+      --c-accent: rgba(12, 13, 16, 0.35);
+      --font-mono: "SF Mono", "Consolas", "Roboto Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--c-paper);
+      color: var(--c-black);
+      font-family: var(--font-mono);
+      touch-action: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background-color: var(--c-paper);
+    }
+
+    /* Tactical HUD Header */
+    .hud-header {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--c-accent);
+      padding-bottom: 8px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 10;
+    }
+
+    .telemetry-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .telemetry-title {
+      font-weight: 700;
+      color: var(--c-black);
+    }
+
+    .telemetry-sub {
+      color: rgba(12, 13, 16, 0.55);
+      font-size: 9px;
+    }
+
+    .hud-mode-pill {
+      display: flex;
+      gap: 6px;
+      border: 1px solid var(--c-black);
+      padding: 3px 6px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    /* Sudoku Board Assembly */
+    .board-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto 0;
+    }
+
+    .sudoku-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      grid-template-rows: repeat(9, 1fr);
+      width: min(72vw, 72vh, 480px);
+      height: min(72vw, 72vh, 480px);
+      border: 2px solid var(--c-paper-major);
+      background-color: #fffdfa;
+      box-shadow: 0 4px 18px rgba(12, 13, 16, 0.06);
+    }
+
+    .sudoku-cell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--c-paper-grid);
+      border-bottom: 1px solid var(--c-paper-grid);
+      cursor: pointer;
+      font-size: clamp(14px, 3.2vw, 22px);
+      font-weight: 700;
+      transition: background-color 0.08s ease;
+    }
+
+    .sudoku-cell:nth-child(3n) {
+      border-right: 2px solid var(--c-paper-major);
+    }
+    .sudoku-cell:nth-child(9n) {
+      border-right: none;
+    }
+    .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+    .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+      border-bottom: 2px solid var(--c-paper-major);
+    }
+    .sudoku-cell:nth-child(n+73):nth-child(-n+81) {
+      border-bottom: none;
+    }
+
+    .sudoku-cell.selected {
+      background-color: rgba(0, 229, 255, 0.12);
+    }
+
+    .sudoku-cell.highlight-peer {
+      background-color: rgba(12, 13, 16, 0.025);
+    }
+
+    .sudoku-cell.initial {
+      font-weight: 900;
+    }
+
+    .sudoku-cell.error {
+      background-color: rgba(255, 0, 127, 0.18) !important;
+      color: #b00050 !important;
+    }
+
+    /* Pencil Note Halftone Candidate Pips */
+    .pencil-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      pointer-events: none;
+      padding: 2px;
+    }
+
+    .pencil-pip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(7px, 1.2vw, 9px);
+      font-weight: 700;
+      line-height: 1;
+      opacity: 0;
+    }
+
+    .pencil-pip.active {
+      opacity: 1;
+    }
+
+    /* Subtractive Palette Bar */
+    .controls-wrapper {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+
+    .palette-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+      border: 1px solid var(--c-black);
+      background: #fffdfa;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 13px;
+      transition: transform 0.06s ease, background 0.06s ease;
+    }
+
+    .palette-btn:active {
+      transform: translateY(1px);
+    }
+
+    .palette-swatch-pip {
+      width: 8px;
+      height: 8px;
+      margin-bottom: 3px;
+      border-radius: 50%;
+      border: 1px solid rgba(12, 13, 16, 0.4);
+    }
+
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .tactical-btn {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid var(--c-black);
+      background: var(--c-paper);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .tactical-btn.active {
+      background: var(--c-black);
+      color: var(--c-paper);
+    }
+
+    /* Subtractive Inks Color Mapping */
+    .ink-1 { color: #009ab0; } /* C */
+    .ink-2 { color: #d6006e; } /* M */
+    .ink-3 { color: #a89200; } /* Y */
+    .ink-4 { color: #008f39; } /* C+Y (Green) */
+    .ink-5 { color: #6a0dad; } /* C+M (Violet) */
+    .ink-6 { color: #d04b00; } /* M+Y (Orange) */
+    .ink-7 { color: #5c4033; } /* C+M+Y (Olive/Brown) */
+    .ink-8 { color: #0c0d10; } /* K */
+    .ink-9 { color: #000000; text-shadow: 0 0 1px rgba(0,0,0,0.8); } /* Rich Black */
+
+    /* Crop Marks */
+    .crop-mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+      border-color: var(--c-accent);
+      border-style: solid;
+    }
+    .crop-tl { top: -18px; left: -18px; border-width: 1px 0 0 1px; }
+    .crop-tr { top: -18px; right: -18px; border-width: 1px 1px 0 0; }
+    .crop-bl { bottom: -18px; left: -18px; border-width: 0 0 1px 1px; }
+    .crop-br { bottom: -18px; right: -18px; border-width: 0 1px 1px 0; }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <header class="hud-header">
+      <div class="telemetry-block">
+        <span class="telemetry-title">SYS // PROCESS-SEPARATION-SUDOKU</span>
+        <span class="telemetry-sub" id="disp-status">GAMUT: NOMINAL // VALIDATING</span>
+      </div>
+
+      <div class="hud-mode-pill">
+        <span>MODE:</span>
+        <span id="disp-active-mode">STAMP [INK]</span>
+      </div>
+
+      <div class="telemetry-block" style="text-align: right;">
+        <span class="telemetry-title" id="disp-density">DENSITY: 00 / 81 CELLS</span>
+        <span class="telemetry-sub" id="disp-plate-select">LAYER: ALL-PLATE COMPOSITE</span>
+      </div>
+    </header>
+
+    <main class="board-wrapper">
+      <div class="crop-mark crop-tl"></div>
+      <div class="crop-mark crop-tr"></div>
+      <div class="crop-mark crop-bl"></div>
+      <div class="crop-mark crop-br"></div>
+
+      <div class="sudoku-grid" id="sudoku-grid">
+        <!-- 81 Cells Mounted via Engine Script -->
+      </div>
+    </main>
+
+    <footer class="controls-wrapper">
+      <div class="palette-grid">
+        <button class="palette-btn" data-val="1">
+          <div class="palette-swatch-pip" style="background: var(--c-cyan);"></div>
+          <span class="ink-1">1:C</span>
+        </button>
+        <button class="palette-btn" data-val="2">
+          <div class="palette-swatch-pip" style="background: var(--c-magenta);"></div>
+          <span class="ink-2">2:M</span>
+        </button>
+        <button class="palette-btn" data-val="3">
+          <div class="palette-swatch-pip" style="background: var(--c-yellow);"></div>
+          <span class="ink-3">3:Y</span>
+        </button>
+        <button class="palette-btn" data-val="4">
+          <div class="palette-swatch-pip" style="background: #00a651;"></div>
+          <span class="ink-4">4:G</span>
+        </button>
+        <button class="palette-btn" data-val="5">
+          <div class="palette-swatch-pip" style="background: #6a0dad;"></div>
+          <span class="ink-5">5:V</span>
+        </button>
+        <button class="palette-btn" data-val="6">
+          <div class="palette-swatch-pip" style="background: #f15a24;"></div>
+          <span class="ink-6">6:O</span>
+        </button>
+        <button class="palette-btn" data-val="7">
+          <div class="palette-swatch-pip" style="background: #5c4033;"></div>
+          <span class="ink-7">7:B</span>
+        </button>
+        <button class="palette-btn" data-val="8">
+          <div class="palette-swatch-pip" style="background: var(--c-black);"></div>
+          <span class="ink-8">8:K</span>
+        </button>
+        <button class="palette-btn" data-val="9">
+          <div class="palette-swatch-pip" style="background: #000000; box-shadow: 0 0 2px #000;"></div>
+          <span class="ink-9">9:RK</span>
+        </button>
+      </div>
+
+      <div class="actions-bar">
+        <button class="tactical-btn active" id="btn-mode-stamp">Stamp [1-9]</button>
+        <button class="tactical-btn" id="btn-mode-note">Pencil [Dots]</button>
+        <button class="tactical-btn" id="btn-undo">Undo</button>
+        <button class="tactical-btn" id="btn-clear">Purge</button>
+        <button class="tactical-btn" id="btn-new">New Plate</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       TACTICAL AUDIO ENGINE (Web Audio API Synthesizer)
+       Process pressroom acoustics: Paper index indexing clicks, variable-density
+       solenoid strikes, candidate etching ticks, and hydraulic full-gamut flush.
+       ========================================================================== */
+    class SudokuAudioEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContextClass();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // Discrete dry mechanical tick on cell selection
+      playSelectTick() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(920, t);
+        osc.frequency.exponentialRampToValueAtTime(240, t + 0.012);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1800, t);
+        filter.Q.setValueAtTime(5.0, t);
+
+        gain.gain.setValueAtTime(0.045, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.015);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.015);
+      }
+
+      // Variable-density solenoid strike mapped to ink weight (1=Cyan light -> 9=Rich Black heavy)
+      playStampStrike(val = 1) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        // Density scaling: lower frequency + longer decay for heavier pigments
+        const baseFreq = 580 - (val * 42); 
+        const duration = 0.035 + (val * 0.006);
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = val >= 8 ? 'triangle' : 'square';
+        osc.frequency.setValueAtTime(baseFreq * 1.4, t);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.35, t + duration * 0.85);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(baseFreq * 2.2, t);
+        filter.Q.setValueAtTime(4.0, t);
+
+        const volume = 0.14 + (val * 0.018);
+        gain.gain.setValueAtTime(volume, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + duration);
+      }
+
+      // Micro-halftone pencil candidate toggle tick
+      playPencilTick(isSet = true) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        const startFreq = isSet ? 1200 : 750;
+        const endFreq = isSet ? 1800 : 500;
+
+        osc.frequency.setValueAtTime(startFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(endFreq, t + 0.02);
+
+        gain.gain.setValueAtTime(0.05, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.022);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.022);
+      }
+
+      // Over-saturation conflict buzzer (acid solvent bleed)
+      playConflictBleed() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, t);
+        osc.frequency.linearRampToValueAtTime(110, t + 0.12);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(320, t);
+
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.14);
+      }
+
+      // Full Gamut Registration Flush (board completion chime + hydraulic press)
+      playCompletionFlush() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        // Sub-harmonic hydraulic press stroke
+        const subOsc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(90, t);
+        subOsc.frequency.exponentialRampToValueAtTime(28, t + 0.55);
+
+        subGain.gain.setValueAtTime(0.35, t);
+        subGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+
+        subOsc.connect(subGain);
+        subGain.connect(this.ctx.destination);
+
+        subOsc.start(t);
+        subOsc.stop(t + 0.6);
+
+        // Process triad harmonic chord (C, M, Y resonance)
+        const triadFreqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        triadFreqs.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.07);
+
+          gain.gain.setValueAtTime(0.0, t);
+          gain.gain.setValueAtTime(0.15, t + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.07 + 0.45);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(t + idx * 0.07);
+          osc.stop(t + idx * 0.07 + 0.45);
+        });
+      }
+    }
+
+    /* ==========================================================================
+       TACTICAL SUDOKU CORE ENGINE
+       Exact backtracking solver, symmetric puzzle generator, candidate pencil
+       mark tracking, state history stack (Undo/Redo), and peer conflict validation.
+       ========================================================================== */
+    const audio = new SudokuAudioEngine();
+
+    const PROCESS_SPECTRUM = {
+      1: { label: 'C',  name: 'CYAN',        class: 'ink-1' },
+      2: { label: 'M',  name: 'MAGENTA',     class: 'ink-2' },
+      3: { label: 'Y',  name: 'YELLOW',      class: 'ink-3' },
+      4: { label: 'G',  name: 'GREEN (C+Y)', class: 'ink-4' },
+      5: { label: 'V',  name: 'VIOLET(C+M)', class: 'ink-5' },
+      6: { label: 'O',  name: 'ORANGE(M+Y)', class: 'ink-6' },
+      7: { label: 'B',  name: 'BROWN(CMY)',  class: 'ink-7' },
+      8: { label: 'K',  name: 'KEY BLACK',   class: 'ink-8' },
+      9: { label: 'RK', name: 'RICH BLACK',  class: 'ink-9' }
+    };
+
+    class SudokuEngine {
+      constructor() {
+        this.board = Array(81).fill(0);
+        this.initialMask = Array(81).fill(false);
+        this.candidates = Array.from({ length: 81 }, () => new Set());
+        this.selectedIdx = 0;
+        this.mode = 'STAMP'; // 'STAMP' or 'NOTE'
+        this.history = [];
+        this.conflicts = new Set();
+        this.isComplete = false;
+
+        this.gridElem = document.getElementById('sudoku-grid');
+        this.cellElems = [];
+        this.buildDOMGrid();
+        this.bindEvents();
+        this.generateNewPuzzle(36); // 36 fixed givens
+      }
+
+      buildDOMGrid() {
+        this.gridElem.innerHTML = '';
+        this.cellElems = [];
+
+        for (let i = 0; i < 81; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'sudoku-cell';
+          cell.dataset.idx = i;
+
+          // Nested 3x3 pencil pip container
+          const pencilGrid = document.createElement('div');
+          pencilGrid.className = 'pencil-grid';
+          for (let p = 1; p <= 9; p++) {
+            const pip = document.createElement('span');
+            pip.className = `pencil-pip pip-${p} ink-${p}`;
+            pip.textContent = p;
+            pencilGrid.appendChild(pip);
+          }
+          cell.appendChild(pencilGrid);
+
+          // Value display container
+          const valSpan = document.createElement('span');
+          valSpan.className = 'cell-value';
+          cell.appendChild(valSpan);
+
+          this.gridElem.appendChild(cell);
+          this.cellElems.push(cell);
+        }
+      }
+
+      bindEvents() {
+        // Cell selection
+        this.cellElems.forEach((cell, idx) => {
+          cell.addEventListener('click', () => {
+            audio.init();
+            this.selectCell(idx);
+          });
+        });
+
+        // Numeric palette buttons
+        document.querySelectorAll('.palette-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            audio.init();
+            const val = parseInt(btn.dataset.val, 10);
+            this.handleInput(val);
+          });
+        });
+
+        // Mode toggles
+        const btnStamp = document.getElementById('btn-mode-stamp');
+        const btnNote = document.getElementById('btn-mode-note');
+        const dispMode = document.getElementById('disp-active-mode');
+
+        btnStamp.addEventListener('click', () => {
+          audio.init();
+          this.mode = 'STAMP';
+          btnStamp.classList.add('active');
+          btnNote.classList.remove('active');
+          if (dispMode) dispMode.textContent = 'STAMP [INK]';
+        });
+
+        btnNote.addEventListener('click', () => {
+          audio.init();
+          this.mode = 'NOTE';
+          btnNote.classList.add('active');
+          btnStamp.classList.remove('active');
+          if (dispMode) dispMode.textContent = 'PENCIL [DOTS]';
+        });
+
+        document.getElementById('btn-undo').addEventListener('click', () => {
+          audio.init();
+          this.undo();
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+          audio.init();
+          this.clearCurrentCell();
+        });
+
+        document.getElementById('btn-new').addEventListener('click', () => {
+          audio.init();
+          this.generateNewPuzzle(36);
+        });
+
+        // Physical Keyboard routing
+        window.addEventListener('keydown', (e) => {
+          audio.init();
+          const k = e.key;
+
+          if (k >= '1' && k <= '9') {
+            this.handleInput(parseInt(k, 10));
+          } else if (k === 'Backspace' || k === 'Delete' || k === '0') {
+            this.clearCurrentCell();
+          } else if (k === 'n' || k === 'N' || k === ' ') {
+            // Space or 'N' toggles note mode
+            if (this.mode === 'STAMP') btnNote.click();
+            else btnStamp.click();
+          } else if (k === 'z' && (e.ctrlKey || e.metaKey)) {
+            this.undo();
+          } else if (k === 'ArrowUp' && this.selectedIdx >= 9) {
+            this.selectCell(this.selectedIdx - 9);
+          } else if (k === 'ArrowDown' && this.selectedIdx <= 71) {
+            this.selectCell(this.selectedIdx + 9);
+          } else if (k === 'ArrowLeft' && this.selectedIdx % 9 > 0) {
+            this.selectCell(this.selectedIdx - 1);
+          } else if (k === 'ArrowRight' && this.selectedIdx % 9 < 8) {
+            this.selectCell(this.selectedIdx + 1);
+          }
+        });
+      }
+
+      selectCell(idx) {
+        this.selectedIdx = idx;
+        audio.playSelectTick();
+        this.renderSelectionHighlights();
+      }
+
+      renderSelectionHighlights() {
+        const selRow = Math.floor(this.selectedIdx / 9);
+        const selCol = this.selectedIdx % 9;
+        const selBox = Math.floor(selRow / 3) * 3 + Math.floor(selCol / 3);
+
+        this.cellElems.forEach((cell, idx) => {
+          cell.classList.remove('selected', 'highlight-peer');
+          const r = Math.floor(idx / 9);
+          const c = idx % 9;
+          const b = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+
+          if (idx === this.selectedIdx) {
+            cell.classList.add('selected');
+          } else if (r === selRow || c === selCol || b === selBox) {
+            cell.classList.add('highlight-peer');
+          }
+        });
+      }
+
+      handleInput(val) {
+        if (this.initialMask[this.selectedIdx] || this.isComplete) return;
+
+        this.pushHistoryState();
+
+        if (this.mode === 'STAMP') {
+          if (this.board[this.selectedIdx] === val) {
+            this.board[this.selectedIdx] = 0;
+          } else {
+            this.board[this.selectedIdx] = val;
+            this.candidates[this.selectedIdx].clear();
+            audio.playStampStrike(val);
+          }
+        } else {
+          // Candidate mode
+          if (this.board[this.selectedIdx] === 0) {
+            const set = this.candidates[this.selectedIdx];
+            if (set.has(val)) {
+              set.delete(val);
+              audio.playPencilTick(false);
+            } else {
+              set.add(val);
+              audio.playPencilTick(true);
+            }
+          }
+        }
+
+        this.validateBoard();
+        this.renderBoard();
+        this.checkWinCondition();
+      }
+
+      clearCurrentCell() {
+        if (this.initialMask[this.selectedIdx] || this.isComplete) return;
+        this.pushHistoryState();
+        this.board[this.selectedIdx] = 0;
+        this.candidates[this.selectedIdx].clear();
+        audio.playSelectTick();
+        this.validateBoard();
+        this.renderBoard();
+      }
+
+      pushHistoryState() {
+        const state = {
+          board: [...this.board],
+          candidates: this.candidates.map(s => new Set(s)),
+          selectedIdx: this.selectedIdx
+        };
+        this.history.push(state);
+        if (this.history.length > 50) this.history.shift();
+      }
+
+      undo() {
+        if (this.history.length === 0 || this.isComplete) return;
+        const prev = this.history.pop();
+        this.board = prev.board;
+        this.candidates = prev.candidates;
+        this.selectedIdx = prev.selectedIdx;
+        audio.playSelectTick();
+        this.validateBoard();
+        this.renderBoard();
+        this.renderSelectionHighlights();
+      }
+
+      validateBoard() {
+        this.conflicts.clear();
+
+        // Row and Column verification
+        for (let i = 0; i < 9; i++) {
+          const rowMap = new Map();
+          const colMap = new Map();
+
+          for (let j = 0; j < 9; j++) {
+            const rIdx = i * 9 + j;
+            const rVal = this.board[rIdx];
+            if (rVal !== 0) {
+              if (rowMap.has(rVal)) {
+                this.conflicts.add(rIdx);
+                this.conflicts.add(rowMap.get(rVal));
+              } else {
+                rowMap.set(rVal, rIdx);
+              }
+            }
+
+            const cIdx = j * 9 + i;
+            const cVal = this.board[cIdx];
+            if (cVal !== 0) {
+              if (colMap.has(cVal)) {
+                this.conflicts.add(cIdx);
+                this.conflicts.add(colMap.get(cVal));
+              } else {
+                colMap.set(cVal, cIdx);
+              }
+            }
+          }
+        }
+
+        // 3x3 Box verification
+        for (let b = 0; b < 9; b++) {
+          const boxMap = new Map();
+          const startR = Math.floor(b / 3) * 3;
+          const startC = (b % 3) * 3;
+
+          for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+              const idx = (startR + r) * 9 + (startC + c);
+              const val = this.board[idx];
+              if (val !== 0) {
+                if (boxMap.has(val)) {
+                  this.conflicts.add(idx);
+                  this.conflicts.add(boxMap.get(val));
+                } else {
+                  boxMap.set(val, idx);
+                }
+              }
+            }
+          }
+        }
+
+        if (this.conflicts.size > 0 && this.board[this.selectedIdx] !== 0) {
+          if (this.conflicts.has(this.selectedIdx)) {
+            audio.playConflictBleed();
+          }
+        }
+
+        const dispStatus = document.getElementById('disp-status');
+        if (dispStatus) {
+          if (this.conflicts.size > 0) {
+            dispStatus.textContent = `ALERT: ${this.conflicts.size} INK OVERLAYS CONFLICT`;
+            dispStatus.style.color = '#ff007f';
+          } else {
+            dispStatus.textContent = 'GAMUT: NOMINAL // ALL PLATES ALIGNED';
+            dispStatus.style.color = '';
+          }
+        }
+      }
+
+      checkWinCondition() {
+        const isFull = this.board.every(v => v !== 0);
+        if (isFull && this.conflicts.size === 0 && !this.isComplete) {
+          this.isComplete = true;
+          audio.playCompletionFlush();
+          const dispStatus = document.getElementById('disp-status');
+          if (dispStatus) {
+            dispStatus.textContent = 'PROCESS REGISTERED // 100% COMPLETE';
+            dispStatus.style.color = '#00a651';
+          }
+        }
+      }
+
+      renderBoard() {
+        let placedCount = 0;
+
+        for (let i = 0; i < 81; i++) {
+          const cell = this.cellElems[i];
+          const val = this.board[i];
+          const valSpan = cell.querySelector('.cell-value');
+          const pips = cell.querySelectorAll('.pencil-pip');
+
+          // Reset classes
+          cell.className = 'sudoku-cell';
+          if (i === this.selectedIdx) cell.classList.add('selected');
+          if (this.initialMask[i]) cell.classList.add('initial');
+          if (this.conflicts.has(i)) cell.classList.add('error');
+
+          if (val !== 0) {
+            placedCount++;
+            valSpan.textContent = val;
+            valSpan.className = `cell-value ${PROCESS_SPECTRUM[val].class}`;
+            pips.forEach(p => p.classList.remove('active'));
+          } else {
+            valSpan.textContent = '';
+            valSpan.className = 'cell-value';
+            const cSet = this.candidates[i];
+            pips.forEach((p, pIdx) => {
+              if (cSet.has(pIdx + 1)) p.classList.add('active');
+              else p.classList.remove('active');
+            });
+          }
+        }
+
+        const dispDensity = document.getElementById('disp-density');
+        if (dispDensity) {
+          dispDensity.textContent = `DENSITY: ${String(placedCount).padStart(2, '0')} / 81 CELLS`;
+        }
+      }
+
+      // Backtracking puzzle generator with symmetric digging
+      generateNewPuzzle(clueCount = 36) {
+        this.isComplete = false;
+        this.history = [];
+        this.board.fill(0);
+        this.initialMask.fill(false);
+        this.candidates.forEach(s => s.clear());
+
+        const grid = Array(81).fill(0);
+
+        // Solve empty grid with randomized seeds
+        const solveRandom = (idx = 0) => {
+          if (idx >= 81) return true;
+          const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+          for (let n of nums) {
+            if (this.isPlacementValid(grid, idx, n)) {
+              grid[idx] = n;
+              if (solveRandom(idx + 1)) return true;
+              grid[idx] = 0;
+            }
+          }
+          return false;
+        };
+
+        solveRandom(0);
+
+        // Dig holes symmetrically
+        const indices = Array.from({ length: 41 }, (_, i) => i).sort(() => Math.random() - 0.5);
+        let holesToDig = 81 - clueCount;
+
+        for (let i of indices) {
+          if (holesToDig <= 0) break;
+          const symI = 80 - i;
+          grid[i] = 0;
+          holesToDig--;
+          if (symI !== i && holesToDig > 0) {
+            grid[symI] = 0;
+            holesToDig--;
+          }
+        }
+
+        for (let i = 0; i < 81; i++) {
+          this.board[i] = grid[i];
+          if (grid[i] !== 0) this.initialMask[i] = true;
+        }
+
+        this.validateBoard();
+        this.renderBoard();
+        this.renderSelectionHighlights();
+      }
+
+      isPlacementValid(arr, idx, val) {
+        const r = Math.floor(idx / 9);
+        const c = idx % 9;
+        const b = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+
+        for (let i = 0; i < 9; i++) {
+          if (arr[r * 9 + i] === val) return false;
+          if (arr[i * 9 + c] === val) return false;
+        }
+
+        const startR = Math.floor(b / 3) * 3;
+        const startC = (b % 3) * 3;
+        for (let br = 0; br < 3; br++) {
+          for (let bc = 0; bc < 3; bc++) {
+            if (arr[(startR + br) * 9 + (startC + bc)] === val) return false;
+          }
+        }
+        return true;
+      }
+    }
+
+    /* ==========================================================================
+       SUBTRACTIVE HALFTONE BACKGROUND PASS & INITIALIZATION
+       Renders an authentic offset print bed behind the puzzle grid using WebGL:
+       generates four process rosette angles (15°, 75°, 0°, 45°) with micro-fiber
+       paper grain noise and real-time ink registration response.
+       ========================================================================== */
+    const BG_VS_SOURCE = `
+      attribute vec2 a_pos;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = (a_pos + 1.0) * 0.5;
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+      }
+    `;
+
+    const BG_FS_SOURCE = `
+      precision mediump float;
+      uniform vec2 u_res;
+      uniform float u_time;
+      varying vec2 v_uv;
+
+      vec2 rot(vec2 uv, float a) {
+        float s = sin(a), c = cos(a);
+        return mat2(c, -s, s, c) * (uv - 0.5) + 0.5;
+      }
+
+      float dotPattern(vec2 uv, float angle, float scale) {
+        vec2 r = rot(uv, angle) * (u_res / scale);
+        vec2 g = fract(r) - 0.5;
+        return smoothstep(0.28, 0.22, length(g));
+      }
+
+      void main() {
+        // Raw bone cardstock substrate base
+        vec3 paper = vec3(0.925, 0.921, 0.894);
+
+        // Subtle ambient process screen rosettes
+        float cDot = dotPattern(v_uv, 0.2618, 14.0) * 0.035;
+        float mDot = dotPattern(v_uv, 1.3090, 14.0) * 0.035;
+        float yDot = dotPattern(v_uv, 0.0000, 14.0) * 0.035;
+        float kDot = dotPattern(v_uv, 0.7854, 14.0) * 0.045;
+
+        vec3 color = paper;
+        color -= vec3(0.0, 0.15, 0.18) * cDot;
+        color -= vec3(0.18, 0.0, 0.10) * mDot;
+        color -= vec3(0.12, 0.12, 0.0) * yDot;
+        color -= vec3(0.08, 0.08, 0.08) * kDot;
+
+        // Cardstock fiber noise
+        float grain = fract(sin(dot(v_uv * u_res, vec2(12.9898, 78.233))) * 43758.5453);
+        color -= grain * 0.022;
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+    class BackgroundShaderPass {
+      constructor() {
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.top = '0';
+        this.canvas.style.left = '0';
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
+        this.canvas.style.pointerEvents = 'none';
+        this.canvas.style.zIndex = '0';
+
+        const container = document.getElementById('game-container');
+        container.insertBefore(this.canvas, container.firstChild);
+
+        this.gl = this.canvas.getContext('webgl', { alpha: false, antialias: false });
+        if (!this.gl) return;
+
+        this.initGL();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.render();
+      }
+
+      compileShader(type, src) {
+        const s = this.gl.createShader(type);
+        this.gl.shaderSource(s, src);
+        this.gl.compileShader(s);
+        return s;
+      }
+
+      initGL() {
+        const gl = this.gl;
+        const vs = this.compileShader(gl.VERTEX_SHADER, BG_VS_SOURCE);
+        const fs = this.compileShader(gl.FRAGMENT_SHADER, BG_FS_SOURCE);
+
+        this.program = gl.createProgram();
+        gl.attachShader(this.program, vs);
+        gl.attachShader(this.program, fs);
+        gl.linkProgram(this.program);
+        gl.useProgram(this.program);
+
+        const buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+          -1, -1,  1, -1, -1,  1,
+          -1,  1,  1, -1,  1,  1
+        ]), gl.STATIC_DRAW);
+
+        const aPos = gl.getAttribLocation(this.program, 'a_pos');
+        gl.enableVertexAttribArray(aPos);
+        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+        this.uRes = gl.getUniformLocation(this.program, 'u_res');
+        this.uTime = gl.getUniformLocation(this.program, 'u_time');
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        if (this.gl) {
+          this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+          this.render();
+        }
+      }
+
+      render(t = 0) {
+        if (!this.gl) return;
+        this.gl.useProgram(this.program);
+        this.gl.uniform2f(this.uRes, this.canvas.width, this.canvas.height);
+        this.gl.uniform1f(this.uTime, t * 0.001);
+        this.gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+    }
+
+    // Mount runtime on document readiness
+    window.addEventListener('DOMContentLoaded', () => {
+      new BackgroundShaderPass();
+      window.tacticalSudoku = new SudokuEngine();
+    });
+  </script>
+</body>
+</html>
