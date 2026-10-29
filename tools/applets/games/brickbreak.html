@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CMYK // TACTICAL BREAKER</title>
+  <style>
+    :root {
+      --c-cyan: #00e5ff;
+      --c-magenta: #ff007f;
+      --c-yellow: #ffe600;
+      --c-black: #0c0d10;
+      --c-paper: #ecebe4;
+      --c-grid: rgba(12, 13, 16, 0.08);
+      --c-accent: rgba(12, 13, 16, 0.35);
+      --font-mono: "SF Mono", "Consolas", "Roboto Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--c-paper);
+      color: var(--c-black);
+      font-family: var(--font-mono);
+      touch-action: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--c-paper);
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Tactical HUD Overlay */
+    .hud-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 16px 20px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 10;
+    }
+
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--c-accent);
+      padding-bottom: 8px;
+    }
+
+    .telemetry-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .telemetry-title {
+      font-weight: 700;
+      color: var(--c-black);
+    }
+
+    .telemetry-sub {
+      color: rgba(12, 13, 16, 0.55);
+      font-size: 9px;
+    }
+
+    .hud-score-cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    .score-readout {
+      font-size: 26px;
+      color: var(--c-black);
+    }
+
+    .hud-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid var(--c-accent);
+      padding-top: 8px;
+    }
+
+    .overprint-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .overprint-track {
+      width: 140px;
+      height: 10px;
+      border: 1px solid var(--c-black);
+      background: rgba(12, 13, 16, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .overprint-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--c-black);
+      transition: width 0.1s linear;
+    }
+
+    .plate-readout {
+      display: flex;
+      gap: 12px;
+      font-weight: 700;
+    }
+    .plate-c { color: #009ab0; }
+    .plate-m { color: #d6006e; }
+    .plate-y { color: #a89200; }
+    .plate-k { color: #0c0d10; }
+
+    /* Touch Guidance Overlay */
+    .touch-guide-zone {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 25%;
+      border-top: 1px dashed var(--c-accent);
+      pointer-events: none;
+      opacity: 0.25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="viewport"></canvas>
+
+    <div class="touch-guide-zone">
+      <span>// TACTICAL SWIPE TRACKING SECTOR //</span>
+    </div>
+
+    <div class="hud-layer">
+      <header class="hud-header">
+        <div class="telemetry-block">
+          <span class="telemetry-title">SYS // CMYK-BREAKER-01</span>
+          <span class="telemetry-sub" id="disp-fps">STATUS: 60.0 FPS // RUNTIME LIVE</span>
+        </div>
+
+        <div class="hud-score-cluster">
+          <span class="telemetry-sub">YIELD SCORE</span>
+          <span class="score-readout" id="disp-score">00000</span>
+        </div>
+
+        <div class="telemetry-block" style="text-align: right;">
+          <span class="telemetry-title" id="disp-active-ball">ACTIVE INK: C-NODE</span>
+          <span class="telemetry-sub" id="disp-balls-left">RESERVE: 03 CORES</span>
+        </div>
+      </header>
+
+      <div></div>
+
+      <footer class="hud-footer">
+        <div class="overprint-container">
+          <span>K-CHARGE:</span>
+          <div class="overprint-track">
+            <div class="overprint-fill" id="disp-k-charge"></div>
+          </div>
+        </div>
+
+        <div class="plate-readout">
+          <span class="plate-c">C: 15°</span>
+          <span class="plate-m">M: 75°</span>
+          <span class="plate-y">Y: 00°</span>
+          <span class="plate-k">K: 45°</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+
+  <script>
+    /* ==========================================================================
+       TACTICAL AUDIO ENGINE (Web Audio API Synthesizer)
+       Procedural physical acoustics: Solenoid strikes, high-frequency plate
+       stripping chirps, mechanical wall bounces, and sub-harmonic K-impact booms.
+       ========================================================================== */
+    class BreakerAudioEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContextClass();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // Solenoid mechanical snap when ball ricochets off the paddle
+      playPaddleHit(colorType = 'CYAN', velocityNorm = 0.5) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        let baseFreq = 420;
+        if (colorType === 'MAGENTA') baseFreq = 520;
+        else if (colorType === 'YELLOW') baseFreq = 640;
+        else if (colorType === 'KEY') baseFreq = 160;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = colorType === 'KEY' ? 'triangle' : 'square';
+        osc.frequency.setValueAtTime(baseFreq * (1.0 + velocityNorm * 0.3), t);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.25, t + 0.04);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(baseFreq * 2.0, t);
+        filter.Q.setValueAtTime(4.5, t);
+
+        const volume = 0.22 + Math.min(velocityNorm * 0.15, 0.2);
+        gain.gain.setValueAtTime(volume, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.045);
+      }
+
+      // Acoustic crack when stripping a halftone plate or destroying a brick
+      playBrickHit(isPlateStripped = false, isDestroyed = false) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        const startFreq = isDestroyed ? 880 : 540;
+        const endFreq = isDestroyed ? 220 : 310;
+
+        osc.frequency.setValueAtTime(startFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(endFreq, t + 0.06);
+
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(isDestroyed ? 300 : 600, t);
+
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.065);
+      }
+
+      // Wall boundary bounce
+      playWallBounce(velocityNorm = 0.5) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, t);
+        osc.frequency.exponentialRampToValueAtTime(70, t + 0.03);
+
+        gain.gain.setValueAtTime(0.12 + velocityNorm * 0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.035);
+      }
+
+      // Sub-harmonic hydraulic boom for K-state penetration or life loss
+      playSubBoom() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(80, t);
+        osc.frequency.exponentialRampToValueAtTime(24, t + 0.42);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(130, t);
+        filter.frequency.exponentialRampToValueAtTime(40, t + 0.38);
+
+        gain.gain.setValueAtTime(0.38, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.45);
+      }
+    }
+
+    /* ==========================================================================
+       TACTICAL SIMULATION & BREAKER ENGINE
+       Subtractive CMY layer stripping, plate-zoned paddle deflection,
+       overprint gauge accumulation, AABB ball-brick physics, and particles.
+       ========================================================================== */
+    const audio = new BreakerAudioEngine();
+
+    const COLOR_DEFS = {
+      CYAN:    { name: 'C-NODE', hex: '#00e5ff', rgb: [0.0, 0.9, 1.0] },
+      MAGENTA: { name: 'M-NODE', hex: '#ff007f', rgb: [1.0, 0.0, 0.5] },
+      YELLOW:  { name: 'Y-NODE', hex: '#ffe600', rgb: [1.0, 0.9, 0.0] },
+      KEY:     { name: 'K-VOID', hex: '#0c0d10', rgb: [0.05, 0.05, 0.06] }
+    };
+
+    class BreakerSimulation {
+      constructor() {
+        this.buffer = document.createElement('canvas');
+        this.ctx = this.buffer.getContext('2d');
+
+        this.width = 1280;
+        this.height = 720;
+        this.buffer.width = this.width;
+        this.buffer.height = this.height;
+
+        this.score = 0;
+        this.lives = 3;
+        this.kCharge = 0; // 0.0 to 1.0
+
+        // Tactical Paddle (Split into 3 process ink sectors)
+        this.paddle = {
+          w: 160,
+          h: 16,
+          x: (this.width - 160) / 2,
+          y: this.height - 46,
+          targetX: (this.width - 160) / 2,
+          vx: 0
+        };
+
+        // Ball State
+        this.ballRadius = 8;
+        this.trailHistory = [];
+        this.maxTrail = 14;
+        this.resetBall();
+
+        this.bricks = [];
+        this.particles = [];
+        this.keys = {};
+        this.buildLevel();
+        this.initInput();
+      }
+
+      initInput() {
+        window.addEventListener('keydown', (e) => {
+          this.keys[e.key.toLowerCase()] = true;
+          audio.init();
+        });
+
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.key.toLowerCase()] = false;
+        });
+
+        const canvas = document.getElementById('viewport');
+        const handlePointer = (clientX) => {
+          audio.init();
+          const rect = canvas.getBoundingClientRect();
+          if (rect.width <= 0) return;
+          const normX = (clientX - rect.left) / rect.width;
+          this.paddle.targetX = normX * this.width - this.paddle.w / 2;
+        };
+
+        window.addEventListener('mousemove', (e) => handlePointer(e.clientX));
+        window.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          if (e.touches.length > 0) handlePointer(e.touches[0].clientX);
+        }, { passive: false });
+        window.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          if (e.touches.length > 0) handlePointer(e.touches[0].clientX);
+        }, { passive: false });
+      }
+
+      buildLevel() {
+        this.bricks = [];
+        const rows = 6;
+        const cols = 12;
+        const brickW = 86;
+        const brickH = 22;
+        const padX = 14;
+        const padY = 12;
+        const totalGridW = cols * brickW + (cols - 1) * padX;
+        const startX = (this.width - totalGridW) / 2;
+        const startY = 82;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let layers = [];
+            // Assign tactical ink composition by row
+            if (r === 0) layers = ['KEY']; // Armor row
+            else if (r === 1) layers = ['CYAN', 'YELLOW']; // Green composite
+            else if (r === 2) layers = ['MAGENTA', 'YELLOW']; // Orange composite
+            else if (r === 3) layers = ['CYAN', 'MAGENTA']; // Violet composite
+            else if (r === 4) layers = ['CYAN'];
+            else layers = ['MAGENTA'];
+
+            this.bricks.push({
+              x: startX + c * (brickW + padX),
+              y: startY + r * (brickH + padY),
+              w: brickW,
+              h: brickH,
+              layers: layers,
+              alive: true
+            });
+          }
+        }
+      }
+
+      resetBall() {
+        this.ball = {
+          x: this.width / 2,
+          y: this.height - 180,
+          vx: (Math.random() > 0.5 ? 1 : -1) * 5.5,
+          vy: -6.5,
+          colorKey: 'CYAN',
+          speedMag: 8.5,
+          active: true
+        };
+        this.trailHistory = [];
+        this.updateHUD();
+      }
+
+      updateHUD() {
+        const scoreElem = document.getElementById('disp-score');
+        const livesElem = document.getElementById('disp-balls-left');
+        const inkElem = document.getElementById('disp-active-ball');
+        const kFill = document.getElementById('disp-k-charge');
+
+        if (scoreElem) scoreElem.textContent = String(this.score).padStart(5, '0');
+        if (livesElem) livesElem.textContent = `RESERVE: ${String(this.lives).padStart(2, '0')} CORES`;
+        if (inkElem) inkElem.textContent = `ACTIVE INK: ${COLOR_DEFS[this.ball.colorKey].name}`;
+        if (kFill) kFill.style.width = `${Math.min(100, this.kCharge * 100)}%`;
+      }
+
+      spawnParticles(x, y, colorKey, count = 8) {
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const spd = Math.random() * 4 + 1.5;
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            life: 1.0,
+            decay: Math.random() * 0.04 + 0.02,
+            colorKey: colorKey
+          });
+        }
+      }
+
+      update() {
+        // Keyboard controls
+        const pSpeed = 12;
+        if (this.keys['a'] || this.keys['arrowleft']) this.paddle.targetX -= pSpeed;
+        if (this.keys['d'] || this.keys['arrowright']) this.paddle.targetX += pSpeed;
+
+        // Clamp paddle bounds
+        this.paddle.targetX = Math.max(16, Math.min(this.width - this.paddle.w - 16, this.paddle.targetX));
+        this.paddle.x += (this.paddle.targetX - this.paddle.x) * 0.32;
+
+        // Trajectory record
+        this.trailHistory.unshift({ x: this.ball.x, y: this.ball.y });
+        if (this.trailHistory.length > this.maxTrail) this.trailHistory.pop();
+
+        // Advance ball
+        this.ball.x += this.ball.vx;
+        this.ball.y += this.ball.vy;
+        this.ball.speedMag = Math.hypot(this.ball.vx, this.ball.vy);
+
+        // Wall collisions
+        if (this.ball.x - this.ballRadius <= 12) {
+          this.ball.x = 12 + this.ballRadius;
+          this.ball.vx *= -1;
+          audio.playWallBounce(Math.min(this.ball.speedMag / 18, 1.0));
+        } else if (this.ball.x + this.ballRadius >= this.width - 12) {
+          this.ball.x = this.width - 12 - this.ballRadius;
+          this.ball.vx *= -1;
+          audio.playWallBounce(Math.min(this.ball.speedMag / 18, 1.0));
+        }
+
+        if (this.ball.y - this.ballRadius <= 12) {
+          this.ball.y = 12 + this.ballRadius;
+          this.ball.vy *= -1;
+          audio.playWallBounce(Math.min(this.ball.speedMag / 18, 1.0));
+        }
+
+        // Bottom boundary loss
+        if (this.ball.y > this.height + 30) {
+          this.lives--;
+          audio.playSubBoom();
+          if (this.lives > 0) {
+            this.resetBall();
+          } else {
+            this.lives = 3;
+            this.score = 0;
+            this.kCharge = 0;
+            this.buildLevel();
+            this.resetBall();
+          }
+        }
+
+        // Paddle Collision & Ink Inking Zone
+        if (
+          this.ball.vy > 0 &&
+          this.ball.y + this.ballRadius >= this.paddle.y &&
+          this.ball.y - this.ballRadius <= this.paddle.y + this.paddle.h &&
+          this.ball.x >= this.paddle.x - 6 &&
+          this.ball.x <= this.paddle.x + this.paddle.w + 6
+        ) {
+          const hitOffset = (this.ball.x - (this.paddle.x + this.paddle.w / 2)) / (this.paddle.w / 2);
+          const bounceAngle = hitOffset * (Math.PI / 3.2);
+          const currentSpeed = Math.min(this.ball.speedMag * 1.02 + 0.15, 20);
+
+          this.ball.vx = currentSpeed * Math.sin(bounceAngle);
+          this.ball.vy = -Math.abs(currentSpeed * Math.cos(bounceAngle));
+          this.ball.y = this.paddle.y - this.ballRadius;
+
+          // Sector inking: left = Cyan, center = Magenta, right = Yellow
+          if (this.ball.colorKey !== 'KEY') {
+            if (hitOffset < -0.33) this.ball.colorKey = 'CYAN';
+            else if (hitOffset > 0.33) this.ball.colorKey = 'YELLOW';
+            else this.ball.colorKey = 'MAGENTA';
+          }
+
+          // Trigger K-state if overprint gauge is filled
+          if (this.kCharge >= 1.0) {
+            this.ball.colorKey = 'KEY';
+            this.kCharge = 0;
+            audio.playSubBoom();
+          } else {
+            audio.playPaddleHit(this.ball.colorKey, Math.min(this.ball.speedMag / 18, 1.0));
+          }
+          this.updateHUD();
+        }
+
+        // Brick AABB Collisions & Plate Demolition
+        for (let i = 0; i < this.bricks.length; i++) {
+          const b = this.bricks[i];
+          if (!b.alive) continue;
+
+          if (
+            this.ball.x + this.ballRadius >= b.x &&
+            this.ball.x - this.ballRadius <= b.x + b.w &&
+            this.ball.y + this.ballRadius >= b.y &&
+            this.ball.y - this.ballRadius <= b.y + b.h
+          ) {
+            // Determine deflection normal
+            const overlapLeft = (this.ball.x + this.ballRadius) - b.x;
+            const overlapRight = (b.x + b.w) - (this.ball.x - this.ballRadius);
+            const overlapTop = (this.ball.y + this.ballRadius) - b.y;
+            const overlapBottom = (b.y + b.h) - (this.ball.y - this.ballRadius);
+
+            const minOverlapX = Math.min(overlapLeft, overlapRight);
+            const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+            // K-Ball punches through without deflection
+            if (this.ball.colorKey !== 'KEY') {
+              if (minOverlapX < minOverlapY) {
+                this.ball.vx *= -1;
+              } else {
+                this.ball.vy *= -1;
+              }
+            }
+
+            // Layer stripping mechanics
+            const layerIdx = b.layers.indexOf(this.ball.colorKey);
+            if (this.ball.colorKey === 'KEY' || layerIdx !== -1) {
+              // Direct ink match or K-strike strips layer
+              if (this.ball.colorKey === 'KEY') {
+                b.layers = [];
+              } else {
+                b.layers.splice(layerIdx, 1);
+              }
+
+              this.score += 150;
+              this.kCharge = Math.min(1.0, this.kCharge + 0.08);
+              this.spawnParticles(this.ball.x, this.ball.y, this.ball.colorKey, 10);
+
+              if (b.layers.length === 0) {
+                b.alive = false;
+                audio.playBrickHit(true, true);
+              } else {
+                audio.playBrickHit(true, false);
+              }
+            } else {
+              // Mismatched ink deflection
+              this.score += 25;
+              this.kCharge = Math.min(1.0, this.kCharge + 0.02);
+              this.spawnParticles(this.ball.x, this.ball.y, this.ball.colorKey, 4);
+              audio.playBrickHit(false, false);
+            }
+
+            this.updateHUD();
+            break;
+          }
+        }
+
+        // Update particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= p.decay;
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#ecebe4';
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        // Technical Grid
+        ctx.strokeStyle = 'rgba(12, 13, 16, 0.04)';
+        ctx.lineWidth = 1;
+        const step = 40;
+        for (let x = 0; x < this.width; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, this.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < this.height; y += step) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(this.width, y);
+          ctx.stroke();
+        }
+
+        // Render Bricks (Multi-Layer Ink Blocks)
+        for (let i = 0; i < this.bricks.length; i++) {
+          const b = this.bricks[i];
+          if (!b.alive) continue;
+
+          if (b.layers.length === 1) {
+            ctx.fillStyle = COLOR_DEFS[b.layers[0]].hex;
+            ctx.fillRect(b.x, b.y, b.w, b.h);
+          } else {
+            // Composite split rendering
+            const segW = b.w / b.layers.length;
+            for (let l = 0; l < b.layers.length; l++) {
+              ctx.fillStyle = COLOR_DEFS[b.layers[l]].hex;
+              ctx.fillRect(b.x + l * segW, b.y, segW, b.h);
+            }
+          }
+
+          // Tactical wireframe edge
+          ctx.strokeStyle = '#0c0d10';
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(b.x, b.y, b.w, b.h);
+        }
+
+        // Ball Trailing
+        for (let i = 0; i < this.trailHistory.length; i++) {
+          const pt = this.trailHistory[i];
+          const alpha = (1 - i / this.trailHistory.length) * 0.45;
+          const r = this.ballRadius * (1 - (i / this.trailHistory.length) * 0.35);
+
+          ctx.fillStyle = COLOR_DEFS[this.ball.colorKey].hex;
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Active Ball
+        ctx.fillStyle = COLOR_DEFS[this.ball.colorKey].hex;
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, this.ballRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0c0d10';
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Paddle (Split into 3 process ink sectors)
+        const secW = this.paddle.w / 3;
+        ctx.fillStyle = '#00e5ff';
+        ctx.fillRect(this.paddle.x, this.paddle.y, secW, this.paddle.h);
+        ctx.fillStyle = '#ff007f';
+        ctx.fillRect(this.paddle.x + secW, this.paddle.y, secW, this.paddle.h);
+        ctx.fillStyle = '#ffe600';
+        ctx.fillRect(this.paddle.x + secW * 2, this.paddle.y, secW, this.paddle.h);
+
+        ctx.strokeStyle = '#0c0d10';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h);
+
+        // Particles
+        for (let i = 0; i < this.particles.length; i++) {
+          const p = this.particles[i];
+          ctx.fillStyle = COLOR_DEFS[p.colorKey].hex;
+          ctx.globalAlpha = p.life;
+          ctx.fillRect(p.x, p.y, 3, 3);
+        }
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    /* ==========================================================================
+       WEBGL POST-PROCESSING ENGINE & CMYK GLSL SHADER
+       Converts the off-screen 2D simulation canvas into four discrete subtractive
+       plates, screens them across authentic print angles (C:15°, M:75°, Y:0°, K:45°),
+       and couples ball kinetic energy directly to plate misregistration drift.
+       ========================================================================== */
+    const VS_SOURCE = `
+      attribute vec2 a_position;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = (a_position + 1.0) * 0.5;
+        v_uv.y = 1.0 - v_uv.y;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+
+    const FS_SOURCE = `
+      precision mediump float;
+      uniform sampler2D u_texture;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform float u_ball_speed;
+      varying vec2 v_uv;
+
+      vec2 rotateUV(vec2 uv, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        mat2 m = mat2(c, -s, s, c);
+        return m * (uv - 0.5) + 0.5;
+      }
+
+      float halftoneDot(vec2 uv, float angle, float frequency, float channelVal) {
+        vec2 rotUV = rotateUV(uv, angle) * (u_resolution / frequency);
+        vec2 grid = fract(rotUV) - 0.5;
+        float dist = length(grid);
+        float radius = sqrt(clamp(channelVal, 0.0, 1.0)) * 0.48;
+        return smoothstep(radius + 0.06, radius - 0.06, dist);
+      }
+
+      void main() {
+        // High-velocity plate misregistration (chromatic ink shear)
+        float shiftMag = (u_ball_speed / 20.0) * 0.0035;
+        vec2 cShift = vec2( shiftMag,  0.0);
+        vec2 mShift = vec2(-shiftMag * 0.5,  shiftMag * 0.86);
+        vec2 yShift = vec2(-shiftMag * 0.5, -shiftMag * 0.86);
+
+        vec4 sampleC = texture2D(u_texture, v_uv + cShift);
+        vec4 sampleM = texture2D(u_texture, v_uv + mShift);
+        vec4 sampleY = texture2D(u_texture, v_uv + yShift);
+        vec4 sampleBase = texture2D(u_texture, v_uv);
+
+        // Convert RGB space to Subtractive CMY
+        float cVal = 1.0 - sampleC.r;
+        float mVal = 1.0 - sampleM.g;
+        float yVal = 1.0 - sampleY.b;
+
+        // Extract dense Key (K) component
+        float kVal = min(cVal, min(mVal, yVal));
+        if (kVal > 0.001) {
+          cVal = clamp((cVal - kVal) / (1.0 - kVal), 0.0, 1.0);
+          mVal = clamp((mVal - kVal) / (1.0 - kVal), 0.0, 1.0);
+          yVal = clamp((yVal - kVal) / (1.0 - kVal), 0.0, 1.0);
+        } else {
+          kVal = 0.0;
+        }
+
+        // Tactical print angles: C: 15°, M: 75°, Y: 0°, K: 45°
+        float freq = 6.4;
+        float dotC = halftoneDot(v_uv, 0.2618, freq, cVal);
+        float dotM = halftoneDot(v_uv, 1.3090, freq, mVal);
+        float dotY = halftoneDot(v_uv, 0.0000, freq, yVal);
+        float dotK = halftoneDot(v_uv, 0.7854, freq, kVal);
+
+        // Cardstock substrate tone
+        vec3 paper = vec3(0.925, 0.921, 0.894);
+        vec3 outColor = paper;
+
+        // Subtractive CMYK ink overlay
+        outColor *= mix(vec3(1.0), vec3(0.0, 0.9, 1.0), dotC * cVal);
+        outColor *= mix(vec3(1.0), vec3(1.0, 0.0, 0.5), dotM * mVal);
+        outColor *= mix(vec3(1.0), vec3(1.0, 0.9, 0.0), dotY * yVal);
+        outColor *= mix(vec3(1.0), vec3(0.05, 0.05, 0.06), dotK * kVal);
+
+        // Substrate microscopic grain noise
+        float grain = fract(sin(dot(v_uv * u_resolution, vec2(12.9898, 78.233))) * 43758.5453);
+        outColor -= grain * 0.022;
+
+        gl_FragColor = vec4(outColor, 1.0);
+      }
+    `;
+
+    class TacticalBreakerRenderer {
+      constructor(canvas, sim) {
+        this.canvas = canvas;
+        this.sim = sim;
+        this.gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+
+        if (!this.gl) {
+          console.error('WebGL context initialization failed.');
+          return;
+        }
+
+        this.initGL();
+        this.initTexture();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+      }
+
+      compileShader(type, source) {
+        const gl = this.gl;
+        const s = gl.createShader(type);
+        gl.shaderSource(s, source);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error('Shader compilation error:', gl.getShaderInfoLog(s));
+          gl.deleteShader(s);
+          return null;
+        }
+        return s;
+      }
+
+      initGL() {
+        const gl = this.gl;
+        const vs = this.compileShader(gl.VERTEX_SHADER, VS_SOURCE);
+        const fs = this.compileShader(gl.FRAGMENT_SHADER, FS_SOURCE);
+
+        this.program = gl.createProgram();
+        gl.attachShader(this.program, vs);
+        gl.attachShader(this.program, fs);
+        gl.linkProgram(this.program);
+
+        if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+          console.error('Program linking error:', gl.getProgramInfoLog(this.program));
+          return;
+        }
+
+        gl.useProgram(this.program);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array([-1, -1,  1, -1, -1,  1, -1,  1,  1, -1,  1,  1]),
+          gl.STATIC_DRAW
+        );
+
+        const aPosition = gl.getAttribLocation(this.program, 'a_position');
+        gl.enableVertexAttribArray(aPosition);
+        gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+        this.uResolution = gl.getUniformLocation(this.program, 'u_resolution');
+        this.uTime = gl.getUniformLocation(this.program, 'u_time');
+        this.uBallSpeed = gl.getUniformLocation(this.program, 'u_ball_speed');
+      }
+
+      initTexture() {
+        const gl = this.gl;
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      }
+
+      draw(now) {
+        const gl = this.gl;
+        gl.useProgram(this.program);
+
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.sim.buffer);
+
+        gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
+        gl.uniform1f(this.uTime, now * 0.001);
+        gl.uniform1f(this.uBallSpeed, this.sim.ball.speedMag);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+    }
+
+    /* ==========================================================================
+       MAIN RUNTIME LOOP
+       Couples 60Hz physics update steps with WebGL texture rasterization.
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      const sim = new BreakerSimulation();
+      const canvas = document.getElementById('viewport');
+      const renderer = new TacticalBreakerRenderer(canvas, sim);
+
+      let lastTime = performance.now();
+      let frameCount = 0;
+      let lastFpsCheck = lastTime;
+      const fpsElem = document.getElementById('disp-fps');
+
+      function loop(now) {
+        const dt = now - lastTime;
+        lastTime = now;
+
+        sim.update();
+        sim.render();
+        renderer.draw(now);
+
+        frameCount++;
+        if (now - lastFpsCheck >= 1000) {
+          const fps = ((frameCount * 1000) / (now - lastFpsCheck)).toFixed(1);
+          if (fpsElem) fpsElem.textContent = `STATUS: ${fps} FPS // RUNTIME LIVE`;
+          frameCount = 0;
+          lastFpsCheck = now;
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      requestAnimationFrame(loop);
+    });
+  </script>
+</body>
+</html>
