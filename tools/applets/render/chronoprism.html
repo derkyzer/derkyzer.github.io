@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crystallized Time // Tactical Radar Corridor</title>
+  <title>Crystallized Time // Modern Tactical Radar</title>
   <style>
     * {
       box-sizing: border-box;
@@ -29,7 +29,7 @@
       z-index: 1;
     }
 
-    /* Tailored Screen Edge Flourishes & Tactical HUD */
+    /* Screen Edge Flourishes */
     .screen-edges {
       position: absolute;
       inset: 0;
@@ -37,35 +37,33 @@
       z-index: 10;
     }
 
-    /* Corner Framing Brackets */
     .corner {
       position: absolute;
-      width: 48px;
-      height: 48px;
-      border: 2px solid rgba(0, 240, 255, 0.5);
+      width: 44px;
+      height: 44px;
+      border: 2px solid rgba(0, 240, 255, 0.45);
     }
-    .corner-tl { top: 24px; left: 24px; border-right: none; border-bottom: none; }
-    .corner-tr { top: 24px; right: 24px; border-left: none; border-bottom: none; }
-    .corner-bl { bottom: 24px; left: 24px; border-right: none; border-top: none; }
-    .corner-br { bottom: 24px; right: 24px; border-left: none; border-top: none; }
+    .corner-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+    .corner-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+    .corner-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+    .corner-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
 
     .corner::after {
       content: '';
       position: absolute;
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       background: #ff0077;
     }
-    .corner-tl::after { top: -4px; left: -4px; }
-    .corner-tr::after { top: -4px; right: -4px; }
-    .corner-bl::after { bottom: -4px; left: -4px; }
-    .corner-br::after { bottom: -4px; right: -4px; }
+    .corner-tl::after { top: -3px; left: -3px; }
+    .corner-tr::after { top: -3px; right: -3px; }
+    .corner-bl::after { bottom: -3px; left: -3px; }
+    .corner-br::after { bottom: -3px; right: -3px; }
 
-    /* Edge Calibration Scales & Markers */
     .edge-scale-x {
       position: absolute;
-      left: 80px;
-      right: 80px;
+      left: 70px;
+      right: 70px;
       height: 14px;
       display: flex;
       justify-content: space-between;
@@ -74,25 +72,23 @@
       color: rgba(255, 235, 0, 0.7);
       letter-spacing: 2px;
     }
-    .edge-scale-top { top: 20px; border-top: 1px dashed rgba(255, 235, 0, 0.3); }
-    .edge-scale-bottom { bottom: 20px; border-bottom: 1px dashed rgba(255, 235, 0, 0.3); }
+    .edge-scale-top { top: 18px; border-top: 1px dashed rgba(255, 235, 0, 0.3); }
+    .edge-scale-bottom { bottom: 18px; border-bottom: 1px dashed rgba(255, 235, 0, 0.3); }
 
     .edge-scale-y {
       position: absolute;
-      top: 80px;
-      bottom: 80px;
-      width: 28px;
+      top: 70px;
+      bottom: 70px;
+      width: 24px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       font-size: 8px;
-      color: rgba(0, 240, 255, 0.6);
-      line-height: 1;
+      color: rgba(0, 240, 255, 0.5);
     }
     .edge-scale-left { left: 16px; border-left: 1px dashed rgba(0, 240, 255, 0.3); padding-left: 4px; }
     .edge-scale-right { right: 16px; border-right: 1px dashed rgba(255, 0, 119, 0.3); padding-right: 4px; text-align: right; }
 
-    /* Reticle Targets on Screen Borders */
     .edge-reticle {
       position: absolute;
       width: 14px;
@@ -112,15 +108,14 @@
       left: 50%; top: -4px; bottom: -4px; width: 1px;
       background: rgba(0, 240, 255, 0.8);
     }
-    .reticle-left { top: 50%; left: 20px; transform: translateY(-50%); }
-    .reticle-right { top: 50%; right: 20px; transform: translateY(-50%); border-color: #ff0077; }
+    .reticle-left { top: 50%; left: 16px; transform: translateY(-50%); }
+    .reticle-right { top: 50%; right: 16px; transform: translateY(-50%); border-color: #ff0077; }
     .reticle-right::before, .reticle-right::after { background: #ff0077; }
 
-    /* Telemetry Header */
     .hud-title {
       position: absolute;
       top: 36px;
-      left: 80px;
+      left: 70px;
       font-size: 11px;
       letter-spacing: 3px;
       text-transform: uppercase;
@@ -132,7 +127,7 @@
     .hud-stats {
       position: absolute;
       bottom: 36px;
-      right: 80px;
+      right: 70px;
       font-size: 10px;
       letter-spacing: 1.5px;
       color: rgba(255, 255, 255, 0.6);
@@ -146,77 +141,84 @@
   <canvas id="glcanvas"></canvas>
 
   <div class="screen-edges">
-    <!-- Corner brackets -->
     <div class="corner corner-tl"></div>
     <div class="corner corner-tr"></div>
     <div class="corner corner-bl"></div>
     <div class="corner corner-br"></div>
 
-    <!-- Edge Scales & Stylings -->
     <div class="edge-scale-x edge-scale-top">
-      <span>SEC-01 // TACTICAL RADAR</span>
-      <span>CMYK-ARRAY // CHRONO-CORE</span>
-      <span>SYS.STATUS: SYNCHRONIZED</span>
+      <span>GRID: CMYK-ACTIVE</span>
+      <span>CORRIDOR RAY_SAMPLER v3</span>
+      <span>RADAR: 360° SWEEP</span>
     </div>
     <div class="edge-scale-x edge-scale-bottom">
-      <span>AZ: 318.42°</span>
-      <span>EL: +14.88°</span>
-      <span>FOV: 55° PERSPECTIVE</span>
-      <span>RANGE: 12.0km</span>
+      <span>LAT: 34.73° N</span>
+      <span>LON: 86.58° W</span>
+      <span>FOV: 50° PERSPECTIVE</span>
+      <span>SYNC: LOCKED</span>
     </div>
 
     <div class="edge-scale-y edge-scale-left">
-      <span>+60</span><span>+40</span><span>+20</span><span>00</span><span>-20</span><span>-40</span><span>-60</span>
+      <span>+40</span><span>+20</span><span>00</span><span>-20</span><span>-40</span>
     </div>
     <div class="edge-scale-y edge-scale-right">
-      <span>2400</span><span>1800</span><span>1200</span><span>0600</span><span>0000</span>
+      <span>09</span><span>06</span><span>03</span><span>00</span>
     </div>
 
     <div class="edge-reticle reticle-left"></div>
     <div class="edge-reticle reticle-right"></div>
 
-    <div class="hud-title">CRYSTAL_<span>TIME</span> // CHRONO-MONOLITH v2.4</div>
+    <div class="hud-title">CRYSTAL_<span>TIME</span> // RADAR-CORE</div>
     <div class="hud-stats">
-      FPS: <span id="fps">60</span> | PARALLAX: <b>DERIVED</b><br>
-      CURSOR TRACK: <span id="cursor-pos">0.00, 0.00</span>
+      FPS: <span id="fps">60</span> | PARALLAX: <b>SMOOTH</b><br>
+      CAMERA BEARING: <span id="cursor-pos">0.00, 0.00</span>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById('glcanvas');
-    const gl = canvas.getContext('webgl', { antialias: true, alpha: false });
+    let gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+    let isWebGL2 = true;
 
     if (!gl) {
-      alert("WebGL not supported by your browser/device.");
+      gl = canvas.getContext('webgl', { antialias: true, alpha: false });
+      isWebGL2 = false;
     }
 
-    const vsSource = `
+    if (!gl) {
+      alert("WebGL initialization failed. Please verify hardware acceleration.");
+    }
+
+    const vsSource = isWebGL2 ? `#version 300 es
+      in vec2 aPosition;
+      void main() {
+        gl_Position = vec4(aPosition, 0.0, 1.0);
+      }
+    ` : `
       attribute vec2 aPosition;
       void main() {
         gl_Position = vec4(aPosition, 0.0, 1.0);
       }
     `;
 
-    const fsSource = `
+    const fsSource = isWebGL2 ? `#version 300 es
       precision highp float;
+      out vec4 fragColor;
 
       uniform vec2 uResolution;
       uniform float uTime;
       uniform vec2 uMouse;
 
-      // CMYK Digital Core Palette
-      const vec3 C_CYAN    = vec3(0.0, 0.94, 1.0);
-      const vec3 C_MAGENTA = vec3(1.0, 0.0, 0.46);
-      const vec3 C_YELLOW  = vec3(1.0, 0.92, 0.0);
-      const vec3 C_KEY     = vec3(0.015, 0.035, 0.07);
+      #define C_CYAN    vec3(0.0, 0.94, 1.0)
+      #define C_MAGENTA vec3(1.0, 0.0, 0.5)
+      #define C_YELLOW  vec3(1.0, 0.92, 0.0)
+      #define C_KEY     vec3(0.015, 0.035, 0.075)
 
-      // Fast rotation
       mat2 rot(float a) {
         float s = sin(a), c = cos(a);
         return mat2(c, -s, s, c);
       }
 
-      // Hash & Noise for Wireframe Topo
       float hash(vec2 p) {
         p = fract(p * vec2(123.34, 456.21));
         p += dot(p, p + 45.32);
@@ -234,190 +236,276 @@
         return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
       }
 
-      // Analytical Ray vs OBB Box Intersection
       bool intersectBox(vec3 ro, vec3 rd, vec3 boxSize, out float tMin, out float tMax) {
-        vec3 m = 1.0 / rd;
+        vec3 safeRd = sign(rd) * max(abs(rd), vec3(0.0001));
+        vec3 m = 1.0 / safeRd;
         vec3 n = m * ro;
         vec3 k = abs(m) * boxSize;
         vec3 t1 = -n - k;
         vec3 t2 = -n + k;
         tMin = max(max(t1.x, t1.y), t1.z);
         tMax = min(min(t2.x, t2.y), t2.z);
-        return tMin <= tMax && tMax > 0.0;
+        return (tMin <= tMax) && (tMax > 0.0);
       }
 
-      // 2D Tactical Background with customizable flourishes and grid
-      vec3 renderBackground(vec2 uv, vec2 screenCoord) {
+      vec3 renderBackground(vec2 uv, vec2 px) {
         vec3 bg = C_KEY;
 
-        // Base Grid Lines
-        vec2 gridUV = screenCoord * 0.035;
-        vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / fwidth(gridUV);
-        float line = 1.0 - min(min(grid.x, grid.y), 1.0);
-        bg += vec3(0.0, 0.35, 0.45) * line * 0.18;
+        // Tactical Background Grid
+        vec2 g = fract(px * 0.035);
+        float gridLine = max(smoothstep(0.08, 0.0, g.x), smoothstep(0.08, 0.0, g.y));
+        bg += vec3(0.0, 0.25, 0.35) * gridLine * 0.3;
 
-        // Sub-divided Micro Dots at intersections
-        vec2 dotUV = fract(gridUV);
-        float dots = smoothstep(0.08, 0.0, length(dotUV - 0.5));
-        bg += C_CYAN * dots * 0.25;
+        // Background Radar sweep 1 (Upper Right)
+        vec2 r1 = uv - vec2(0.6, 0.3);
+        float d1 = length(r1);
+        float rings1 = smoothstep(0.015, 0.0, abs(fract(d1 * 5.0) - 0.5) - 0.46);
+        float sweep1 = fract((atan(r1.y, r1.x) / 6.28318) - uTime * 0.25);
+        bg += C_CYAN * (rings1 * 0.25 + sweep1 * 0.18) * smoothstep(0.65, 0.05, d1);
 
-        // Large Background Radar Sweeps (Top Right & Bottom Left)
-        vec2 rCenter1 = vec2(0.65, 0.35);
-        float rDist1 = length(uv - rCenter1);
-        float rRings1 = smoothstep(0.005, 0.0, abs(fract(rDist1 * 4.0 - uTime * 0.05) - 0.5) - 0.48);
-        float angle1 = atan(uv.y - rCenter1.y, uv.x - rCenter1.x);
-        float sweep1 = fract((angle1 / 6.28318) - uTime * 0.2);
-        bg += C_MAGENTA * (rRings1 * 0.2 + sweep1 * 0.15) * smoothstep(0.6, 0.0, rDist1);
+        // Background Radar sweep 2 (Lower Left)
+        vec2 r2 = uv - vec2(-0.65, -0.35);
+        float d2 = length(r2);
+        float rings2 = smoothstep(0.015, 0.0, abs(fract(d2 * 6.0) - 0.5) - 0.46);
+        float sweep2 = fract((atan(r2.y, r2.x) / 6.28318) + uTime * 0.15);
+        bg += C_MAGENTA * (rings2 * 0.22 + sweep2 * 0.15) * smoothstep(0.55, 0.05, d2);
 
-        vec2 rCenter2 = vec2(-0.7, -0.4);
-        float rDist2 = length(uv - rCenter2);
-        float rRings2 = smoothstep(0.005, 0.0, abs(fract(rDist2 * 6.0) - 0.5) - 0.48);
-        bg += C_CYAN * rRings2 * 0.22 * smoothstep(0.5, 0.0, rDist2);
-
-        // Binary/Telemetry data columns streaming down
-        float colX = floor(screenCoord.x * 0.08);
-        float colNoise = hash(vec2(colX, floor(screenCoord.y * 0.05 - uTime * 1.5)));
-        float charMask = step(0.72, colNoise) * step(0.85, fract(screenCoord.x * 0.08));
-        bg += vec3(0.0, 0.6, 0.4) * charMask * 0.15;
-
+        // Faint Data Nodes
+        vec2 id = floor(px * 0.035);
+        float n = hash(id + floor(uTime * 0.8));
+        if (n > 0.96) {
+          bg += C_YELLOW * 0.3;
+        }
         return bg;
       }
 
       void main() {
         vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
-
-        // Dynamic Tactical Screen Background
         vec3 col = renderBackground(uv, gl_FragCoord.xy);
 
-        // Position-Derived Parallax Camera Setup
-        // Matches the steep diagonal isometric perspective of the crystal bar
-        vec2 mouseOffset = (uMouse - 0.5) * 0.45;
-        vec3 ro = vec3(2.8 + mouseOffset.x * 0.6, 1.8 + mouseOffset.y * 0.5, -4.5);
-        vec3 target = vec3(-0.3, -0.2, 0.8);
+        // Smooth Position-Derived Camera Parallax
+        vec2 m = (uMouse - 0.5) * 0.4;
+        vec3 ro = vec3(2.6 + m.x * 0.6, 1.6 + m.y * 0.5, -4.2);
+        vec3 ta = vec3(-0.35, -0.15, 0.7);
 
-        vec3 ww = normalize(target - ro);
+        vec3 ww = normalize(ta - ro);
         vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
         vec3 vv = cross(uu, ww);
         vec3 rd = normalize(uv.x * uu + uv.y * vv + 1.8 * ww);
 
-        // Orient and align the long diagonal Monolith
-        // Rotate the ray into the Monolith's object coordinate frame
-        vec3 boxPos = vec3(0.0, -0.05, 0.0);
-        vec3 rPos = ro - boxPos;
+        // Monolith Space Orientation
+        vec3 rPos = ro;
         vec3 rDir = rd;
 
-        // Angle the corridor across the screen from upper-left to bottom-right
-        mat2 rMat = rot(-0.62);
-        rPos.xz = rMat * rPos.xz;
-        rDir.xz = rMat * rDir.xz;
+        mat2 rXZ = rot(-0.62);
+        rPos.xz = rXZ * rPos.xz;
+        rDir.xz = rXZ * rDir.xz;
 
-        rPos.yz = rot(0.24) * rPos.yz;
-        rDir.yz = rot(0.24) * rDir.yz;
+        mat2 rYZ = rot(0.24);
+        rPos.yz = rYZ * rPos.yz;
+        rDir.yz = rYZ * rDir.yz;
 
-        // Dimensions of the Crystallized Monolith: width, height, long length
         vec3 bSize = vec3(0.7, 0.45, 6.0);
         float tEnter, tExit;
 
         if (intersectBox(rPos, rDir, bSize, tEnter, tExit)) {
-          // Inside the Crystallized Corridor
           vec3 hitIn = rPos + rDir * tEnter;
-          vec3 hitOut = rPos + rDir * tExit;
 
-          // 1. Crystal Facet Highlights & Glowing Chamfered Edges
-          vec3 dNear = abs(hitIn) - bSize;
-          vec3 dEdge = abs(dNear);
-          float edge = step(max(dEdge.x, max(dEdge.y, dEdge.z)), 0.025);
-
-          // Front-face cross-section neon trim
-          if (abs(hitIn.z - bSize.z) < 0.05 || abs(hitIn.z + bSize.z) < 0.05) {
-            col += C_CYAN * 0.8;
-          }
-          if (abs(hitIn.y - bSize.y) < 0.02 || abs(hitIn.y + bSize.y) < 0.02) {
-            col += C_YELLOW * 0.4;
-          }
-          if (abs(hitIn.x - bSize.x) < 0.02 || abs(hitIn.x + bSize.x) < 0.02) {
-            col += C_MAGENTA * 0.4;
+          // Perimeter Chamfer Edge Lighting
+          vec3 dEdge = bSize - abs(hitIn);
+          float minD = min(dEdge.x, min(dEdge.y, dEdge.z));
+          if (minD < 0.035) {
+            col += C_CYAN * 0.9;
           }
 
-          // Glass Surface Refraction / Transmittance glow
-          col += C_KEY * 1.5;
+          // Cross-Section Cap Frame Glow
+          if (abs(hitIn.z - bSize.z) < 0.06 || abs(hitIn.z + bSize.z) < 0.06) {
+            col += C_YELLOW * 0.45;
+          }
 
-          // Volumetric Internal Slice Accumulator (Radar, Topo, Nodes)
-          float stepSize = (tExit - tEnter) / 36.0;
+          // Glass Transmittance
+          col += C_KEY * 1.6;
+
+          // Volumetric Interior Layers
+          float stepSize = (tExit - tEnter) / 32.0;
           float t = tEnter + stepSize * 0.5;
 
-          vec3 volAccum = vec3(0.0);
-
-          for (int i = 0; i < 36; i++) {
+          for (int i = 0; i < 32; i++) {
             vec3 p = rPos + rDir * t;
-            float scrollZ = p.z + uTime * 0.7;
+            float scrollZ = p.z + uTime * 0.65;
 
-            // --- A. Topographic Elevation Wireframe along floor ---
-            float topoH = noise(vec2(p.x * 2.8, scrollZ * 0.8)) * 0.35 - 0.35;
-            float distToTopo = abs(p.y - topoH);
-            float topoGrid = smoothstep(0.02, 0.0, distToTopo) * (step(0.88, fract(p.x * 12.0)) + step(0.88, fract(scrollZ * 6.0)));
-            volAccum += C_MAGENTA * topoGrid * 0.35;
-
-            // --- B. Horizontal Tactical Radar Discs ---
-            // Radar 1: Near Front
-            vec3 rCenterF = vec3(0.1, 0.0, 1.8);
-            float dRF = length(p.xz - rCenterF.xz);
-            if (abs(p.y - rCenterF.y) < 0.04 && dRF < 0.45) {
-              float rings = smoothstep(0.015, 0.0, abs(fract(dRF * 8.0) - 0.5) - 0.45);
-              float sweep = fract((atan(p.z - rCenterF.z, p.x - rCenterF.x) / 6.283) - uTime * 1.2);
-              volAccum += C_CYAN * (rings * 0.5 + sweep * 0.9) * smoothstep(0.45, 0.4, dRF);
+            // 1. Topographic Wireframe Surface
+            float topo = noise(vec2(p.x * 2.5, scrollZ * 0.8)) * 0.32 - 0.35;
+            float distTopo = abs(p.y - topo);
+            if (distTopo < 0.02) {
+              float grid = step(0.85, fract(p.x * 12.0)) + step(0.85, fract(scrollZ * 6.0));
+              col += C_MAGENTA * (grid * 0.35);
             }
 
-            // Radar 2: Mid-way down timeline
-            vec3 rCenterM = vec3(-0.15, 0.1, -0.8);
-            float dRM = length(p.xz - rCenterM.xz);
-            if (abs(p.y - rCenterM.y) < 0.03 && dRM < 0.4) {
-              float ringsM = smoothstep(0.02, 0.0, abs(fract(dRM * 6.0) - 0.5) - 0.45);
-              volAccum += C_YELLOW * ringsM * 0.6;
+            // 2. Horizontal Tactical Radar Disc
+            vec3 radarPos = vec3(0.12, 0.0, 1.9);
+            float dRF = length(p.xz - radarPos.xz);
+            if (abs(p.y - radarPos.y) < 0.035 && dRF < 0.42) {
+              float rings = smoothstep(0.02, 0.0, abs(fract(dRF * 8.0) - 0.5) - 0.44);
+              float sweep = fract((atan(p.z - radarPos.z, p.x - radarPos.x) / 6.28318) - uTime * 1.2);
+              col += C_CYAN * (rings * 0.45 + sweep * 0.8) * 0.35;
             }
 
-            // --- C. Suspended Planetary & Sensor Spheres ---
-            // 1. Magenta Dome / Planet Sphere near front
-            vec3 sPos1 = vec3(-0.25, -0.05, 2.5);
-            float dSphere1 = length(p - sPos1);
-            if (dSphere1 < 0.22) {
-              float lat = step(0.85, fract(p.y * 22.0));
-              volAccum += mix(C_MAGENTA, vec3(0.7, 0.1, 1.0), p.y + 0.5) * (0.8 + lat * 0.8);
+            // 3. Front Magenta Sensor Orb
+            vec3 orb1 = vec3(-0.25, -0.05, 2.5);
+            float dO1 = length(p - orb1);
+            if (dO1 < 0.22) {
+              float lat = step(0.82, fract(p.y * 20.0));
+              col += C_MAGENTA * (0.15 + lat * 0.2);
             }
 
-            // 2. High-intensity Yellow Energy Beacon
-            vec3 sPos2 = vec3(0.3, 0.08, 0.3);
-            float dSphere2 = length(p - sPos2);
-            volAccum += C_YELLOW * (0.012 / (dSphere2 * dSphere2 + 0.01));
+            // 4. Central Yellow Beacon
+            vec3 orb2 = vec3(0.3, 0.08, 0.3);
+            float dO2 = length(p - orb2);
+            col += C_YELLOW * (0.003 / (dO2 * dO2 + 0.015));
 
-            // 3. Cyan Targeting Orb
-            vec3 sPos3 = vec3(-0.2, 0.12, -2.2);
-            float dSphere3 = length(p - sPos3);
-            if (dSphere3 < 0.18) {
-              float wire = step(0.8, fract(atan(p.x - sPos3.x, p.z - sPos3.z) * 3.0));
-              volAccum += C_CYAN * (0.6 + wire * 0.7);
-            }
-
-            // --- D. Tactical Yellow Telemetry Baseline ribbon ---
-            if (abs(p.y - 0.22) < 0.015 && abs(p.x - 0.42) < 0.02) {
+            // 5. Tactical Yellow Baseline
+            if (abs(p.y - 0.22) < 0.018 && abs(p.x - 0.42) < 0.02) {
               float dash = step(0.4, fract(scrollZ * 3.0));
-              volAccum += C_YELLOW * dash * 0.9;
+              col += C_YELLOW * dash * 0.3;
             }
 
             t += stepSize;
           }
-
-          col += volAccum;
-
-          // Crisp Monolith Glass Outer Perimeter Glow
-          col += C_CYAN * 0.25 * smoothstep(0.1, 0.0, tEnter);
         }
 
-        // Vignette
-        float vig = 1.0 - smoothstep(0.65, 1.45, length(uv));
-        col *= vig;
+        // Lens Vignette
+        col *= (1.0 - smoothstep(0.7, 1.4, length(uv)));
+        fragColor = vec4(col, 1.0);
+      }
+    ` : `
+      precision highp float;
+      uniform vec2 uResolution;
+      uniform float uTime;
+      uniform vec2 uMouse;
 
-        // Output Final CMYK-graded Fragment
+      #define C_CYAN    vec3(0.0, 0.94, 1.0)
+      #define C_MAGENTA vec3(1.0, 0.0, 0.5)
+      #define C_YELLOW  vec3(1.0, 0.92, 0.0)
+      #define C_KEY     vec3(0.015, 0.035, 0.075)
+
+      mat2 rot(float a) {
+        float s = sin(a), c = cos(a);
+        return mat2(c, -s, s, c);
+      }
+
+      float hash(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        float a = hash(i);
+        float b = hash(i + vec2(1.0, 0.0));
+        float c = hash(i + vec2(0.0, 1.0));
+        float d = hash(i + vec2(1.0, 1.0));
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+      }
+
+      bool intersectBox(vec3 ro, vec3 rd, vec3 boxSize, out float tMin, out float tMax) {
+        vec3 safeRd = sign(rd) * max(abs(rd), vec3(0.0001));
+        vec3 m = 1.0 / safeRd;
+        vec3 n = m * ro;
+        vec3 k = abs(m) * boxSize;
+        vec3 t1 = -n - k;
+        vec3 t2 = -n + k;
+        tMin = max(max(t1.x, t1.y), t1.z);
+        tMax = min(min(t2.x, t2.y), t2.z);
+        return (tMin <= tMax) && (tMax > 0.0);
+      }
+
+      void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
+        vec3 col = C_KEY;
+
+        // Tactical Background Grid
+        vec2 g = fract(gl_FragCoord.xy * 0.035);
+        float gridLine = max(smoothstep(0.08, 0.0, g.x), smoothstep(0.08, 0.0, g.y));
+        col += vec3(0.0, 0.25, 0.35) * gridLine * 0.3;
+
+        // Background Radar sweep
+        vec2 r1 = uv - vec2(0.6, 0.3);
+        float d1 = length(r1);
+        float rings1 = smoothstep(0.015, 0.0, abs(fract(d1 * 5.0) - 0.5) - 0.46);
+        float sweep1 = fract((atan(r1.y, r1.x) / 6.28318) - uTime * 0.25);
+        col += C_CYAN * (rings1 * 0.25 + sweep1 * 0.18) * smoothstep(0.65, 0.05, d1);
+
+        // Smooth Position-Derived Camera Parallax
+        vec2 m = (uMouse - 0.5) * 0.4;
+        vec3 ro = vec3(2.6 + m.x * 0.6, 1.6 + m.y * 0.5, -4.2);
+        vec3 ta = vec3(-0.35, -0.15, 0.7);
+
+        vec3 ww = normalize(ta - ro);
+        vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
+        vec3 vv = cross(uu, ww);
+        vec3 rd = normalize(uv.x * uu + uv.y * vv + 1.8 * ww);
+
+        vec3 rPos = ro;
+        vec3 rDir = rd;
+        mat2 rXZ = rot(-0.62);
+        rPos.xz = rXZ * rPos.xz;
+        rDir.xz = rXZ * rDir.xz;
+
+        mat2 rYZ = rot(0.24);
+        rPos.yz = rYZ * rPos.yz;
+        rDir.yz = rYZ * rDir.yz;
+
+        vec3 bSize = vec3(0.7, 0.45, 6.0);
+        float tEnter, tExit;
+
+        if (intersectBox(rPos, rDir, bSize, tEnter, tExit)) {
+          vec3 hitIn = rPos + rDir * tEnter;
+          vec3 dEdge = bSize - abs(hitIn);
+          float minD = min(dEdge.x, min(dEdge.y, dEdge.z));
+          if (minD < 0.035) col += C_CYAN * 0.9;
+          if (abs(hitIn.z - bSize.z) < 0.06 || abs(hitIn.z + bSize.z) < 0.06) col += C_YELLOW * 0.45;
+          col += C_KEY * 1.6;
+
+          float stepSize = (tExit - tEnter) / 32.0;
+          float t = tEnter + stepSize * 0.5;
+
+          for (int i = 0; i < 32; i++) {
+            vec3 p = rPos + rDir * t;
+            float scrollZ = p.z + uTime * 0.65;
+
+            float topo = noise(vec2(p.x * 2.5, scrollZ * 0.8)) * 0.32 - 0.35;
+            if (abs(p.y - topo) < 0.02) {
+              float grid = step(0.85, fract(p.x * 12.0)) + step(0.85, fract(scrollZ * 6.0));
+              col += C_MAGENTA * (grid * 0.35);
+            }
+
+            vec3 radarPos = vec3(0.12, 0.0, 1.9);
+            float dRF = length(p.xz - radarPos.xz);
+            if (abs(p.y - radarPos.y) < 0.035 && dRF < 0.42) {
+              float rings = smoothstep(0.02, 0.0, abs(fract(dRF * 8.0) - 0.5) - 0.44);
+              float sweep = fract((atan(p.z - radarPos.z, p.x - radarPos.x) / 6.28318) - uTime * 1.2);
+              col += C_CYAN * (rings * 0.45 + sweep * 0.8) * 0.35;
+            }
+
+            vec3 orb1 = vec3(-0.25, -0.05, 2.5);
+            if (length(p - orb1) < 0.22) {
+              float lat = step(0.82, fract(p.y * 20.0));
+              col += C_MAGENTA * (0.15 + lat * 0.2);
+            }
+
+            vec3 orb2 = vec3(0.3, 0.08, 0.3);
+            float dO2 = length(p - orb2);
+            col += C_YELLOW * (0.003 / (dO2 * dO2 + 0.015));
+
+            t += stepSize;
+          }
+        }
+
+        col *= (1.0 - smoothstep(0.7, 1.4, length(uv)));
         gl_FragColor = vec4(col, 1.0);
       }
     `;
@@ -427,7 +515,7 @@
       gl.shaderSource(shader, source);
       gl.compileShader(shader);
       if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error("Shader Compile Error:", gl.getShaderInfoLog(shader));
+        console.error("Shader Error:\n", gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
         return null;
       }
@@ -467,7 +555,6 @@
     let mouseX = 0.5, mouseY = 0.5;
     let targetMouseX = 0.5, targetMouseY = 0.5;
 
-    // Position-derived gentle parallax tracking
     window.addEventListener('mousemove', (e) => {
       targetMouseX = e.clientX / window.innerWidth;
       targetMouseY = 1.0 - (e.clientY / window.innerHeight);
@@ -484,14 +571,13 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // Frame Rate Counter & Render Loop
     let lastTime = 0;
     let frameCount = 0;
     let fpsTimer = 0;
     const fpsElem = document.getElementById('fps');
 
     function render(now) {
-      now *= 0.001; // convert to seconds
+      now *= 0.001;
       const delta = now - lastTime;
       lastTime = now;
 
@@ -503,9 +589,8 @@
         fpsTimer = 0;
       }
 
-      // Smooth inertia lerp for mouse parallax
-      mouseX += (targetMouseX - mouseX) * 0.05;
-      mouseY += (targetMouseY - mouseY) * 0.05;
+      mouseX += (targetMouseX - mouseX) * 0.06;
+      mouseY += (targetMouseY - mouseY) * 0.06;
 
       gl.useProgram(program);
       gl.uniform2f(uResolution, canvas.width, canvas.height);
