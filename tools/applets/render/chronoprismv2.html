@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crystallized Time // Modern Tactical Radar Block</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #020408;
+      font-family: 'Courier New', Courier, monospace;
+      color: #00f0ff;
+    }
+    #webgl-container {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Tactile Screen Edge Flourishes */
+    .screen-edges {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .corner {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid rgba(0, 240, 255, 0.4);
+    }
+    .corner-tl { top: 16px; left: 16px; border-right: none; border-bottom: none; }
+    .corner-tr { top: 16px; right: 16px; border-left: none; border-bottom: none; }
+    .corner-bl { bottom: 16px; left: 16px; border-right: none; border-top: none; }
+    .corner-br { bottom: 16px; right: 16px; border-left: none; border-top: none; }
+
+    .corner::after {
+      content: '';
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: #ff0077;
+    }
+    .corner-tl::after { top: -2.5px; left: -2.5px; }
+    .corner-tr::after { top: -2.5px; right: -2.5px; }
+    .corner-bl::after { bottom: -2.5px; left: -2.5px; }
+    .corner-br::after { bottom: -2.5px; right: -2.5px; }
+
+    .edge-scale-x {
+      position: absolute;
+      left: 60px;
+      right: 60px;
+      height: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8.5px;
+      color: rgba(255, 235, 0, 0.7);
+      letter-spacing: 2px;
+    }
+    .edge-scale-top { top: 16px; border-top: 1px dashed rgba(255, 235, 0, 0.25); }
+    .edge-scale-bottom { bottom: 16px; border-bottom: 1px dashed rgba(255, 235, 0, 0.25); }
+
+    .edge-scale-y {
+      position: absolute;
+      top: 60px;
+      bottom: 60px;
+      width: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 7.5px;
+      color: rgba(0, 240, 255, 0.5);
+    }
+    .edge-scale-left { left: 14px; border-left: 1px dashed rgba(0, 240, 255, 0.25); padding-left: 3px; }
+    .edge-scale-right { right: 14px; border-right: 1px dashed rgba(255, 0, 119, 0.25); padding-right: 3px; text-align: right; }
+
+    .hud-title {
+      position: absolute;
+      top: 32px;
+      left: 60px;
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #00f0ff;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+    .hud-title span { color: #ffeb00; }
+
+    .hud-stats {
+      position: absolute;
+      bottom: 32px;
+      right: 60px;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: right;
+    }
+    .hud-stats b { color: #ff0077; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="webgl-container"></div>
+
+  <div class="screen-edges">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="edge-scale-x edge-scale-top">
+      <span>TACTICAL RADAR // SOLID BLOCK</span>
+      <span>CMYK-ARRAY CHRONOSPEC</span>
+      <span>INTERNAL DENSITY: 98.4%</span>
+    </div>
+    <div class="edge-scale-x edge-scale-bottom">
+      <span>T-INDEX: SCROLLING</span>
+      <span>REFRACTION: IOR 1.52</span>
+      <span>PARALLAX: WEIGHTED LERP</span>
+      <span>BEARING: CALIBRATED</span>
+    </div>
+
+    <div class="edge-scale-y edge-scale-left">
+      <span>+40</span><span>+20</span><span>00</span><span>-20</span><span>-40</span>
+    </div>
+    <div class="edge-scale-y edge-scale-right">
+      <span>24</span><span>16</span><span>08</span><span>00</span>
+    </div>
+
+    <div class="hud-title">CHRONO_<span>MONOLITH</span> // SOLID ENCASEMENT</div>
+    <div class="hud-stats">
+      FPS: <span id="fps">60</span> | PARALLAX: <b>DERIVED</b><br>
+      OFFSET: <span id="cursor-pos">0.00, 0.00</span>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Scene & Setup ---
+    const container = document.getElementById('webgl-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020408, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+    // Positioned down the barrel of the long beam like the reference
+    const baseCamPos = new THREE.Vector3(4.2, 2.4, 5.5);
+    camera.position.copy(baseCamPos);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x020408, 1.0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    container.appendChild(renderer.domElement);
+
+    // --- 2. Background Grid System ---
+    const bgGroup = new THREE.Group();
+    scene.add(bgGroup);
+
+    const floorGrid = new THREE.GridHelper(30, 30, 0x00f0ff, 0x071b28);
+    floorGrid.position.set(0, -3.2, 0);
+    bgGroup.add(floorGrid);
+
+    // Subtle background radar reticles
+    function makeBgReticle(radius, col) {
+      const g = new THREE.Group();
+      const ring = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(
+          new THREE.Path().absarc(0, 0, radius, 0, Math.PI * 2, true).getPoints(64)
+        ),
+        new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.18 })
+      );
+      g.add(ring);
+      return g;
+    }
+    const bgR1 = makeBgReticle(3.0, 0x00f0ff);
+    bgR1.position.set(-2.5, 0.5, -6.0);
+    bgGroup.add(bgR1);
+
+    const bgR2 = makeBgReticle(2.2, 0xff0077);
+    bgR2.position.set(3.8, -0.8, -5.0);
+    bgGroup.add(bgR2);
+
+    // --- 3. The Solid Monolith (Root Alignment) ---
+    const monolith = new THREE.Group();
+    scene.add(monolith);
+
+    // Align diagonally across the screen: top-left to bottom-right
+    monolith.rotation.y = -Math.PI / 3.8;
+    monolith.rotation.x = 0.22;
+    monolith.rotation.z = -0.12;
+
+    const bW = 1.35;
+    const bH = 0.95;
+    const bL = 13.0;
+
+    // --- 4. Substrate (Dense Terrain Core inside the Acrylic) ---
+    // Instead of floating lines, this is a dark mountain bed filling the bottom half of the prism
+    const topoSegX = 32;
+    const topoSegZ = 120;
+    const topoGeo = new THREE.PlaneGeometry(bW * 0.98, bL * 0.99, topoSegX, topoSegZ);
+    topoGeo.rotateX(-Math.PI / 2);
+    topoGeo.translate(0, -bH * 0.49, 0);
+
+    const pos = topoGeo.attributes.position;
+    const origY = new Float32Array(pos.count);
+    for (let i = 0; i < pos.count; i++) {
+      const vx = pos.getX(i);
+      const vz = pos.getZ(i);
+      // Natural mountainous ridge contouring
+      const h = (Math.sin(vx * 4.0) * 0.12 + Math.cos(vz * 1.2) * 0.1 + Math.sin(vx * 7.0 + vz * 2.5) * 0.06);
+      const clampedH = Math.max(0.0, h + 0.18);
+      pos.setY(i, pos.getY(i) + clampedH);
+      origY[i] = pos.getY(i);
+    }
+    topoGeo.computeVertexNormals();
+
+    // Solid dark-matter base mesh with cyan/magenta wireframe on top
+    const topoSolidMat = new THREE.MeshBasicMaterial({
+      color: 0x01131c,
+      side: THREE.DoubleSide
+    });
+    const topoWireMat = new THREE.MeshBasicMaterial({
+      color: 0xff0077,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.8
+    });
+    const topoSolid = new THREE.Mesh(topoGeo, topoSolidMat);
+    const topoWire = new THREE.Mesh(topoGeo, topoWireMat);
+    monolith.add(topoSolid);
+    monolith.add(topoWire);
+
+    // --- 5. Embedded Tactical Radar Discs (Flush on Top Surface & Terrain) ---
+    function makeEmbeddedRadar(radius, primaryCol, needleCol) {
+      const g = new THREE.Group();
+      g.rotation.x = -Math.PI / 2;
+
+      // Concentric rings
+      for (let r = 0.33; r <= 1.0; r += 0.33) {
+        const ringG = new THREE.BufferGeometry().setFromPoints(
+          new THREE.Path().absarc(0, 0, radius * r, 0, Math.PI * 2, true).getPoints(48)
+        );
+        g.add(new THREE.Line(ringG, new THREE.LineBasicMaterial({ color: primaryCol, transparent: true, opacity: 0.7 })));
+      }
+
+      // Crosshairs
+      const chG = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-radius, 0, 0), new THREE.Vector3(radius, 0, 0),
+        new THREE.Vector3(0, -radius, 0), new THREE.Vector3(0, radius, 0)
+      ]);
+      g.add(new THREE.LineSegments(chG, new THREE.LineBasicMaterial({ color: primaryCol, transparent: true, opacity: 0.35 })));
+
+      // Sweep Needle
+      const needleG = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0.002), new THREE.Vector3(radius, 0, 0.002)]);
+      const needle = new THREE.Line(needleG, new THREE.LineBasicMaterial({ color: needleCol, linewidth: 2 }));
+      g.add(needle);
+      g.userData.needle = needle;
+
+      return g;
+    }
+
+    // Top surface radar sweeps
+    const radar1 = makeEmbeddedRadar(0.42, 0x00f0ff, 0xffeb00);
+    radar1.position.set(0.12, bH * 0.495, 3.8);
+    monolith.add(radar1);
+
+    const radar2 = makeEmbeddedRadar(0.35, 0xff0077, 0x00f0ff);
+    radar2.position.set(-0.18, bH * 0.495, 0.8);
+    monolith.add(radar2);
+
+    const radar3 = makeEmbeddedRadar(0.3, 0xffeb00, 0xff0077);
+    radar3.position.set(0.15, bH * 0.495, -2.4);
+    monolith.add(radar3);
+
+    // --- 6. Embedded Sensor Spheres & Celestial Elements ---
+    // A. Front Glowing Magenta Dome / Planet embedded in terrain
+    const domeGeo = new THREE.SphereGeometry(0.28, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.6);
+    const domeMat = new THREE.MeshBasicMaterial({ color: 0xff0077, wireframe: true });
+    const frontDome = new THREE.Mesh(domeGeo, domeMat);
+    frontDome.position.set(-0.25, -0.1, 4.8);
+    monolith.add(frontDome);
+
+    // Solid core for dome
+    const domeCore = new THREE.Mesh(
+      new THREE.SphereGeometry(0.24, 16, 12),
+      new THREE.MeshBasicMaterial({ color: 0x440022 })
+    );
+    frontDome.add(domeCore);
+
+    // B. Bright Yellow Point-Light Beacon
+    const beacon = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffeb00 })
+    );
+    beacon.position.set(0.32, 0.1, 1.8);
+    monolith.add(beacon);
+
+    // Aura
+    const beaconHalo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffeb00, wireframe: true, transparent: true, opacity: 0.35 })
+    );
+    beacon.add(beaconHalo);
+
+    // C. Cyan Targeting Orb
+    const cyanOrb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 14, 10),
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
+    );
+    cyanOrb.position.set(-0.22, 0.18, -1.2);
+    monolith.add(cyanOrb);
+
+    // --- 7. Outer Solid Crystal Encasement (Glass Facets & Edge Chamfers) ---
+    const boxGeo = new THREE.BoxGeometry(bW, bH, bL);
+
+    // Transmissive Glass Hull
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x03121f,
+      roughness: 0.05,
+      metalness: 0.1,
+      transmission: 0.75,
+      ior: 1.5,
+      transparent: true,
+      opacity: 0.45,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const glassHull = new THREE.Mesh(boxGeo, glassMat);
+    monolith.add(glassHull);
+
+    // Sharp Cyan Corner Piping (The signature crystallized bounding box)
+    const edgeGeo = new THREE.EdgesGeometry(boxGeo);
+    const edgeLines = new THREE.LineSegments(
+      edgeGeo,
+      new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 2, transparent: true, opacity: 0.9 })
+    );
+    monolith.add(edgeLines);
+
+    // Front Cap Frame Accent (Glowing Yellow Face)
+    const capGeo = new THREE.PlaneGeometry(bW, bH);
+    const capEdges = new THREE.EdgesGeometry(capGeo);
+    const frontCap = new THREE.LineSegments(
+      capEdges,
+      new THREE.LineBasicMaterial({ color: 0xffeb00, linewidth: 3 })
+    );
+    frontCap.position.z = bL / 2 + 0.005;
+    monolith.add(frontCap);
+
+    // Internal Yellow Telemetry Data Ribbon along right top edge
+    const ribbonPts = [];
+    for (let z = -bL / 2 + 0.1; z <= bL / 2 - 0.1; z += 0.25) {
+      ribbonPts.push(new THREE.Vector3(bW * 0.48, bH * 0.48, z));
+    }
+    const ribbonGeo = new THREE.BufferGeometry().setFromPoints(ribbonPts);
+    const ribbon = new THREE.Line(
+      ribbonGeo,
+      new THREE.LineDashedMaterial({ color: 0xffeb00, dashSize: 0.2, gapSize: 0.12, linewidth: 2 })
+    );
+    ribbon.computeLineDistances();
+    monolith.add(ribbon);
+
+    // --- 8. Mouse Parallax & Animation Loop ---
+    let targetMouseX = 0, targetMouseY = 0;
+    let smoothMouseX = 0, smoothMouseY = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+      document.getElementById('cursor-pos').innerText = 
+        `${targetMouseX.toFixed(2)}, ${(-targetMouseY).toFixed(2)}`;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    let lastTime = 0;
+    let frameCount = 0;
+    let fpsTimer = 0;
+    const fpsElem = document.getElementById('fps');
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      now *= 0.001;
+      const delta = now - lastTime;
+      lastTime = now;
+
+      // FPS
+      frameCount++;
+      fpsTimer += delta;
+      if (fpsTimer >= 0.5) {
+        fpsElem.innerText = Math.round(frameCount / fpsTimer);
+        frameCount = 0;
+        fpsTimer = 0;
+      }
+
+      // Smooth inertia parallax
+      smoothMouseX += (targetMouseX - smoothMouseX) * 0.04;
+      smoothMouseY += (targetMouseY - smoothMouseY) * 0.04;
+
+      camera.position.x = baseCamPos.x + smoothMouseX * 1.1;
+      camera.position.y = baseCamPos.y - smoothMouseY * 0.7;
+      camera.lookAt(-0.15, 0.05, 0.5);
+
+      // Radar Needle Rotation
+      if (radar1.userData.needle) radar1.userData.needle.rotation.z -= delta * 3.8;
+      if (radar2.userData.needle) radar2.userData.needle.rotation.z += delta * 2.5;
+      if (radar3.userData.needle) radar3.userData.needle.rotation.z -= delta * 3.0;
+
+      // Background Reticle Rotation
+      bgR1.rotation.z += delta * 0.12;
+      bgR2.rotation.z -= delta * 0.08;
+
+      // Pulse Energy Beacon
+      const pulse = 1.0 + Math.sin(now * 5.0) * 0.12;
+      beaconHalo.scale.set(pulse, pulse, pulse);
+
+      // Spheres rotation
+      frontDome.rotation.y += delta * 0.2;
+      cyanOrb.rotation.y += delta * 0.4;
+      cyanOrb.rotation.x += delta * 0.25;
+
+      // Topo wave flow along the timeline (crystallized moving data)
+      const pArr = topoGeo.attributes.position;
+      for (let i = 0; i < pArr.count; i++) {
+        const vx = pArr.getX(i);
+        const vz = pArr.getZ(i);
+        const wave = Math.sin(vx * 5.0 + now * 2.0) * Math.cos(vz * 1.8 - now * 1.5) * 0.035;
+        pArr.setY(i, origY[i] + wave);
+      }
+      pArr.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    }
+
+    animate(0);
+  </script>
+</body>
+</html>
