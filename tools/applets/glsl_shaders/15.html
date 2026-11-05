@@ -1,0 +1,471 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Advanced Holographic Effects Showcase</title>
+   <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body, html {
+         width: 100%;
+         height: 100%;
+         overflow: hidden;
+         background: #010204;
+         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      canvas { width: 100vw; height: 100vh; display: block; }
+
+      #ui-container {
+         position: absolute;
+         top: 20px;
+         left: 50%;
+         transform: translateX(-50%);
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         gap: 12px;
+         z-index: 10;
+         color: #e0f7ff;
+         text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+         user-select: none;
+      }
+
+      .nav-bar {
+         display: flex;
+         align-items: center;
+         gap: 16px;
+         background: rgba(4, 12, 24, 0.75);
+         border: 1px solid rgba(0, 217, 255, 0.3);
+         padding: 8px 16px;
+         border-radius: 30px;
+         backdrop-filter: blur(8px);
+         box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+      }
+
+      button {
+         background: rgba(0, 217, 255, 0.1);
+         border: 1px solid rgba(0, 217, 255, 0.5);
+         color: #00d9ff;
+         padding: 6px 16px;
+         border-radius: 20px;
+         cursor: pointer;
+         font-weight: bold;
+         transition: all 0.2s ease;
+      }
+
+      button:hover {
+         background: rgba(0, 217, 255, 0.3);
+         box-shadow: 0 0 12px rgba(0, 217, 255, 0.6);
+         color: #fff;
+      }
+
+      #effect-title {
+         font-size: 1.1rem;
+         font-weight: 700;
+         letter-spacing: 1px;
+         min-width: 320px;
+         text-align: center;
+         text-transform: uppercase;
+      }
+
+      #effect-desc {
+         font-size: 0.85rem;
+         color: #88ccee;
+         max-width: 520px;
+         text-align: center;
+         background: rgba(4, 12, 24, 0.6);
+         padding: 6px 14px;
+         border-radius: 12px;
+         border: 1px solid rgba(0, 217, 255, 0.15);
+      }
+
+      .instructions {
+         position: absolute;
+         bottom: 20px;
+         left: 50%;
+         transform: translateX(-50%);
+         font-size: 0.8rem;
+         color: rgba(0, 217, 255, 0.5);
+         letter-spacing: 0.5px;
+      }
+   </style>
+</head>
+<body>
+
+   <div id="ui-container">
+      <div class="nav-bar">
+         <button id="btn-prev">&lt; Prev</button>
+         <div id="effect-title">1. Quantum Wave Interference</div>
+         <button id="btn-next">Next &gt;</button>
+      </div>
+      <div id="effect-desc">Concentric overlapping ripple nodes creating interference patterns.</div>
+   </div>
+
+   <div class="instructions">Use [1-9, 0, -, =] keys or [Left/Right] arrows to swap effects</div>
+
+   <canvas id="glcanvas"></canvas>
+
+   <script id="vs" type="x-shader/x-vertex">#version 300 es
+      in vec2 a_position;
+      void main() {
+         gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+   </script>
+
+   <script id="fs" type="x-shader/x-fragment">#version 300 es
+      precision highp float;
+
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform float u_click_time;
+      uniform vec2 u_mouse;
+      uniform int u_effect_mode; // 0 to 11
+
+      out vec4 fragColor;
+
+      // --- UTILITY MATH FUNCTIONS ---
+      float hash12(vec2 p) {
+         p = fract(p * vec2(234.34, 435.345));
+         p += dot(p, p + 34.23);
+         return fract(p.x * p.y);
+      }
+
+      vec3 hash32(vec2 p) {
+         vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+         p3 += dot(p3, p3.yzx + 33.33);
+         return fract((p3.xxx+p3.yyy)*p3.zzz);
+      }
+
+      float valueNoise(vec2 p) {
+         vec2 i = floor(p);
+         vec2 f = fract(p);
+         f = f * f * (3.0 - 2.0 * f);
+         float a = hash12(i);
+         float b = hash12(i + vec2(1.0, 0.0));
+         float c = hash12(i + vec2(0.0, 1.0));
+         float d = hash12(i + vec2(1.0, 1.0));
+         return mix(mix(a, b, f.x),
+
+    mix(c, d, f.x), f.y);
+    }
+
+    float fbm(vec2 p) {
+      float val = 0.0;
+      float amp = 0.5;
+      for (int i = 0; i < 4; i++) {
+        val += amp * valueNoise(p);
+        p *= 2.05;
+        amp *= 0.5;
+      }
+      return val;
+    }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+      vec2 mouseNorm = (u_mouse - 0.5 * u_resolution.xy) / u_resolution.y;
+
+      vec3 finalColor = vec3(0.002, 0.005, 0.01);
+      vec3 cyan  = vec3(0.12, 0.75, 1.0);
+      vec3 white = vec3(0.9, 0.98, 1.0);
+
+      // --- 1. QUANTUM WAVE INTERFERENCE ---
+      if (u_effect_mode == 0) {
+        vec2 p1 = vec2(-0.25 * sin(u_time * 0.8), 0.15 * cos(u_time * 0.5));
+        vec2 p2 = vec2(0.25 * cos(u_time * 0.7), -0.15 * sin(u_time * 0.9));
+        
+        float w1 = sin(length(uv - p1) * 35.0 - u_time * 4.0);
+        float w2 = sin(length(uv - p2) * 35.0 - u_time * 4.0);
+        float interference = (w1 + w2) * 0.5;
+
+        float nodeLines = smoothstep(0.05, 0.0, abs(interference));
+        finalColor += cyan * nodeLines * 2.2;
+        finalColor += white * pow(smoothstep(0.7, 1.0, interference), 2.0) * 1.5;
+      }
+
+      // --- 2. HOLOGRAPHIC VOLUMETRIC FOG ---
+      else if (u_effect_mode == 1) {
+        vec2 fogUV = uv * 2.5 + vec2(u_time * 0.1, u_time * 0.05);
+        float density1 = fbm(fogUV);
+        float density2 = fbm(fogUV * 1.8 - vec2(u_time * 0.15));
+        float fog = pow(density1 * density2 * 3.2, 2.0);
+
+        float backGlow = smoothstep(0.6, 0.0, length(uv));
+        finalColor += cyan * fog * backGlow * 2.5;
+        finalColor += vec3(0.02, 0.2, 0.4) * (1.0 - fog) * backGlow;
+      }
+
+      // --- 3. CHRONO-GRID TEMPORAL DISTORTION ---
+      else if (u_effect_mode == 2) {
+        float timeWarp = u_time + fbm(uv * 3.0 + u_time * 0.2) * 1.5;
+        vec2 warpedUV = uv + vec2(sin(timeWarp), cos(timeWarp)) * 0.03;
+
+        vec2 grid = abs(fract(warpedUV * 18.0 - 0.5) - 0.5);
+        float gridLine = smoothstep(0.03, 0.0, min(grid.x, grid.y));
+
+        finalColor += cyan * gridLine * 2.5;
+        finalColor += white * pow(gridLine, 4.0) * 1.5;
+      }
+
+      // --- 4. ANISOTROPIC CIRCUIT MICRO-TRACES ---
+      else if (u_effect_mode == 3) {
+        vec2 gridUV = floor(uv * 20.0);
+        vec2 cellUV = fract(uv * 20.0) - 0.5;
+
+        float traceHash = hash12(gridUV);
+        float linePattern = 0.0;
+
+        if (traceHash > 0.5) {
+          linePattern = smoothstep(0.06, 0.0, abs(cellUV.x));
+        } else {
+          linePattern = smoothstep(0.06, 0.0, abs(cellUV.y));
+        }
+
+        float pulse = sin(gridUV.x * 0.5 + gridUV.y * 0.5 + u_time * 5.0) * 0.5 + 0.5;
+        pulse = pow(pulse, 6.0);
+
+        finalColor += cyan * linePattern * 0.6;
+        finalColor += white * linePattern * pulse * 3.0;
+      }
+
+      // --- 5. CAUSTIC PRISMATIC EDGE DISPERSION ---
+      else if (u_effect_mode == 4) {
+        float borderDist = abs(length(uv) - 0.3);
+        float rEdge = smoothstep(0.02, 0.0, abs(borderDist - 0.006));
+        float gEdge = smoothstep(0.02, 0.0, borderDist);
+        float bEdge = smoothstep(0.02, 0.0, abs(borderDist + 0.006));
+
+        finalColor.r += rEdge * 2.5;
+        finalColor.g += gEdge * 2.0;
+        finalColor.b += bEdge * 3.0;
+
+        float innerGlass = smoothstep(0.3, 0.0, length(uv));
+        finalColor += vec3(0.05, 0.2, 0.35) * innerGlass * 0.8;
+      }
+
+      // --- 6. SUB-SURFACE SCATTERING GLOW ---
+      else if (u_effect_mode == 5) {
+        float dist = length(uv - mouseNorm);
+        float sss = exp(-dist * 4.0);
+        float core = smoothstep(0.08, 0.0, dist);
+
+        finalColor += cyan * sss * 2.0;
+        finalColor += white * core * 3.0;
+        finalColor += vec3(0.0, 0.3, 0.6) * exp(-dist * 1.5) * 1.0;
+      }
+
+      // --- 7. HOLOGRAPHIC MOIRÉ RINGS ---
+      else if (u_effect_mode == 6) {
+        float r = length(uv);
+        float ring1 = sin(r * 120.0 + u_time * 2.0);
+        
+        vec2 rotUV = vec2(uv.x * cos(0.15) - uv.y * sin(0.15), uv.x * sin(0.15) + uv.y * cos(0.15));
+        float ring2 = sin(length(rotUV) * 115.0 - u_time * 2.0);
+
+        float moire = smoothstep(0.1, 0.0, abs(ring1 * ring2));
+        finalColor += cyan * moire * 2.2;
+      }
+
+      // --- 8. DIGITAL PLASMA ARC FILAMENTS ---
+      else if (u_effect_mode == 7) {
+        float arc = 0.0;
+        for (float i = 0.0; i < 4.0; i++) {
+          vec2 arcUV = uv * (1.5 + i * 0.5);
+          float n = fbm(arcUV * 3.0 + vec2(u_time * (2.0 + i)));
+          arc += smoothstep(0.03, 0.0, abs(uv.x - (n - 0.5) * 0.6));
+        }
+        finalColor += cyan * arc * 1.8;
+        finalColor += white * pow(arc, 3.0) * 2.5;
+      }
+
+      // --- 9. ANAMORPHIC GLARE STREAKS ---
+      else if (u_effect_mode == 8) {
+        float centerDot = smoothstep(0.05, 0.0, length(uv - mouseNorm));
+        float hStreak = exp(-abs(uv.y - mouseNorm.y) * 45.0) * smoothstep(0.8, 0.0, abs(uv.x - mouseNorm.x));
+
+        finalColor += white * centerDot * 3.0;
+        finalColor += cyan * hStreak * 3.5;
+      }
+
+      // --- 10. CYBERNETIC HEX-VOXEL TOPOGRAPHY ---
+      else if (u_effect_mode == 9) {
+        vec2 grid = abs(fract(uv * 15.0) - 0.5);
+        float cell = smoothstep(0.48, 0.42, max(grid.x, grid.y));
+        
+        vec2 cellID = floor(uv * 15.0);
+        float height = sin(cellID.x * 0.5 + cellID.y * 0.5 + u_time * 3.0) * 0.5 + 0.5;
+
+        finalColor += cyan * cell * height * 2.2;
+        finalColor += white * smoothstep(0.45, 0.48, max(grid.x, grid.y)) * height * 1.5;
+      }
+
+      // --- 11. POLARIZED CRYSTAL LATTICE ---
+      else if (u_effect_mode == 10) {
+        float angle = atan(uv.y, uv.x);
+        float dist = length(uv);
+        
+        float lattice = sin(angle * 8.0 + dist * 25.0 - u_time * 2.0);
+        vec3 crystalColor = 0.5 + 0.5 * cos(angle * 3.0 + u_time + vec3(0.0, 1.5, 3.0));
+
+        finalColor += crystalColor * smoothstep(0.1, 0.0, abs(lattice)) * smoothstep(0.5, 0.0, dist) * 2.2;
+      }
+
+      // --- 12. HOLOGRAPHIC DUST FIELD ---
+      else if (u_effect_mode == 11) {
+        float dustAcc = 0.0;
+        for (float i = 0.0; i < 40.0; i++) {
+          vec3 p3 = hash32(vec2(i, 1.54));
+          float speed = 0.1 + p3.z * 0.2;
+          
+          vec2 partPos = vec2(
+            (p3.x - 0.5) * 1.2,
+            fract(p3.y + u_time * speed) - 0.5
+          );
+
+          float d = length(uv - partPos);
+          float glint = sin(u_time * 5.0 + i) * 0.5 + 0.5;
+          dustAcc += smoothstep(0.008, 0.0, d) * glint;
+        }
+
+        finalColor += white * dustAcc * 2.5;
+        finalColor += cyan * dustAcc * 1.5;
+      }
+
+      fragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+  <script>
+    const effects = [
+      { name: "1. Quantum Wave Interference", desc: "Concentric overlapping ripple nodes creating interference patterns." },
+      { name: "2. Holographic Volumetric Fog", desc: "Wisps of glowing light-smoke trapped inside the glass plane." },
+      { name: "3. Chrono-Grid Temporal Distortion", desc: "Warped grid lines expanding and snapping in localized time waves." },
+      { name: "4. Anisotropic Circuit Traces", desc: "Micro-fine geometric circuit pathways lighting up with data pulses." },
+      { name: "5. Caustic Edge Dispersion", desc: "Prismatic RGB color-splitting fringing around the glass border." },
+      { name: "6. Sub-Surface Scattering Glow", desc: "Light diffusing through translucent acrylic/glass material." },
+      { name: "7. Holographic Moiré Rings", desc: "High-frequency concentric rings creating optical interference patterns." },
+      { name: "8. Digital Plasma Arc Filaments", desc: "Crackling electric arc tendrils crawling across the glass." },
+      { name: "9. Anamorphic Glare Streaks", desc: "Cinematic horizontal blue flare streaks reacting to light sources." },
+      { name: "10. Cybernetic Voxel Topography", desc: "Tactile 3D height-map grid pulsing like an equalizer." },
+      { name: "11. Polarized Crystal Lattice", desc: "Synthetic crystalline geometry with cross-polarized light shifts." },
+      { name: "12. Holographic Dust Field", desc: "Microscopic floating specs catching prismatic glints in space." }
+    ];
+
+    let currentEffectIndex = 0;
+
+    const canvas = document.getElementById('glcanvas');
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) alert('WebGL 2 required');
+
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function createProgram(gl, vsSource, fsSource) {
+      const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+      const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+      const program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      return program;
+    }
+
+    const program = createProgram(
+      gl,
+      document.getElementById('vs').text.trim(),
+      document.getElementById('fs').text.trim()
+    );
+
+    const positionAttrLoc = gl.getAttribLocation(program, 'a_position');
+    const resolutionUniformLoc = gl.getUniformLocation(program, 'u_resolution');
+    const timeUniformLoc = gl.getUniformLocation(program, 'u_time');
+    const clickTimeUniformLoc = gl.getUniformLocation(program, 'u_click_time');
+    const mouseUniformLoc = gl.getUniformLocation(program, 'u_mouse');
+    const effectModeUniformLoc = gl.getUniformLocation(program, 'u_effect_mode');
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1, -1,  1,
+      -1,  1,  1, -1,  1,  1,
+    ]), gl.STATIC_DRAW);
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.enableVertexAttribArray(positionAttrLoc);
+    gl.vertexAttribPointer(positionAttrLoc, 2, gl.FLOAT, false, 0, 0);
+
+    let lastClickTime = -10.0;
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    function setEffect(index) {
+      currentEffectIndex = (index + effects.length) % effects.length;
+      document.getElementById('effect-title').textContent = effects[currentEffectIndex].name;
+      document.getElementById('effect-desc').textContent = effects[currentEffectIndex].desc;
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => setEffect(currentEffectIndex - 1));
+    document.getElementById('btn-next').addEventListener('click', () => setEffect(currentEffectIndex + 1));
+
+    window.addEventListener('keydown', (e) => {
+      const keyMap = {
+        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
+        '7': 6, '8': 7, '9': 8, '0': 9, '-': 10, '=': 11
+      };
+      if (e.key in keyMap) {
+        setEffect(keyMap[e.key]);
+      } else if (e.key === 'ArrowRight') {
+        setEffect(currentEffectIndex + 1);
+      } else if (e.key === 'ArrowLeft') {
+        setEffect(currentEffectIndex - 1);
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = canvas.height - e.clientY;
+    });
+
+    window.addEventListener('click', () => {
+      lastClickTime = performance.now() * 0.001;
+    });
+
+    function resize() {
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function render(time) {
+      resize();
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+
+      const currentTime = time * 0.001;
+      gl.uniform2f(resolutionUniformLoc, canvas.width, canvas.height);
+      gl.uniform1f(timeUniformLoc, currentTime);
+      gl.uniform1f(clickTimeUniformLoc, lastClickTime);
+      gl.uniform2f(mouseUniformLoc, mouseX, mouseY);
+      gl.uniform1i(effectModeUniformLoc, currentEffectIndex);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

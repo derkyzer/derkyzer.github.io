@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iridescent & Optical Materials Laboratory</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #020408; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e0f2fe; user-select: none;
+    }
+    canvas { width: 100vw; height: 100vh; display: block; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+
+    #ui-container {
+      position: absolute; top: 16px; left: 50%;
+      transform: translateX(-50%); display: flex; flex-direction: column;
+      align-items: center; gap: 10px; z-index: 10; width: 95%; max-width: 900px;
+      pointer-events: none;
+    }
+    .nav-bar {
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+      background: rgba(8, 15, 30, 0.85); border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 6px 12px; border-radius: 30px; backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    button {
+      background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8; padding: 6px 14px; border-radius: 20px; cursor: pointer;
+      font-weight: 600; font-size: 0.8rem; transition: all 0.2s ease;
+    }
+    button:hover { background: rgba(56, 189, 248, 0.3); color: #fff; border-color: #38bdf8; }
+    button.active { background: #38bdf8; color: #020408; border-color: #38bdf8; font-weight: 700; box-shadow: 0 0 12px rgba(56, 189, 248, 0.6); }
+
+    .control-row {
+      pointer-events: auto; display: flex; gap: 16px; align-items: center;
+      background: rgba(8, 15, 30, 0.7); border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 16px; border-radius: 20px; backdrop-filter: blur(8px);
+      font-size: 0.75rem; color: #94a3b8;
+    }
+    .control-group { display: flex; align-items: center; gap: 6px; }
+    input[type=range] { accent-color: #38bdf8; cursor: pointer; }
+
+    #hud-panel {
+      position: absolute; bottom: 16px; left: 16px; right: 16px;
+      max-width: 600px; margin: 0 auto; pointer-events: auto;
+      background: rgba(6, 11, 22, 0.88); border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 14px; padding: 14px 18px; backdrop-filter: blur(12px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8); transition: all 0.3s ease;
+    }
+    .hud-title {
+      font-size: 1.05rem; font-weight: 700; color: #38bdf8; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between;
+    }
+    .hud-subtitle { font-size: 0.75rem; color: #f43f5e; font-weight: 600; margin-bottom: 8px; }
+    .hud-desc { font-size: 0.8rem; line-height: 1.45; color: #cbd5e1; margin-bottom: 8px; }
+    .hud-math {
+      font-family: 'Courier New', Courier, monospace; font-size: 0.72rem;
+      background: rgba(0,0,0,0.5); border-left: 3px solid #38bdf8;
+      padding: 6px 10px; color: #7dd3fc; border-radius: 2px;
+    }
+
+    .instructions {
+      position: absolute; top: 16px; right: 16px; font-size: 0.7rem;
+      color: rgba(148, 163, 184, 0.6); pointer-events: none; text-align: right;
+    }
+
+    @media (max-width: 768px) {
+      #hud-panel { left: 10px; right: 10px; bottom: 10px; padding: 10px 12px; }
+      .hud-title { font-size: 0.9rem; }
+      .hud-desc { font-size: 0.75rem; }
+      .instructions { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="ui-container">
+    <div class="nav-bar" id="material-nav">
+      <button data-mode="-1" class="active">Grid View</button>
+      <button data-mode="0">Opalite</button>
+      <button data-mode="1">CD-ROM</button>
+      <button data-mode="2">Oil Slick</button>
+      <button data-mode="3">Soap Bubble</button>
+      <button data-mode="4">Anodized Al</button>
+      <button data-mode="5">Holo Foil</button>
+      <button data-mode="6">Labradorite</button>
+    </div>
+
+    <div class="control-row">
+      <div class="control-group">
+        <label for="slider-light">Light Angle:</label>
+        <input type="range" id="slider-light" min="0" max="6.28" step="0.05" value="1.2">
+      </div>
+      <div class="control-group">
+        <label for="slider-rough">Roughness:</label>
+        <input type="range" id="slider-rough" min="0.01" max="1.0" step="0.01" value="0.15">
+      </div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    Drag: Orbit View<br>
+    Keys [1-7]: Select Material • [G]: Grid Mode • [←/→]: Navigate
+  </div>
+
+  <div id="hud-panel">
+    <div class="hud-title" id="hud-title">Overview Grid Mode</div>
+    <div class="hud-subtitle" id="hud-subtitle">Select a material to inspect optics & shader math</div>
+    <div class="hud-desc" id="hud-desc">Displaying all 7 optical and iridescent material phenomena simultaneously. Click any sphere or use the menu above to isolate and inspect the specific GLSL equations.</div>
+    <div class="hud-math" id="hud-math">Mode: Multi-Object Raytracer Pass // Additive Interference & Scattering Matrix</div>
+  </div>
+
+  <canvas id="glcanvas"></canvas>
+
+  <script id="vs" type="x-shader/x-vertex">#version 300 es
+    in vec2 a_position;
+    void main() {
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  </script>
+
+  <script id="fs" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform int u_mode; // -1 for Grid, 0 to 6 for isolated materials
+    uniform float u_light_angle;
+    uniform float u_roughness;
+
+    out vec4 fragColor;
+
+    #define PI 3.14159265359
+    #define TWO_PI 6.28318530718
+
+    // --- Helper Math & Noise ---
+    mat2 rot2D(float a) {
+      float s = sin(a), c = cos(a);
+      return mat2(c, -s, s, c);
+    }
+
+    vec3 hash33(vec3 p) {
+      p = vec3(dot(p, vec2(127.1, 311.7).xyx),
+               dot(p, vec2(269.5, 183.3).yxy),
+               dot(p, vec2(113.5, 271.9).zzx));
+      return fract(sin(p) * 43758.5453123);
+    }
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+
+    // Sine octaves (continuous C^inf derivative noise field)
+    float sineOctaves(vec2 p, float time) {
+      float val = 0.0;
+      float amp = 0.5;
+      mat2 m = mat2(0.8, 0.6, -0.6, 0.8);
+      for (int i = 0; i < 4; i++) {
+        val += amp * (sin(p.x + time) * cos(p.y - time * 0.7));
+        p = m * p * 2.03;
+        amp *= 0.5;
+      }
+      return val;
+    }
+
+    // Airy Thin-Film Phase Retardation (Full Spectral Interference)
+    vec3 thinFilmInterference(float thickness, float cosTheta, float n_film) {
+      // Phase difference delta = (4 * PI * n * d * cosTheta) / lambda
+      // RGB wavelengths in nanometers: R=650, G=510, B=475
+      vec3 wavelengths = vec3(650.0, 510.0, 475.0);
+      vec3 delta = (4.0 * PI * n_film * thickness * cosTheta) / wavelengths;
+      // Airy reflection intensity: I = 0.5 + 0.5 * cos(delta)
+      return 0.5 + 0.5 * cos(delta);
+    }
+
+    // --- Material Shading Calculations ---
+
+    // 1. OPALITE: Rayleigh/Mie Volumetric Scattering & Tyndall Effect
+    vec3 shadeOpalite(vec3 N, vec3 V, vec3 L, vec2 uv) {
+      float NdotL = max(dot(N, L), 0.0);
+      float VdotL = dot(-V, L); // Forward scattering factor
+      float NdotV = max(dot(N, V), 0.0);
+
+      // Rayleigh scattering: shorter wavelengths (Blue) scatter at wider angles
+      float rayleigh = 1.0 + pow(clamp(1.0 - NdotV, 0.0, 1.0), 3.0);
+      vec3 scatteredBlue = vec3(0.4, 0.75, 1.0) * rayleigh * 1.8;
+
+      // Mie forward scattering (Warm inner glow when transmitting light)
+      float mie = pow(max(0.0, VdotL * 0.5 + 0.5), 6.0);
+      vec3 transmittedWarm = vec3(1.0, 0.55, 0.25) * mie * 2.2;
+
+      // Soft milky opalescent subsurface core
+      vec3 coreGlow = mix(scatteredBlue, transmittedWarm, 0.4 + 0.6 * VdotL);
+
+      // Soft glossy surface specular
+      vec3 H = normalize(L + V);
+      float spec = pow(max(dot(N, H), 0.0), 64.0 / u_roughness);
+      vec3 specular = vec3(1.0) * spec * 0.8;
+
+      return coreGlow * (0.6 + 0.4 * NdotL) + specular;
+    }
+
+    // 2. CD-ROM: Radial Micro-Track Diffraction Grating
+    vec3 shadeCDROM(vec3 N, vec3 V, vec3 L, vec3 pos) {
+      // Radial tangent around z-axis track center
+      vec3 trackTangent = normalize(cross(N, vec3(0.0, 0.0, 1.0)));
+      if (length(trackTangent) < 0.001) trackTangent = vec3(1.0, 0.0, 0.0);
+
+      vec3 H = normalize(L + V);
+      float projH = dot(H, trackTangent);
+
+      // Diffraction grating equation: d * sin(theta) = m * lambda
+      // Map projection into RGB wavelengths
+      float trackSpacing = 1600.0; // 1.6 um track pitch
+      vec3 rainbow = 0.5 + 0.5 * cos((projH * trackSpacing * 0.02) + vec3(0.0, 2.05, 4.1));
+
+      // Sharp anisotropic streak highlight
+      float diffStreak = exp(-pow(projH * 18.0 / u_roughness, 2.0));
+      vec3 iridescentSpec = rainbow * diffStreak * 2.5;
+
+      // Dark polycarbonate base reflection
+      float NdotL = max(dot(N, L), 0.1);
+      vec3 base = vec3(0.05, 0.07, 0.1) * NdotL;
+
+      return base + iridescentSpec;
+    }
+
+    // 3. OIL SLICK: Fluid-Warped Thin Film Interference
+    vec3 shadeOilSlick(vec3 N, vec3 V, vec3 L, vec3 pos) {
+      // Fluid-drag domain warped thickness map
+      vec2 st = pos.xy * 2.5;
+      float w1 = sineOctaves(st + vec2(u_time * 0.1), u_time * 0.2);
+      float w2 = sineOctaves(st * 1.8 + vec2(w1 * 0.8), u_time * 0.15);
+      float thickness = 380.0 + w2 * 320.0; // Thickness d in nm (380-700nm)
+
+      float cosTheta = max(dot(N, V), 0.1); // Viewing angle retardation
+      vec3 iridescence = thinFilmInterference(thickness, cosTheta, 1.4);
+
+      // Dark asphalt / oily water non-reflective base
+      float NdotL = max(dot(N, L), 0.05);
+      vec3 darkBase = vec3(0.02, 0.03, 0.04) * NdotL;
+
+      // Specular shine over oily sheen
+      vec3 H = normalize(L + V);
+      float spec = pow(max(dot(N, H), 0.0), 32.0 / u_roughness);
+
+      return darkBase + iridescence * 0.85 + vec3(spec * 0.4);
+    }
+
+    // 4. SOAP BUBBLE: Dual-Surface Ultra-Thin Film & Transparent Core
+    vec3 shadeSoapBubble(vec3 N, vec3 V, vec3 L, vec3 pos) {
+      float NdotV = max(dot(N, V), 0.0);
+      float cosTheta = sqrt(1.0 - (1.0 - NdotV * NdotV) / (1.33 * 1.33)); // Snell's refraction angle inside film
+
+      // Dynamic film thickness swirling due to gravity/surface tension
+      float noisePattern = sineOctaves(pos.xy * 3.0, u_time * 0.3);
+      float thickness = 280.0 + noisePattern * 240.0; // 280nm - 520nm thin film
+
+      vec3 iridescence = thinFilmInterference(thickness, cosTheta, 1.33);
+
+      // Strong Fresnel edge reflection + complete transparent center core
+      float fresnel = pow(1.0 - NdotV, 3.0);
+      vec3 bubbleSpec = iridescence * (fresnel * 2.2 + 0.15);
+
+      // Sharp dual specular highlight
+      vec3 H = normalize(L + V);
+      float spec = pow(max(dot(N, H), 0.0), 128.0 / u_roughness);
+
+      return bubbleSpec + vec3(spec * 1.5);
+    }
+
+    // 5. ANODIZED ALUMINUM: Oxide Interference & Anisotropic Brush Stretch
+    vec3 shadeAnodizedAluminum(vec3 N, vec3 V, vec3 L, vec3 pos) {
+      // Rotational micro-brushed tangents
+      vec3 brushDir = normalize(cross(N, vec3(0.0, 1.0, 0.0)));
+      if (length(brushDir) < 0.001) brushDir = vec3(1.0, 0.0, 0.0);
+
+      // Oxide layer interference (e.g., ~420nm Titanium Oxide layer)
+      float cosTheta = max(dot(N, V), 0.1);
+      vec3 oxideIridescence = thinFilmInterference(420.0, cosTheta, 2.2);
+
+      // Anisotropic specular stretch (Ward / Cook-Torrance anisotropic proxy)
+      vec3 H = normalize(L + V);
+      float dotHT = dot(H, brushDir);
+      float anisoSpec = exp(-pow(dotHT / (u_roughness * 0.4), 2.0));
+
+      float NdotL = max(dot(N, L), 0.1);
+      vec3 metallicBase = vec3(0.25, 0.28, 0.32) * oxideIridescence;
+
+      return metallicBase * (0.3 + 0.7 * NdotL) + oxideIridescence * anisoSpec * 1.8;
+    }
+
+    // 6. HOLO FOIL: Voronoi Micro-Grating Crystal Flakes
+    vec3 shadeHoloFoil(vec3 N, vec3 V, vec3 L, vec3 pos) {
+      vec3 st = pos * 6.0;
+      vec3 cellId = floor(st);
+      vec3 cellUV = fract(st) - 0.5;
+
+      // Voronoi crystal flake generation
+      float minD = 10.0;
+      vec3 flakeNormal = N;
+      vec3 flakeHash = vec3(0.0);
+
+      for (int z = -1; z <= 1; z++) {
+        for (int y = -1; y <= 1; y++) {
+          for (int x = -1; x <= 1; x++) {
+            vec3 neighbor = vec3(float(x), float(y), float(z));
+            vec3 rnd = hash33(cellId + neighbor);
+            vec3 point = neighbor + rnd - 0.5;
+            float d = length(cellUV - point);
+            if (d < minD) {
+              minD = d;
+              flakeHash = rnd;
+              // Randomly tilted micro-facet normal per flake
+              flakeNormal = normalize(N + (rnd - 0.5) * 0.8);
+            }
+          }
+        }
+      }
+
+      // Spectral reflection flash condition
+      vec3 H = normalize(L + V);
+      float specFlash = pow(max(dot(flakeNormal, H), 0.0), 16.0 / u_roughness);
+      
+      // Micro-grating rainbow direction offset per cell
+      vec3 spectralColor = 0.5 + 0.5 * cos(flakeHash.x * 20.0 + dot(flakeNormal, V) * 12.0 + vec3(0.0, 2.0, 4.0));
+
+      float NdotL = max(dot(N, L), 0.1);
+      vec3 baseDark = vec3(0.08, 0.08, 0.1) * NdotL;
+
+      return baseDark + spectralColor * specFlash * 3.5;
+    }
+
+    // 7. LABRADORITE: Sub-Surface Lamellar Labradorescence Schiller
+    vec3 shadeLabradorite(vec3 N, vec3 V, vec3 L, vec3 pos) {
+      // Sub-surface exsolution lamellae layers (plagioclase feldspar)
+      float lamellae = sin(pos.y * 35.0 + pos.x * 20.0) * cos(pos.z * 25.0);
+      
+      // Directional Schiller effect angle dependence (Schiller flash locked to optic axis)
+      vec3 opticAxis = normalize(vec3(0.4, 0.8, 0.3));
+      float schillerAngle = dot(reflect(-V, N), opticAxis);
+      float schillerFlash = pow(max(0.0, schillerAngle), 8.0 / u_roughness);
+
+      // Spectral Schiller color: Vivid Peacock Blue & Gold
+      vec3 schillerColor = mix(vec3(0.0, 0.5, 1.0), vec3(1.0, 0.75, 0.1), lamellae * 0.5 + 0.5);
+
+      // Dark metallic/silicate base material
+      float NdotL = max(dot(N, L), 0.15);
+      vec3 darkSilicate = vec3(0.06, 0.08, 0.09) * NdotL;
+
+      // Surface resinous gloss
+      vec3 H = normalize(L + V);
+      float surfaceSpec = pow(max(dot(N, H), 0.0), 48.0);
+
+      return darkSilicate + schillerColor * schillerFlash * 3.0 + vec3(surfaceSpec * 0.5);
+    }
+
+    // --- Sphere Raytracing Dispatcher ---
+    vec4 raytraceSphere(vec3 ro, vec3 rd, vec3 center, float radius, int matID, vec3 lightDir) {
+      vec3 oc = ro - center;
+      float b = dot(oc, rd);
+      float c = dot(oc, oc) - radius * radius;
+      float h = b * b - c;
+
+      if (h < 0.0) return vec4(0.0); // Miss
+
+      float t = -b - sqrt(h);
+      if (t < 0.0) return vec4(0.0);
+
+      vec3 pos = ro + rd * t;
+      vec3 N = normalize(pos - center);
+      vec3 V = -rd;
+
+      vec3 col = vec3(0.0);
+      if (matID == 0) col = shadeOpalite(N, V, lightDir, pos.xy);
+      else if (matID == 1) col = shadeCDROM(N, V, lightDir, pos - center);
+      else if (matID == 2) col = shadeOilSlick(N, V, lightDir, pos - center);
+      else if (matID == 3) col = shadeSoapBubble(N, V, lightDir, pos - center);
+      else if (matID == 4) col = shadeAnodizedAluminum(N, V, lightDir, pos - center);
+      else if (matID == 5) col = shadeHoloFoil(N, V, lightDir, pos - center);
+      else if (matID == 6) col = shadeLabradorite(N, V, lightDir, pos - center);
+
+      return vec4(col, 1.0);
+    }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+
+      // Light direction vector from slider control
+      vec3 lightDir = normalize(vec3(cos(u_light_angle), 0.8, sin(u_light_angle)));
+
+      // View orbit rotation from mouse drag
+      vec2 orbit = (u_mouse / u_resolution - 0.5) * vec2(TWO_PI, PI);
+      vec3 ro = vec3(0.0, 0.0, 3.8);
+      
+      // Apply camera rotation matrix
+      mat2 rotX = rot2D(-orbit.y * 0.7);
+      mat2 rotY = rot2D(-orbit.x);
+      ro.yz = rotX * ro.yz;
+      ro.xz = rotY * ro.xz;
+
+      vec3 ta = vec3(0.0, 0.0, 0.0);
+      vec3 ww = normalize(ta - ro);
+      vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
+      vec3 vv = normalize(cross(uu, ww));
+      vec3 rd = normalize(uv.x * uu + uv.y * vv + 1.5 * ww);
+
+      vec3 finalColor = vec3(0.02, 0.03, 0.06); // Dark laboratory background
+
+      // --- RENDER MODE SWITCH ---
+      if (u_mode >= 0) {
+        // Isolated Material Mode (Single Center Sphere)
+        vec4 result = raytraceSphere(ro, rd, vec3(0.0), 1.15, u_mode, lightDir);
+        if (result.a > 0.5) finalColor = result.rgb;
+      } else {
+        // Grid View Mode (7 Spheres Arranged in Circle + Center)
+        // Center: Soap Bubble (3), Surrounding 6: Opalite, CD-ROM, Oil Slick, Anodized Al, Holo Foil, Labradorite
+        vec3 positions[7] = vec3[7](
+          vec3(-1.25,  0.85, 0.0),  // 0: Opalite
+          vec3( 1.25,  0.85, 0.0),  // 1: CD-ROM
+          vec3(-1.65, -0.35, 0.0),  // 2: Oil Slick
+          vec3( 0.0,   0.0,  0.0),  // 3: Soap Bubble (Center)
+          vec3( 1.65, -0.35, 0.0),  // 4: Anodized Al
+          vec3(-0.95, -1.35, 0.0),  // 5: Holo Foil
+          vec3( 0.95, -1.35, 0.0)   // 6: Labradorite
+        );
+
+        float minT = 1e6;
+        for (int i = 0; i < 7; i++) {
+          vec4 res = raytraceSphere(ro, rd, positions[i], 0.62, i, lightDir);
+          if (res.a > 0.5) {
+            finalColor = res.rgb;
+            break;
+          }
+        }
+      }
+
+      // Simple Tonemapping & Gamma Correction
+      finalColor = finalColor / (1.0 + finalColor * 0.3);
+      finalColor = pow(finalColor, vec3(1.0 / 2.2));
+
+      fragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+  <script>
+    const materials = [
+      {
+        name: "1. Opalite (Opalescent Glass)",
+        sub: "Rayleigh & Mie Sub-Surface Volumetric Scattering",
+        desc: "Opalite features synthetic opalescence created by microscopic glass spheres. Shorter wavelengths (blue) scatter widely via Rayleigh scattering, while transmitted light shifts to warm orange/pink due to Mie forward scattering.",
+        math: "I_scattered = I_0 * (1 + cos²θ)/λ⁴  || Tyndall Volumetric Transmission Matrix"
+      },
+      {
+        name: "2. CD-ROM (Diffraction Grating)",
+        sub: "Radial Micro-Track Wave Interference",
+        desc: "Concentric microscopic tracks (1.6 µm pitch) act as a circular reflection diffraction grating. Incident white light splits into sharp rainbow streaks aligned perpendicularly to the track tangents.",
+        math: "d · (sin θ_m - sin θ_i) = m · λ  || Radial Tangent Projection Projection: H · T_track"
+      },
+      {
+        name: "3. Oil Slick (Fluid Thin-Film)",
+        sub: "Domain-Warped Airy Phase Retardation",
+        desc: "A thin hydrocarbon layer floating on water creates variable thickness (300–800 nm). Fluid dynamics distort the film, causing light reflecting from top and bottom boundaries to interfere constructively/destructively.",
+        math: "δ = (4π · n_film · d(uv) · cos θ_refract) / λ  || Airy Intensity: I = 0.5 + 0.5·cos(δ)"
+      },
+      {
+        name: "4. Soap Bubble (Ultra-Thin Film Membrane)",
+        sub: "Fresnel-Modulated Translucent Interference",
+        desc: "An ultra-thin liquid soap wall enclosed by air interfaces. Displays high transparency at the core with vivid spectral interference fringes at glancing Fresnel angles.",
+        math: "R_fresnel = R_0 + (1 - R_0)(1 - cos θ)³  || Dual-Boundary Retardation: d ≈ 280-520nm"
+      },
+      {
+        name: "5. Anodized Aluminum (Oxide Layer)",
+        sub: "Anisotropic Surface Stretch + Thin-Film Oxide",
+        desc: "Electrolytic oxidation forms a controlled micro-thin metal-oxide coating (~420 nm). Micro-brushed metal grooves stretch specular highlights along tangents while oxide interference adds subtle iridescent color.",
+        math: "Specular_aniso = exp(- (H · T_brush / α)² )  || Oxide Delay: δ_oxide(d = 420nm, n = 2.2)"
+      },
+      {
+        name: "6. Holo Foil (Crystal Fragment Flakes)",
+        sub: "Micro-Facet Voronoi Diffraction Flakes",
+        desc: "Randomized crystalline micro-stamping creates thousands of microscopic facets per square millimeter. Each flake possesses an independent normal vector and grating phase, flashing distinct spectral colors at specific view vectors.",
+        math: "N_flake = normalize(N_base + Hash3D(CellID) · γ)  || Flash Specular: (N_flake · H)^(16/r)"
+      },
+      {
+        name: "7. Labradorite (Labradorescence)",
+        sub: "Sub-Surface Exsolution Lamellae Interference",
+        desc: "An intermediate plagioclase feldspar crystal. Light penetrates the dark silicate surface and reflects off internal microscopic lamellar intergrowths, flashing iridescent peacock blues and golds at specific angles (Schiller effect).",
+        math: "I_schiller = (R_view · Axis_optic)^k · Lamellae(xyz)  || Internal Lamellar Pitch: ~150-300nm"
+      }
+    ];
+
+    let currentMode = -1; // -1 = Grid Mode
+    const canvas = document.getElementById('glcanvas');
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) alert('WebGL 2 required');
+
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function createProgram(gl, vsSource, fsSource) {
+      const program = gl.createProgram();
+      gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
+      gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
+      gl.linkProgram(program);
+      return program;
+    }
+
+    const program = createProgram(
+      gl,
+      document.getElementById('vs').text.trim(),
+      document.getElementById('fs').text.trim()
+    );
+
+    const positionAttrLoc = gl.getAttribLocation(program, 'a_position');
+    const resolutionLoc = gl.getUniformLocation(program, 'u_resolution');
+    const timeLoc = gl.getUniformLocation(program, 'u_time');
+    const mouseLoc = gl.getUniformLocation(program, 'u_mouse');
+    const modeLoc = gl.getUniformLocation(program, 'u_mode');
+    const lightAngleLoc = gl.getUniformLocation(program, 'u_light_angle');
+    const roughnessLoc = gl.getUniformLocation(program, 'u_roughness');
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1, -1,  1,
+      -1,  1,  1, -1,  1,  1,
+    ]), gl.STATIC_DRAW);
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.enableVertexAttribArray(positionAttrLoc);
+    gl.vertexAttribPointer(positionAttrLoc, 2, gl.FLOAT, false, 0, 0);
+
+    // Camera Orbit Mouse Tracking
+    let mouseX = window.innerWidth * 0.5;
+    let mouseY = window.innerHeight * 0.5;
+    let targetMouseX = mouseX;
+    let targetMouseY = mouseY;
+    let isDragging = false;
+
+    canvas.addEventListener('mousedown', (e) => { isDragging = true; });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        targetMouseX += e.movementX * 1.5;
+        targetMouseY += e.movementY * 1.5;
+      }
+    });
+
+    // Touch support for mobile
+    let touchX = 0, touchY = 0;
+    canvas.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      touchX = e.touches[0].clientX;
+      touchY = e.touches[0].clientY;
+    });
+    canvas.addEventListener('touchend', () => { isDragging = false; });
+    canvas.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        targetMouseX += (e.touches[0].clientX - touchX) * 2.0;
+        targetMouseY += (e.touches[0].clientY - touchY) * 2.0;
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+      }
+    });
+
+    // UI Updates
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('#material-nav button').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.mode) === mode);
+      });
+
+      const titleEl = document.getElementById('hud-title');
+      const subEl = document.getElementById('hud-subtitle');
+      const descEl = document.getElementById('hud-desc');
+      const mathEl = document.getElementById('hud-math');
+
+      if (mode === -1) {
+        titleEl.textContent = "Overview Grid Mode";
+        subEl.textContent = "Select a material to inspect optics & shader math";
+        descEl.textContent = "Displaying all 7 optical and iridescent material phenomena simultaneously. Click any button or use key shortcuts [1-7] to isolate and inspect specific GLSL equations.";
+        mathEl.textContent = "Mode: Multi-Object Raytracer Pass // Additive Interference & Scattering Matrix";
+      } else {
+        const mat = materials[mode];
+        titleEl.textContent = mat.name;
+        subEl.textContent = mat.sub;
+        descEl.textContent = mat.desc;
+        mathEl.textContent = mat.math;
+      }
+    }
+
+    document.querySelectorAll('#material-nav button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setMode(parseInt(btn.dataset.mode));
+      });
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key >= '1' && e.key <= '7') {
+        setMode(parseInt(e.key) - 1);
+      } else if (e.key.toLowerCase() === 'g') {
+        setMode(-1);
+      } else if (e.key === 'ArrowRight') {
+        setMode(currentMode >= 6 ? -1 : currentMode + 1);
+      } else if (e.key === 'ArrowLeft') {
+        setMode(currentMode <= -1 ? 6 : currentMode - 1);
+      }
+    });
+
+    function resize() {
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    const lightSlider = document.getElementById('slider-light');
+    const roughSlider = document.getElementById('slider-rough');
+
+    function render(time) {
+      resize();
+
+      // Smooth mouse interpolation
+      mouseX += (targetMouseX - mouseX) * 0.08;
+      mouseY += (targetMouseY - mouseY) * 0.08;
+
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+
+      gl.uniform2f(resolutionLoc, canvas.width, canvas.height);
+      gl.uniform1f(timeLoc, time * 0.001);
+      gl.uniform2f(mouseLoc, mouseX, mouseY);
+      gl.uniform1i(modeLoc, currentMode);
+      gl.uniform1f(lightAngleLoc, parseFloat(lightSlider.value));
+      gl.uniform1f(roughnessLoc, parseFloat(roughSlider.value));
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

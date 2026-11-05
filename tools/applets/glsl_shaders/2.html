@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raymarched Cube, Streaks & Sunbeam Shader</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    canvas { width: 100vw; height: 100vh; display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="glcanvas"></canvas>
+
+  <script id="vs" type="x-shader/x-vertex">#version 300 es
+    in vec2 a_position;
+    void main() {
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  </script>
+
+  <script id="fs" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+
+    out vec4 fragColor;
+
+    // 2D Rotation matrix helper
+    mat2 rot2D(float angle) {
+      float s = sin(angle), c = cos(angle);
+      return mat2(c, -s, s, c);
+    }
+
+    // Pseudo-random hash
+    float hash(vec3 p) {
+      p = fract(p * vec3(443.897, 441.423, 437.195));
+      p += dot(p, p.yzx + 19.19);
+      return fract((p.x + p.y) * p.z);
+    }
+
+    // Box SDF
+    float sdBox(vec3 p, vec3 b) {
+      vec3 q = abs(p) - b;
+      return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+    }
+
+    // Calculate normal on the cube surface
+    vec3 calcNormal(vec3 p) {
+      vec2 e = vec2(0.001, 0.0);
+      return normalize(vec3(
+        sdBox(p + e.xyy, vec3(0.75)) - sdBox(p - e.xyy, vec3(0.75)),
+        sdBox(p + e.yxy, vec3(0.75)) - sdBox(p - e.yxy, vec3(0.75)),
+        sdBox(p + e.yyx, vec3(0.75)) - sdBox(p - e.yyx, vec3(0.75))
+      ));
+    }
+
+    void main() {
+      // Normalized screen coordinates aspect-ratio corrected (-1.0 to 1.0)
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+      vec2 mouseNorm = (u_mouse - 0.5 * u_resolution.xy) / u_resolution.y;
+
+      // Camera setup
+      vec3 ro = vec3(0.0, 0.0, -3.5); // Ray origin
+      vec3 rd = normalize(vec3(uv, 1.2)); // Ray direction
+
+      // 1. MOUSE SUNBEAM VECTOR
+      vec3 lightPos = vec3(mouseNorm * 3.0, -1.0);
+      vec3 lightDir = normalize(lightPos - vec3(0.0));
+
+      // 2. RAYMARCHING CENTRAL CUBE
+      vec3 p = ro;
+      float t = 0.0;
+      float d = 0.0;
+      bool hit = false;
+
+      // Rotate domain space for the cube
+      vec3 pRot = ro;
+      pRot.yz *= rot2D(u_time * 0.4);
+      pRot.xz *= rot2D(u_time * 0.6);
+      vec3 rdRot = rd;
+      rdRot.yz *= rot2D(u_time * 0.4);
+      rdRot.xz *= rot2D(u_time * 0.6);
+
+      for (int i = 0; i < 64; i++) {
+        p = pRot + rdRot * t;
+        d = sdBox(p, vec3(0.75));
+        if (d < 0.001) {
+          hit = true;
+          break;
+        }
+        if (t > 10.0) break;
+        t += d;
+      }
+
+      vec3 finalColor = vec3(0.02, 0.03, 0.06); // Dark background
+
+      // Surface shading if cube hit
+      if (hit) {
+        vec3 n = calcNormal(p);
+        vec3 l = normalize(vec3(mouseNorm * 2.0, 2.0) - p);
+        
+        // Diffuse & Specular Sunbeam lighting on cube faces
+        float diff = max(dot(n, l), 0.1);
+        vec3 ref = reflect(-l, n);
+        float spec = pow(max(dot(ref, -rdRot), 0.0), 32.0);
+
+        vec3 cubeBase = vec3(0.1, 0.4, 0.8);
+        finalColor = cubeBase * diff + vec3(1.0, 0.9, 0.7) * spec;
+      }
+
+      // 3. PANES OF LIGHT / VERTICAL STREAKS
+      float streakNoise = sin(uv.x * 25.0 + u_time * 2.0) * cos(uv.x * 12.0 - u_time);
+      float streaks = pow(abs(streakNoise), 4.0) * smoothstep(1.0, 0.0, abs(uv.y));
+      finalColor += vec3(0.1, 0.5, 1.0) * streaks * 0.35;
+
+      // 4. PARTICLE SWARM AROUND CUBE
+      float particles = 0.0;
+      for (float i = 0.0; i < 40.0; i++) {
+        float angle = i * 0.35 + u_time * 0.5;
+        float radius = 1.2 + 0.3 * sin(i + u_time);
+        vec3 partPos = vec3(cos(angle) * radius, sin(i * 9.0 + u_time) * 0.8, sin(angle) * radius);
+        
+        // Project 3d particle position to camera space
+        vec3 partCam = partPos - ro;
+        vec2 partUV = partCam.xy / partCam.z;
+        float distToPart = length(uv - partUV);
+        particles += 0.002 / (distToPart + 0.01);
+      }
+      finalColor += vec3(0.4, 0.8, 1.0) * particles * 0.15;
+
+      // 5. SUNBEAM ATMOSPHERIC VOLUMETRIC GLOW
+      vec3 rayToMouse = normalize(vec3(mouseNorm, 0.0) - ro);
+      float sunbeam = pow(max(dot(rd, rayToMouse), 0.0), 16.0);
+      finalColor += vec3(1.0, 0.85, 0.6) * sunbeam * 0.6;
+
+      // 6. SOFT TRANSPARENT MOUSE CURSOR HALO
+      vec2 st = gl_FragCoord.xy / u_resolution.xy;
+      vec2 mouseST = u_mouse / u_resolution.xy;
+      float cursorDist = distance(st, mouseST);
+      finalColor += vec3(0.2, 0.6, 1.0) * (0.004 / (cursorDist + 0.02)); // Increased denominator = higher transparency
+
+      fragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+  <script>
+    const canvas = document.getElementById('glcanvas');
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) alert('WebGL 2 required');
+
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function createProgram(gl, vsSource, fsSource) {
+      const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+      const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+      const program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      return program;
+    }
+
+    const program = createProgram(
+      gl,
+      document.getElementById('vs').text.trim(),
+      document.getElementById('fs').text.trim()
+    );
+
+    const positionAttrLoc = gl.getAttribLocation(program, 'a_position');
+    const resolutionUniformLoc = gl.getUniformLocation(program, 'u_resolution');
+    const timeUniformLoc = gl.getUniformLocation(program, 'u_time');
+    const mouseUniformLoc = gl.getUniformLocation(program, 'u_mouse');
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1, -1,  1,
+      -1,  1,  1, -1,  1,  1,
+    ]), gl.STATIC_DRAW);
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.enableVertexAttribArray(positionAttrLoc);
+    gl.vertexAttribPointer(positionAttrLoc, 2, gl.FLOAT, false, 0, 0);
+
+    const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = canvas.height - e.clientY;
+    });
+
+    function resize() {
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function render(time) {
+      resize();
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+
+      gl.uniform2f(resolutionUniformLoc, canvas.width, canvas.height);
+      gl.uniform1f(timeUniformLoc, time * 0.001);
+      gl.uniform2f(mouseUniformLoc, mouse.x, mouse.y);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

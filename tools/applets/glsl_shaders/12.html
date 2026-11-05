@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Standalone Holographic Shaders FX Explorer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #010204;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    canvas { width: 100vw; height: 100vh; display: block; }
+
+    #ui-container {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+      color: #e0f7ff;
+      text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+      user-select: none;
+    }
+
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(4, 12, 24, 0.75);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      padding: 8px 16px;
+      border-radius: 30px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+    }
+
+    button {
+      background: rgba(0, 217, 255, 0.1);
+      border: 1px solid rgba(0, 217, 255, 0.5);
+      color: #00d9ff;
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(0, 217, 255, 0.3);
+      box-shadow: 0 0 12px rgba(0, 217, 255, 0.6);
+      color: #fff;
+    }
+
+    #effect-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      min-width: 320px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    #effect-desc {
+      font-size: 0.85rem;
+      color: #88ccee;
+      max-width: 500px;
+      text-align: center;
+      background: rgba(4, 12, 24, 0.6);
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 217, 255, 0.15);
+    }
+
+    .instructions {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.8rem;
+      color: rgba(0, 217, 255, 0.5);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="ui-container">
+    <div class="nav-bar">
+      <button id="btn-prev">&lt; Prev</button>
+      <div id="effect-title">1. Laser Scanline Sweep</div>
+      <button id="btn-next">Next &gt;</button>
+    </div>
+    <div id="effect-desc">Sweeping laser plane with trailing grid overlay.</div>
+  </div>
+
+  <div class="instructions">Use [1-9, 0, -, =] keys or [Left/Right] arrows to swap effects</div>
+
+  <canvas id="glcanvas"></canvas>
+
+  <script id="vs" type="x-shader/x-vertex">#version 300 es
+    in vec2 a_position;
+    void main() {
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  </script>
+
+  <script id="fs" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform float u_click_time;
+    uniform vec2 u_mouse;
+    uniform int u_effect_mode; // 0 to 11
+
+    out vec4 fragColor;
+
+    // --- MATH & NOISE HELPERS ---
+    vec2 hash22(vec2 p) {
+      p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+      return fract(sin(p) * 43758.5453123);
+    }
+
+    float hash12(vec2 p) {
+      p = fract(p * vec2(234.34, 435.345));
+      p += dot(p, p + 34.23);
+      return fract(p.x * p.y);
+    }
+
+    vec4 hexGrid(vec2 p) {
+      vec2 s = vec2(1.7320508, 1.0);
+      vec4 hC = floor(vec4(p, p - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+      vec2 hA = p - hC.xy * s;
+      vec2 hB = p - (hC.zw + 0.5) * s;
+      return dot(hA, hA) < dot(hB, hB) ? vec4(hA, hC.xy) : vec4(hB, hC.zw + 0.5);
+    }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+      vec2 mouseNorm = (u_mouse - 0.5 * u_resolution.xy) / u_resolution.y;
+
+      vec3 finalColor = vec3(0.002, 0.005, 0.01);
+      vec3 cyan  = vec3(0.1, 0.75, 1.0);
+      vec3 white = vec3(0.9, 0.98, 1.0);
+
+      // --- 1. LASER SCANLINE SWEEP ---
+      if (u_effect_mode == 0) {
+        float sweepY = sin(u_time * 2.0) * 0.4;
+        float lineDist = abs(uv.y - sweepY);
+        float laserLine = smoothstep(0.008, 0.0, lineDist);
+        float trail = smoothstep(0.3, 0.0, uv.y - sweepY) * step(sweepY, uv.y);
+        float grid = sin(uv.x * 200.0) * 0.5 + 0.5;
+        
+        finalColor += cyan * laserLine * 3.5;
+        finalColor += vec3(0.0, 0.4, 0.8) * trail * grid * 1.2;
+      }
+
+      // --- 2. GLITCH CHROMATIC ABERRATION ---
+      else if (u_effect_mode == 1) {
+        float glitchTrigger = step(0.85, hash12(vec2(floor(u_time * 15.0), 1.0)));
+        float sliceY = floor(uv.y * 30.0);
+        float sliceOffset = (hash12(vec2(sliceY, floor(u_time * 20.0))) - 0.5) * 0.12 * glitchTrigger;
+        
+        vec2 gUV = uv + vec2(sliceOffset, 0.0);
+        float grid = sin(gUV.x * 100.0) * sin(gUV.y * 100.0);
+        
+        finalColor.r += smoothstep(0.02, 0.0, abs(length(gUV + vec2(0.015 * glitchTrigger, 0.0)) - 0.3)) * 2.0;
+        finalColor.b += smoothstep(0.02, 0.0, abs(length(gUV - vec2(0.015 * glitchTrigger, 0.0)) - 0.3)) * 2.0;
+        finalColor.g += smoothstep(0.02, 0.0, abs(length(gUV) - 0.3)) * 1.5;
+      }
+
+      // --- 3. FRESNEL GLASS DEPTH REFRACTION ---
+      else if (u_effect_mode == 2) {
+        float d = length(uv) - 0.3;
+        float fresnel = pow(1.0 - clamp(abs(d), 0.0, 1.0), 8.0);
+        float glassRim = smoothstep(0.02, 0.0, abs(d));
+        
+        finalColor += cyan * glassRim * 3.0;
+        finalColor += white * fresnel * 0.8;
+      }
+
+      // --- 4. DIGITAL CAUSTICS FLUID ---
+      else if (u_effect_mode == 3) {
+        vec2 cUV = uv * 10.0;
+        float c1 = sin(cUV.x + u_time) + sin(cUV.y + u_time * 0.8);
+        float c2 = cos(cUV.x * 0.8 - u_time * 1.2) + cos(cUV.y * 1.2 + u_time);
+        float causticNet = pow(sin(c1 + c2), 3.0);
+        finalColor += cyan * causticNet * smoothstep(0.5, 0.0, length(uv)) * 1.2;
+      }
+
+      // --- 5. FORCEFIELD HEX GRID ---
+      else if (u_effect_mode == 4) {
+        vec4 hexCell = hexGrid(uv * 30.0);
+        float hexEdge = smoothstep(0.08, 0.02, length(hexCell.xy));
+        float pulse = sin(length(uv) * 20.0 - u_time * 5.0) * 0.5 + 0.5;
+        finalColor += cyan * hexEdge * pulse * 1.5;
+      }
+
+      // --- 6. PSEUDO-3D PARALLAX FIELD ---
+      else if (u_effect_mode == 5) {
+        vec2 layer1 = uv + mouseNorm * 0.02;
+        vec2 layer2 = uv + mouseNorm * 0.05;
+        vec2 layer3 = uv + mouseNorm * 0.09;
+        
+        float ring1 = smoothstep(0.01, 0.0, abs(length(layer1) - 0.15));
+        float ring2 = smoothstep(0.01, 0.0, abs(length(layer2) - 0.28));
+        float ring3 = smoothstep(0.01, 0.0, abs(length(layer3) - 0.40));
+        
+        finalColor += vec3(0.1, 0.4, 0.8) * ring1 * 2.0;
+        finalColor += cyan * ring2 * 2.5;
+        finalColor += white * ring3 * 3.0;
+      }
+
+      // --- 7. CHROMATIC THIN-FILM INTERFERENCE (NEW) ---
+      else if (u_effect_mode == 6) {
+        float d = length(uv);
+        float angle = atan(uv.y, uv.x);
+        float noiseVal = sin(d * 30.0 - u_time * 3.0 + sin(angle * 5.0));
+        
+        // Rainbow thin-film color shift
+        vec3 iridescence = 0.5 + 0.5 * cos(u_time + d * 12.0 + vec3(0.0, 2.0, 4.0));
+        finalColor += iridescence * smoothstep(0.05, 0.0, abs(noiseVal)) * smoothstep(0.5, 0.0, d) * 1.8;
+      }
+
+      // --- 8. MATRIX DATA STREAM (NEW) ---
+      else if (u_effect_mode == 7) {
+        vec2 mUV = uv * vec2(40.0, 15.0);
+        float colIndex = floor(mUV.x);
+        float speed = 2.0 + hash12(vec2(colIndex, 1.0)) * 3.0;
+        
+        float charPos = fract(mUV.y + u_time * speed + hash12(vec2(colIndex, 5.0)));
+        float charGlow = pow(charPos, 5.0);
+        float pixelGrid = step(0.2, fract(mUV.x)) * step(0.2, fract(mUV.y));
+        
+        finalColor += cyan * charGlow * pixelGrid * 2.5;
+      }
+
+      // --- 9. ORBITAL ACOUSTIC LIGHT RING (NEW) ---
+      else if (u_effect_mode == 8) {
+        float r = length(uv);
+        float a = atan(uv.y, uv.x);
+        
+        float wave = sin(a * 12.0 + u_time * 4.0) * 0.03;
+        float ring1 = smoothstep(0.01, 0.0, abs(r - (0.25 + wave)));
+        float ring2 = smoothstep(0.005, 0.0, abs(r - (0.32 - wave * 0.5)));
+        
+        finalColor += cyan * ring1 * 3.0;
+        finalColor += white * ring2 * 2.0;
+      }
+
+      // --- 10. GRAVITATIONAL LENS DISTORTION (NEW) ---
+      else if (u_effect_mode == 9) {
+        float lensDist = length(uv - mouseNorm);
+        vec2 distortedUV = uv;
+        if (lensDist < 0.3) {
+          float warp = pow((0.3 - lensDist) / 0.3, 2.0);
+          distortedUV += normalize(uv - mouseNorm) * warp * 0.15;
+        }
+        
+        float grid = sin(distortedUV.x * 60.0) * sin(distortedUV.y * 60.0);
+        float gridLines = smoothstep(0.8, 1.0, grid);
+        
+        finalColor += cyan * gridLines * 1.5;
+        finalColor += white * smoothstep(0.01, 0.0, abs(lensDist - 0.3)) * 2.0;
+      }
+
+      // --- 11. VOXEL GRID DISSOLVE (NEW) ---
+      else if (u_effect_mode == 10) {
+        vec2 vUV = floor(uv * 30.0) / 30.0;
+        float vHash = hash12(vUV + vec2(floor(u_time * 0.8)));
+        
+        float dissolveThreshold = sin(u_time * 2.0) * 0.5 + 0.5;
+        if (vHash < dissolveThreshold) {
+          vec2 localCell = fract(uv * 30.0) - 0.5;
+          float cube = smoothstep(0.4, 0.35, max(abs(localCell.x), abs(localCell.y)));
+          finalColor += cyan * cube * (vHash / dissolveThreshold) * 2.0;
+        }
+      }
+
+      // --- 12. BIOLUMINESCENT NEURAL WEB (NEW) ---
+      else if (u_effect_mode == 11) {
+        vec2 nUV = uv * 6.0;
+        float web = 0.0;
+        for (float i = 0.0; i < 3.0; i++) {
+          vec2 p = nUV + vec2(sin(u_time * 0.5 + i), cos(u_time * 0.3 + i));
+          float d = length(fract(p) - 0.5);
+          web += smoothstep(0.08, 0.0, d);
+        }
+        finalColor += cyan * web * 1.8;
+      }
+
+      fragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+  <script>
+    const effects = [
+      { name: "1. Laser Scanline Sweep", desc: "Sweeping laser plane with trailing grid overlay." },
+      { name: "2. Glitch RGB Aberration", desc: "Randomized horizontal slices with split Red and Blue channels." },
+      { name: "3. Fresnel Edge Refraction", desc: "Simulates internal refraction and edge-lighting." },
+      { name: "4. Digital Caustics", desc: "Interlocking wave fields generating flowing energy fluid." },
+      { name: "5. Forcefield Hex Grid", desc: "Micro-hexagonal shield mesh glowing with a continuous pulse." },
+      { name: "6. Pseudo-3D Parallax", desc: "Mouse movement offsets background elements in 3D space." },
+      { name: "7. Chromatic Thin-Film", desc: "Iridescent oil-slick color shifting interference waves." },
+      { name: "8. Matrix Data Stream", desc: "Falling digital code columns drifting through holographic space." },
+      { name: "9. Orbital Acoustic Ring", desc: "Concentric rings pulsing like an audio visualizer core." },
+      { name: "10. Gravitational Lens Warp", desc: "Spatial distortion field bending background light around mouse." },
+      { name: "11. Voxel Grid Dissolve", desc: "3D pixel grid dissolving into floating cubic fragments." },
+      { name: "12. Bioluminescent Neural Web", desc: "Organic energy filaments growing and firing electricity." }
+    ];
+
+    let currentEffectIndex = 0;
+
+    const canvas = document.getElementById('glcanvas');
+    const gl = canvas.getContext('webgl2');
+
+    if (!gl) alert('WebGL 2 required');
+
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function createProgram(gl, vsSource, fsSource) {
+      const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+      const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+      const program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      return program;
+    }
+
+    const program = createProgram(
+      gl,
+      document.getElementById('vs').text.trim(),
+      document.getElementById('fs').text.trim()
+    );
+
+    const positionAttrLoc = gl.getAttribLocation(program, 'a_position');
+    const resolutionUniformLoc = gl.getUniformLocation(program, 'u_resolution');
+    const timeUniformLoc = gl.getUniformLocation(program, 'u_time');
+    const clickTimeUniformLoc = gl.getUniformLocation(program, 'u_click_time');
+    const mouseUniformLoc = gl.getUniformLocation(program, 'u_mouse');
+    const effectModeUniformLoc = gl.getUniformLocation(program, 'u_effect_mode');
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1, -1,  1,
+      -1,  1,  1, -1,  1,  1,
+    ]), gl.STATIC_DRAW);
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.enableVertexAttribArray(positionAttrLoc);
+    gl.vertexAttribPointer(positionAttrLoc, 2, gl.FLOAT, false, 0, 0);
+
+    let lastClickTime = -10.0;
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    function setEffect(index) {
+      currentEffectIndex = (index + effects.length) % effects.length;
+      document.getElementById('effect-title').textContent = effects[currentEffectIndex].name;
+      document.getElementById('effect-desc').textContent = effects[currentEffectIndex].desc;
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => setEffect(currentEffectIndex - 1));
+    document.getElementById('btn-next').addEventListener('click', () => setEffect(currentEffectIndex + 1));
+
+    window.addEventListener('keydown', (e) => {
+      const keyMap = {
+        '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
+        '7': 6, '8': 7, '9': 8, '0': 9, '-': 10, '=': 11
+      };
+      if (e.key in keyMap) {
+        setEffect(keyMap[e.key]);
+      } else if (e.key === 'ArrowRight') {
+        setEffect(currentEffectIndex + 1);
+      } else if (e.key === 'ArrowLeft') {
+        setEffect(currentEffectIndex - 1);
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = canvas.height - e.clientY;
+    });
+
+    window.addEventListener('click', () => {
+      lastClickTime = performance.now() * 0.001;
+    });
+
+    function resize() {
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function render(time) {
+      resize();
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+
+      const currentTime = time * 0.001;
+      gl.uniform2f(resolutionUniformLoc, canvas.width, canvas.height);
+      gl.uniform1f(timeUniformLoc, currentTime);
+      gl.uniform1f(clickTimeUniformLoc, lastClickTime);
+      gl.uniform2f(mouseUniformLoc, mouseX, mouseY);
+      gl.uniform1i(effectModeUniformLoc, currentEffectIndex);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
