@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>RECURSIVE FRACTAL LAB // SPEC-04</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;700&display=swap');
+
+    :root {
+      --cmyk-c: #00f0ff;
+      --cmyk-m: #ff0055;
+      --cmyk-y: #ffe600;
+      --cmyk-k: #05070a;
+      --hud-bg: rgba(7, 10, 15, 0.88);
+      --border-c: rgba(0, 240, 255, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--cmyk-k);
+      font-family: 'Share Tech Mono', monospace;
+      color: #cbd5e1;
+    }
+
+    /* WebGL Canvas */
+    #glCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    /* Subtle Tactical CRT Scanlines */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+      background-size: 100% 4px;
+      opacity: 0.45;
+    }
+
+    /* Tactical Panel Chassis */
+    .tactical-box {
+      background: var(--hud-bg);
+      border: 1px solid var(--border-c);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 12px rgba(0, 240, 255, 0.05);
+      position: relative;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: border-color 0.2s ease, opacity 0.25s ease;
+    }
+
+    .tactical-box::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      width: 6px;
+      height: 6px;
+      border-top: 2px solid var(--cmyk-c);
+      border-left: 2px solid var(--cmyk-c);
+      pointer-events: none;
+    }
+
+    .tactical-box::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 6px;
+      height: 6px;
+      border-bottom: 2px solid var(--cmyk-m);
+      border-right: 2px solid var(--cmyk-m);
+      pointer-events: none;
+    }
+
+    /* Panel Header & Collapse Logic */
+    .panel-header {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+    .panel-header:hover {
+      background: rgba(0, 240, 255, 0.08);
+    }
+    .panel-header:active {
+      background: rgba(0, 240, 255, 0.15);
+    }
+
+    .panel-body {
+      transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin 0.2s ease;
+      max-height: 520px;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    .panel-collapsed .panel-body {
+      max-height: 0 !important;
+      opacity: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Custom Tactical Sliders */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: #0f172a;
+      height: 5px;
+      border: 1px solid #334155;
+      outline: none;
+      border-radius: 1px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      background: var(--cmyk-c);
+      cursor: pointer;
+      border: 1px solid #fff;
+      box-shadow: 0 0 8px var(--cmyk-c);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      background: var(--cmyk-c);
+      cursor: pointer;
+      border: 1px solid #fff;
+      box-shadow: 0 0 8px var(--cmyk-c);
+    }
+
+    /* Master HUD Hidden State */
+    .hud-layer {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .hud-hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(-4px);
+    }
+
+    /* Central Reticle */
+    .reticle-ring {
+      border: 1px dashed rgba(0, 240, 255, 0.35);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Tactical Scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: var(--cmyk-c);
+    }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden bg-black select-none">
+
+  <!-- WebGL Raymarching Viewport -->
+  <canvas id="glCanvas"></canvas>
+
+  <!-- Scanline Screen Pass -->
+  <div class="scanlines"></div>
+
+  <!-- CENTRAL AIMING RETICLE / PITCH YAW SENSOR -->
+  <div id="reticleLayer" class="hud-layer absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+    <div class="reticle-ring w-44 h-44 relative flex items-center justify-center animate-pulse" style="animation-duration: 4s;">
+      <div class="w-1.5 h-1.5 bg-cyan-400"></div>
+      <div class="absolute -top-1 w-2 h-0.5 bg-cyan-400"></div>
+      <div class="absolute -bottom-1 w-2 h-0.5 bg-cyan-400"></div>
+      <div class="absolute -left-1 w-0.5 h-2 bg-cyan-400"></div>
+      <div class="absolute -right-1 w-0.5 h-2 bg-cyan-400"></div>
+      <div class="absolute text-[8px] tracking-widest text-cyan-500 font-mono top-2">RET-04</div>
+    </div>
+    <div id="coordTelemetry" class="absolute mt-52 text-[9px] font-mono text-cyan-300/80 bg-black/70 px-2 py-0.5 border border-cyan-500/40">
+      AZ: 37° | EL: 12° | DIST: 4.30
+    </div>
+  </div>
+
+  <!-- TOP HEADER HUD (FIXED) -->
+  <header class="absolute top-0 left-0 right-0 z-30 p-2 sm:p-3 flex justify-between items-center pointer-events-none">
+    <div class="tactical-box pointer-events-auto px-3 py-1.5 flex items-center gap-2">
+      <div class="w-2.5 h-2.5 bg-yellow-400 animate-pulse"></div>
+      <span class="text-xs sm:text-sm font-bold tracking-wider text-white">RECURSIVE FRACTAL LAB</span>
+      <span class="text-[9px] px-1 py-0.5 border border-cyan-400 text-cyan-300 bg-cyan-950/60 font-mono">SPEC-04</span>
+    </div>
+
+    <div class="tactical-box pointer-events-auto px-2.5 py-1.5 flex items-center gap-3">
+      <div class="flex items-center gap-1.5 text-[10px] font-mono">
+        <span class="text-slate-500">FPS:</span>
+        <span id="fpsVal" class="text-cyan-400 font-bold">60</span>
+      </div>
+      <button id="btnToggleHUD" class="px-2 py-0.5 text-[9px] font-mono uppercase border border-cyan-400 bg-cyan-950/50 text-cyan-300 hover:bg-cyan-500 hover:text-black transition-all">
+        [HUD: ON]
+      </button>
+      <button id="btnCapture" class="hidden sm:inline-block px-2 py-0.5 text-[9px] font-mono uppercase border border-slate-700 bg-black/60 text-slate-300 hover:border-yellow-400 hover:text-yellow-300 transition-all">
+        CAPTURE
+      </button>
+    </div>
+  </header>
+
+  <!-- LEFT HUD: TOPOLOGICAL MODES & ANALYTICS -->
+  <aside id="leftHud" class="hud-layer absolute top-14 left-2 sm:left-3 z-20 w-72 sm:w-80 flex flex-col gap-2 pointer-events-none">
+    
+    <!-- 01. Topological Mode Selector (STARTS COLLAPSED) -->
+    <div id="panelModes" class="tactical-box pointer-events-auto p-2.5 flex flex-col gap-2 panel-collapsed">
+      <div id="headerModes" class="panel-header flex justify-between items-center border-b border-cyan-500/30 pb-1.5 px-0.5">
+        <span class="text-[10px] tracking-widest text-cyan-400 font-bold uppercase flex items-center gap-1.5">
+          <svg class="w-3 h-3 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4zM4 9a2 2 0 100 4h12a2 2 0 100-4H4zM4 15a2 2 0 100 4h12a2 2 0 100-4H4z"/></svg>
+          TOPOLOGICAL MODE
+        </span>
+        <div class="flex items-center gap-2">
+          <span id="labelActiveMode" class="text-[9px] text-yellow-300 font-mono">01 // APERTURE</span>
+          <span id="iconChevronModes" class="text-cyan-300 text-xs font-mono font-bold">⌄</span>
+        </div>
+      </div>
+
+      <div class="panel-body flex flex-col gap-1.5 pt-1">
+        <button data-mode="1" class="mode-btn text-left px-2 py-1.5 border border-cyan-400 bg-cyan-950/50 text-cyan-200 font-mono text-[10px] flex justify-between items-center transition-all">
+          <span>01. APERTURE MENGER</span>
+          <span class="text-[9px] text-cyan-400 opacity-80">α-DILATION [INIT]</span>
+        </button>
+        <button data-mode="2" class="mode-btn text-left px-2 py-1.5 border border-slate-700 bg-slate-900/40 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-200 font-mono text-[10px] flex justify-between items-center transition-all">
+          <span>02. 5x5x5 HYPER-LATTICE</span>
+          <span class="text-[9px] text-slate-400">D ≈ 2.8860</span>
+        </button>
+        <button data-mode="3" class="mode-btn text-left px-2 py-1.5 border border-slate-700 bg-slate-900/40 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-200 font-mono text-[10px] flex justify-between items-center transition-all">
+          <span>03. DUAL THREADED</span>
+          <span class="text-[9px] text-magenta-400">INTERLOCKING</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 02. Hausdorff Analytics (STARTS COLLAPSED) -->
+    <div id="panelTelemetry" class="tactical-box pointer-events-auto p-2.5 flex flex-col gap-2 panel-collapsed">
+      <div id="headerTelemetry" class="panel-header flex justify-between items-center border-b border-magenta-500/30 pb-1 px-0.5">
+        <span class="text-[10px] tracking-widest text-magenta-400 font-bold uppercase">HAUSDORFF ANALYTICS</span>
+        <div class="flex items-center gap-2">
+          <span class="text-[9px] text-slate-400">ITER <span id="telemetryIter" class="text-white font-bold">3</span></span>
+          <span id="iconChevronTelemetry" class="text-magenta-300 text-xs font-mono font-bold">⌄</span>
+        </div>
+      </div>
+
+      <div class="panel-body flex flex-col gap-2 pt-1">
+        <div class="grid grid-cols-2 gap-2 text-[10px]">
+          <div class="bg-black/60 p-1.5 border border-slate-800">
+            <div class="text-slate-500 text-[8px] uppercase">Hausdorff Dim (D)</div>
+            <div id="statDimension" class="text-cyan-300 text-sm font-bold font-mono">2.7268</div>
+            <div class="text-[8px] text-slate-400 font-mono">ln(M)/ln(N)</div>
+          </div>
+
+          <div class="bg-black/60 p-1.5 border border-slate-800">
+            <div class="text-slate-500 text-[8px] uppercase">Residual Vol V(n)</div>
+            <div id="statVolume" class="text-yellow-300 text-sm font-bold font-mono">40.66%</div>
+            <div class="text-[8px] text-slate-400 font-mono">Limit as n→∞ = 0</div>
+          </div>
+
+          <div class="bg-black/60 p-1.5 border border-slate-800">
+            <div class="text-slate-500 text-[8px] uppercase">Strut Metric</div>
+            <div id="statStruts" class="text-magenta-400 text-xs font-bold font-mono">α = 1.00</div>
+            <div class="text-[8px] text-slate-400 font-mono">Classic Limit</div>
+          </div>
+
+          <div class="bg-black/60 p-1.5 border border-slate-800">
+            <div class="text-slate-500 text-[8px] uppercase">Surface Area An</div>
+            <div id="statSurface" class="text-emerald-400 text-xs font-bold font-mono">24.8x</div>
+            <div class="text-[8px] text-slate-400 font-mono">Limit as n→∞ = ∞</div>
+          </div>
+        </div>
+
+        <div id="modeDescription" class="text-[9px] text-slate-300 leading-relaxed bg-slate-900/60 p-1.5 border-l-2 border-cyan-400">
+          Aperture Menger initialized to classic ratio α = 1.00 (D ≈ 2.7268). Adjust hole scale to dilate or contract cross-tunnels.
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT HUD: PARAMETER MATRIX (STARTS COLLAPSED, AUTO-HIDES IN DUAL MODE) -->
+  <aside id="asideParams" class="hud-layer absolute top-14 right-2 sm:right-3 z-20 w-72 sm:w-80 flex flex-col gap-2 pointer-events-none">
+    
+    <div id="panelParams" class="tactical-box pointer-events-auto p-2.5 flex flex-col gap-2.5 panel-collapsed">
+      <div id="headerParams" class="panel-header flex justify-between items-center border-b border-yellow-400/30 pb-1.5 px-0.5">
+        <span class="text-[10px] tracking-widest text-yellow-400 font-bold uppercase flex items-center gap-1.5">
+          <svg class="w-3 h-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+          PARAMETER MATRIX
+        </span>
+        <div class="flex items-center gap-2">
+          <button id="btnReset" class="text-[8px] text-slate-400 hover:text-white underline mr-1" onclick="event.stopPropagation()">RESET</button>
+          <span id="iconChevronParams" class="text-yellow-300 text-xs font-mono font-bold">⌄</span>
+        </div>
+      </div>
+
+      <div class="panel-body flex flex-col gap-3 pt-1 max-h-[60vh] overflow-y-auto custom-scroll pr-1">
+        <!-- Recursion Depth -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-slate-400">RECURSION DEPTH (n)</span>
+            <span id="valIterations" class="text-cyan-400 font-bold">3</span>
+          </div>
+          <input id="paramIterations" type="range" min="1" max="4" step="1" value="3">
+        </div>
+
+        <!-- Aperture / Alpha Dilation -->
+        <div id="containerHoleScale" class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-slate-400">APERTURE RATIO (α)</span>
+            <span id="valHoleScale" class="text-cyan-400 font-bold">1.00</span>
+          </div>
+          <input id="paramHoleScale" type="range" min="0.30" max="1.70" step="0.05" value="1.00">
+        </div>
+
+        <!-- Cross Section Slicer -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-slate-400">INTERNAL SLICER (Z)</span>
+            <span id="valClipPlane" class="text-magenta-400 font-bold">OFF</span>
+          </div>
+          <input id="paramClipPlane" type="range" min="-1.5" max="2.0" step="0.05" value="2.0">
+        </div>
+
+        <!-- Toggles: Auto Orbit & Ambient Occlusion -->
+        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800">
+          <label class="flex items-center gap-2 text-[9px] text-slate-300 cursor-pointer">
+            <input id="toggleAutoRotate" type="checkbox" checked class="accent-cyan-400">
+            <span>AUTO ORBIT</span>
+          </label>
+          <label class="flex items-center gap-2 text-[9px] text-slate-300 cursor-pointer">
+            <input id="toggleAO" type="checkbox" checked class="accent-yellow-400">
+            <span>AMBIENT OCCL</span>
+          </label>
+        </div>
+
+        <!-- Orbit Speed -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[9px]">
+            <span class="text-slate-400">ORBIT SPEED</span>
+            <span id="valGyroSpeed" class="text-slate-200">1.0x</span>
+          </div>
+          <input id="paramGyroSpeed" type="range" min="0.1" max="3.0" step="0.1" value="1.0">
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- BOTTOM STATUS FOOTER -->
+  <footer class="hud-layer absolute bottom-0 left-0 right-0 z-20 p-2 sm:p-3 pointer-events-none flex justify-between items-end">
+    <div class="tactical-box pointer-events-auto px-3 py-1 text-[9px] font-mono text-slate-400 flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+      <span>INTERACTION: DRAG = ORBIT | PINCH / SCROLL = ZOOM</span>
+    </div>
+
+    <!-- CMYK Palette Switcher -->
+    <div class="tactical-box pointer-events-auto p-1.5 flex items-center gap-1.5">
+      <button data-pal="0" class="palette-btn w-4 h-4 bg-cyan-400 border border-white/60 shadow-sm" title="Cyan Monochrome"></button>
+      <button data-pal="1" class="palette-btn w-4 h-4 bg-pink-600 border border-transparent opacity-60 hover:opacity-100" title="Magenta Telemetry"></button>
+      <button data-pal="2" class="palette-btn w-4 h-4 bg-yellow-400 border border-transparent opacity-60 hover:opacity-100" title="Full CMYK Tri-Band"></button>
+      <button data-pal="3" class="palette-btn w-4 h-4 bg-slate-300 border border-transparent opacity-60 hover:opacity-100" title="Key Carbon Monochrome"></button>
+    </div>
+  </footer>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toast" class="absolute top-14 left-1/2 -translate-x-1/2 z-40 px-3 py-1 bg-black/90 border border-cyan-400 text-cyan-300 text-[10px] font-mono tracking-widest pointer-events-none transition-all duration-300 opacity-0 -translate-y-2">
+    INITIALIZING RECURSIVE FRACTAL LAB...
+  </div>
+
+  <!-- GLSL SHADERS -->
+  <script id="vs" type="x-shader/x-vertex">
+    attribute vec2 a_position;
+    varying vec2 vUv;
+    void main() {
+      vUv = a_position * 0.5 + 0.5;
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  </script>
+
+  <script id="fs" type="x-shader/x-fragment">
+    precision highp float;
+
+    varying vec2 vUv;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform float u_zoom;
+    uniform vec2 u_rot;          // x = yaw, y = pitch
+    
+    // Fractal Parameters
+    uniform int u_mode;          // 1: Variable Aperture, 2: 5x5x5 Hyper-Lattice, 3: Dual Threaded
+    uniform int u_iterations;    // 1 to 4
+    uniform float u_hole_scale;  // 0.30 to 1.70
+    uniform float u_clip_plane;  // Cross section clip
+    uniform int u_palette;       // 0: Cyan, 1: Magenta, 2: CMYK, 3: Key Mono
+    uniform bool u_enable_ao;    // Ambient occlusion flag
+
+    #define MAX_STEPS 110
+    #define SURF_DIST 0.0015
+    #define MAX_DIST 22.0
+
+    // Exact Box Signed Distance Field
+    float sdBox(vec3 p, vec3 b) {
+      vec3 di = abs(p) - b;
+      float mc = max(di.x, max(di.y, di.z));
+      return min(mc, length(max(di, 0.0)));
+    }
+
+    // 2D Rotation
+    mat2 rot(float a) {
+      float s = sin(a), c = cos(a);
+      return mat2(c, -s, s, c);
+    }
+
+    // Mode 1: Canonical Variable Aperture Menger Sponge
+    // Preserves solid exterior face while carving orthogonal central tunnels
+    float deMengerVariable(vec3 p, float hole_size, int iters) {
+      float d = sdBox(p, vec3(1.0));
+      float s = 1.0;
+
+      for (int i = 0; i < 4; i++) {
+        if (i >= iters) break;
+        
+        vec3 a = mod(p * s, 2.0) - 1.0;
+        s *= 3.0;
+        vec3 r = abs(1.0 - 3.0 * abs(a));
+
+        float da = max(r.x, r.y);
+        float db = max(r.y, r.z);
+        float dc = max(r.z, r.x);
+
+        // Canonical Inigo Quilez cross-tunnel carving formula
+        float c = (min(da, min(db, dc)) - hole_size) / s;
+        d = max(d, c);
+      }
+      return d;
+    }
+
+    // Mode 2: 5x5x5 Partition Hyper-Lattice
+    // Correctly scaled distance estimator with 5-way division
+    float deMenger5(vec3 p, int iters) {
+      float d = sdBox(p, vec3(1.0));
+      float s = 1.0;
+
+      for (int i = 0; i < 3; i++) {
+        if (i >= iters) break;
+
+        vec3 a = mod(p * s, 2.0) - 1.0;
+        s *= 5.0;
+        vec3 r = abs(1.0 - 5.0 * abs(a));
+
+        float da = max(r.x, r.y);
+        float db = max(r.y, r.z);
+        float dc = max(r.z, r.x);
+
+        float c = (min(da, min(db, dc)) - 0.70) / s;
+        d = max(d, c);
+      }
+      return d;
+    }
+
+    // Mode 3: Aligned Interlocking Dual Threaded Sponges
+    // Sponges thread through each other's central void without overlapping
+    float deDualThreaded(vec3 p, int iters) {
+      // Primary Host Sponge
+      float dA = deMengerVariable(p, 1.0, iters);
+
+      // Symmetrically aligned interlocking sponge:
+      // Offset by exactly 1/3 (the width of the primary central tunnel)
+      // and rotated 90° along two axes so its pillars slip cleanly through the orthogonal voids
+      vec3 pB = p - vec3(0.333333, 0.333333, 0.333333);
+      pB.xy = rot(1.570796) * pB.xy;
+      pB.yz = rot(1.570796) * pB.yz;
+
+      float dB = deMengerVariable(pB, 1.0, iters);
+      return min(dA, dB);
+    }
+
+    // Master Scene SDF Evaluation with Cross-Section Plane
+    float mapScene(vec3 p) {
+      float d = 100.0;
+
+      if (u_mode == 1) {
+        d = deMengerVariable(p, u_hole_scale, u_iterations);
+      } else if (u_mode == 2) {
+        d = deMenger5(p, u_iterations);
+      } else if (u_mode == 3) {
+        d = deDualThreaded(p, u_iterations);
+      }
+
+      // Dynamic Cross Section Plane Slice
+      if (u_clip_plane < 1.95) {
+        float slice = p.z - u_clip_plane;
+        d = max(d, slice);
+      }
+
+      return d;
+    }
+
+    // Surface Normal Calculation via Tetrahedral Gradient
+    vec3 calcNormal(vec3 p) {
+      vec2 e = vec2(0.0015, -0.0015);
+      return normalize(
+        e.xyy * mapScene(p + e.xyy) +
+        e.yyx * mapScene(p + e.yyx) +
+        e.yxy * mapScene(p + e.yxy) +
+        e.xxx * mapScene(p + e.xxx)
+      );
+    }
+
+    // Ambient Occlusion Estimation
+    float calcAO(vec3 p, vec3 n) {
+      if (!u_enable_ao) return 1.0;
+      float occ = 0.0;
+      float sca = 1.0;
+      for (int i = 0; i < 5; i++) {
+        float h = 0.015 + 0.12 * float(i) / 4.0;
+        float d = mapScene(p + h * n);
+        occ += (h - d) * sca;
+        sca *= 0.85;
+      }
+      return clamp(1.0 - 1.8 * occ, 0.0, 1.0);
+    }
+
+    void main() {
+      // Normalized coordinates
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+
+      // Camera Rig with Target Orbit
+      float yaw = u_rot.x;
+      float pitch = u_rot.y;
+      
+      vec3 ro = vec3(0.0, 0.0, u_zoom);
+      // Apply pitch (around X) then yaw (around Y)
+      ro.yz = rot(pitch) * ro.yz;
+      ro.xz = rot(yaw) * ro.xz;
+
+      vec3 ta = vec3(0.0, 0.0, 0.0);
+      vec3 ww = normalize(ta - ro);
+      vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
+      vec3 vv = cross(uu, ww);
+
+      vec3 rd = normalize(uv.x * uu + uv.y * vv + 1.8 * ww);
+
+      // Raymarching Loop
+      float t = 0.5;
+      float d = 0.0;
+      int hitSteps = 0;
+
+      for (int i = 0; i < MAX_STEPS; i++) {
+        vec3 pos = ro + rd * t;
+        d = mapScene(pos);
+        if (abs(d) < SURF_DIST || t > MAX_DIST) {
+          hitSteps = i;
+          break;
+        }
+        t += d * 0.82; // Conservative step factor prevents overshooting fine struts
+      }
+
+      // Background Sky: Deep tactical slate grid
+      vec3 col = vec3(0.027, 0.035, 0.048);
+      
+      // Horizon / grid pattern
+      col += vec3(0.0, 0.05, 0.08) * (1.0 - length(uv) * 0.8);
+
+      if (t < MAX_DIST) {
+        vec3 pos = ro + rd * t;
+        vec3 nor = calcNormal(pos);
+
+        // Ensure normal faces camera ray
+        if (dot(nor, -rd) < 0.0) nor = -nor;
+
+        // Key Lighting Rig
+        vec3 lightDir1 = normalize(vec3(1.2, 1.8, 1.0));
+        vec3 lightDir2 = normalize(vec3(-1.0, -0.6, -1.2));
+
+        float diff1 = max(dot(nor, lightDir1), 0.0);
+        float diff2 = max(dot(nor, lightDir2), 0.0) * 0.45;
+        float ao = calcAO(pos, nor);
+        float amb = 0.22;
+
+        // Base Palette Tints
+        vec3 baseTint = vec3(0.0, 0.94, 1.0); // Cyan Default
+
+        if (u_palette == 1) {
+          baseTint = vec3(1.0, 0.0, 0.35); // Magenta Telemetry
+        } else if (u_palette == 2) {
+          // Dynamic CMYK Tri-Band based on surface normal orientation
+          baseTint = abs(nor.x) * vec3(0.0, 0.94, 1.0) +
+                     abs(nor.y) * vec3(1.0, 0.9, 0.0) +
+                     abs(nor.z) * vec3(1.0, 0.0, 0.35);
+        } else if (u_palette == 3) {
+          baseTint = vec3(0.85, 0.9, 0.95); // Key Monochrome
+        }
+
+        // Composite illumination
+        vec3 lighting = (diff1 + diff2 + amb) * baseTint * ao;
+
+        // Rim Light (Edge Fresnel)
+        float fresnel = pow(clamp(1.0 + dot(rd, nor), 0.0, 1.0), 3.0);
+        vec3 rimColor = (u_palette == 1) ? vec3(1.0, 0.9, 0.0) : vec3(0.0, 0.95, 1.0);
+        lighting += fresnel * rimColor * 0.7;
+
+        // Distance Fog attenuation
+        col = mix(lighting, col, 1.0 - exp(-0.025 * t * t));
+      }
+
+      // Subtle tactical vignette
+      col *= 1.0 - 0.35 * length(uv);
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  </script>
+
+  <!-- APPLICATION ENGINE JAVASCRIPT -->
+  <script>
+    window.addEventListener('load', () => {
+      const canvas = document.getElementById('glCanvas');
+      
+      // Initialize WebGL context with fallback
+      let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        alert('WebGL is unsupported on this hardware/browser.');
+        return;
+      }
+
+      // Compile Shader Utility
+      function createShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(shader));
+          gl.deleteShader(shader);
+          return null;
+        }
+        return shader;
+      }
+
+      const vsSource = document.getElementById('vs').text;
+      const fsSource = document.getElementById('fs').text;
+      const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+      const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+      const program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(program));
+        return;
+      }
+      gl.useProgram(program);
+
+      // Screen Quad Setup
+      const positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1.0, -1.0,
+         1.0, -1.0,
+        -1.0,  1.0,
+        -1.0,  1.0,
+         1.0, -1.0,
+         1.0,  1.0
+      ]), gl.STATIC_DRAW);
+
+      const aPosition = gl.getAttribLocation(program, 'a_position');
+      gl.enableVertexAttribArray(aPosition);
+      gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+      // Locate Uniforms
+      const uResolution = gl.getUniformLocation(program, 'u_resolution');
+      const uTime = gl.getUniformLocation(program, 'u_time');
+      const uZoom = gl.getUniformLocation(program, 'u_zoom');
+      const uRot = gl.getUniformLocation(program, 'u_rot');
+      const uMode = gl.getUniformLocation(program, 'u_mode');
+      const uIterations = gl.getUniformLocation(program, 'u_iterations');
+      const uHoleScale = gl.getUniformLocation(program, 'u_hole_scale');
+      const uClipPlane = gl.getUniformLocation(program, 'u_clip_plane');
+      const uPalette = gl.getUniformLocation(program, 'u_palette');
+      const uEnableAO = gl.getUniformLocation(program, 'u_enable_ao');
+
+      // UI References
+      const fpsVal = document.getElementById('fpsVal');
+      const toast = document.getElementById('toast');
+      const coordTelemetry = document.getElementById('coordTelemetry');
+
+      const panelModes = document.getElementById('panelModes');
+      const headerModes = document.getElementById('headerModes');
+      const iconChevronModes = document.getElementById('iconChevronModes');
+      const labelActiveMode = document.getElementById('labelActiveMode');
+
+      const panelTelemetry = document.getElementById('panelTelemetry');
+      const headerTelemetry = document.getElementById('headerTelemetry');
+      const iconChevronTelemetry = document.getElementById('iconChevronTelemetry');
+      const telemetryIter = document.getElementById('telemetryIter');
+      const statDimension = document.getElementById('statDimension');
+      const statVolume = document.getElementById('statVolume');
+      const statStruts = document.getElementById('statStruts');
+      const statSurface = document.getElementById('statSurface');
+      const modeDescription = document.getElementById('modeDescription');
+
+      const panelParams = document.getElementById('panelParams');
+      const headerParams = document.getElementById('headerParams');
+      const iconChevronParams = document.getElementById('iconChevronParams');
+      const asideParams = document.getElementById('asideParams');
+
+      const btnToggleHUD = document.getElementById('btnToggleHUD');
+      const btnReset = document.getElementById('btnReset');
+      const btnCapture = document.getElementById('btnCapture');
+
+      const paramIterations = document.getElementById('paramIterations');
+      const valIterations = document.getElementById('valIterations');
+      const paramHoleScale = document.getElementById('paramHoleScale');
+      const valHoleScale = document.getElementById('valHoleScale');
+      const containerHoleScale = document.getElementById('containerHoleScale');
+      const paramClipPlane = document.getElementById('paramClipPlane');
+      const valClipPlane = document.getElementById('valClipPlane');
+      const toggleAutoRotate = document.getElementById('toggleAutoRotate');
+      const toggleAO = document.getElementById('toggleAO');
+      const paramGyroSpeed = document.getElementById('paramGyroSpeed');
+      const valGyroSpeed = document.getElementById('valGyroSpeed');
+
+      // Application State
+      let state = {
+        mode: 1,                 // 1: Aperture Menger, 2: 5x5x5, 3: Dual Threaded
+        iterations: 3,           // 3 subdivisions
+        holeScale: 1.0,          // α = 1.00 (Classic Menger ratio)
+        clipPlane: 2.0,          // 2.0 = Slicer OFF
+        palette: 0,              // 0: Cyan, 1: Magenta, 2: CMYK, 3: Key Mono
+        enableAO: true,
+        autoRotate: true,
+        gyroSpeed: 1.0,
+        zoom: 4.3,               // Zoomed out outside the cube
+        targetYaw: 0.65,         // Initial calibrated isometric yaw
+        targetPitch: 0.22,       // Initial calibrated elevation pitch
+        currentYaw: 0.65,
+        currentPitch: 0.22,
+        isDragging: false,
+        lastMouseX: 0,
+        lastMouseY: 0,
+        startTime: performance.now(),
+        lastFpsUpdate: performance.now(),
+        frameCount: 0,
+        hudVisible: true,
+        // Multi-touch pinch tracking
+        initialPinchDist: 0,
+        initialZoom: 4.3
+      };
+
+      // Toast Notification Helper
+      let toastTimeout = null;
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translate(-50%, 0)';
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translate(-50%, -8px)';
+        }, 2200);
+      }
+
+      // Mode Metadata
+      const modeData = {
+        1: {
+          label: "01 // APERTURE",
+          dim: "2.7268",
+          struts: "α = 1.00",
+          desc: "Continuously variable aperture ratio (α). Initialized at α = 1.00 (Classic Menger, D ≈ 2.7268). Adjust the Aperture slider in Parameter Matrix to dilate or contract cross-tunnels."
+        },
+        2: {
+          label: "02 // 5x5x5",
+          dim: "2.8860",
+          struts: "104 / 125",
+          desc: "Solid high-order partition lattice dividing each coordinate axis by 5. Preserves 104 solid sub-cubes per iteration around orthogonal cross voids, yielding higher structural density."
+        },
+        3: {
+          label: "03 // DUAL THREAD",
+          dim: "INTERLOCKED",
+          struts: "Dual Linked",
+          desc: "Precisely aligned interlocking universal curves. The secondary sponge is offset along the 1/3 void axis and orthogonally rotated 90°, cleanly threading through the primary tunnels without collision."
+        }
+      };
+
+      // Update Telemetry Metrics
+      function updateHUDTelemetry() {
+        telemetryIter.textContent = state.iterations;
+        labelActiveMode.textContent = modeData[state.mode].label;
+        modeDescription.textContent = modeData[state.mode].desc;
+
+        let n = state.iterations;
+        let vRemaining = 0;
+        let sArea = 0;
+
+        if (state.mode === 1) {
+          let alpha = state.holeScale;
+          let effM = Math.max(8.0, 27.0 - 7.0 * alpha);
+          let dEst = Math.log(effM) / Math.log(3.0);
+          statDimension.textContent = dEst.toFixed(4);
+          vRemaining = Math.pow(Math.max(0.01, 1.0 - 0.259 * alpha), n) * 100.0;
+          sArea = Math.pow(2.2 * alpha, n) * 6.0;
+          statStruts.textContent = `α = ${alpha.toFixed(2)}`;
+          containerHoleScale.style.display = 'flex';
+        } else if (state.mode === 2) {
+          vRemaining = Math.pow(104.0 / 125.0, n) * 100.0;
+          sArea = Math.pow(104.0 / 25.0, n) * 6.0;
+          statDimension.textContent = "2.8860";
+          statStruts.textContent = "104 / 125 (Dense)";
+          containerHoleScale.style.display = 'none';
+        } else if (state.mode === 3) {
+          vRemaining = Math.pow(20.0 / 27.0, n) * 100.0 * 2.0;
+          sArea = Math.pow(20.0 / 9.0, n) * 12.0;
+          statDimension.textContent = "2.727 (Dual)";
+          statStruts.textContent = "Interlocked Axis";
+          containerHoleScale.style.display = 'none';
+        }
+
+        statVolume.textContent = vRemaining < 0.001 ? "< 0.001%" : vRemaining.toFixed(2) + "%";
+        statSurface.textContent = sArea > 9999 ? "> 9999x" : sArea.toFixed(1) + "x";
+
+        // Auto-hide parameter matrix in Dual Threaded mode
+        if (state.mode === 3) {
+          asideParams.style.display = 'none';
+        } else {
+          asideParams.style.display = 'flex';
+        }
+      }
+
+      // Collapsible Panel Toggles
+      function togglePanel(panel, chevron) {
+        const isCollapsed = panel.classList.toggle('panel-collapsed');
+        chevron.textContent = isCollapsed ? '⌄' : '⌃';
+      }
+
+      headerModes.addEventListener('click', () => togglePanel(panelModes, iconChevronModes));
+      headerTelemetry.addEventListener('click', () => togglePanel(panelTelemetry, iconChevronTelemetry));
+      headerParams.addEventListener('click', () => togglePanel(panelParams, iconChevronParams));
+
+      // Global Master HUD Toggle
+      btnToggleHUD.addEventListener('click', () => {
+        state.hudVisible = !state.hudVisible;
+        const hudLayers = document.querySelectorAll('.hud-layer');
+        hudLayers.forEach(el => {
+          if (!state.hudVisible) {
+            el.classList.add('hud-hidden');
+          } else {
+            el.classList.remove('hud-hidden');
+          }
+        });
+        btnToggleHUD.textContent = state.hudVisible ? '[HUD: ON]' : '[HUD: OFF]';
+        showToast(state.hudVisible ? 'HUD TELEMETRY ENGAGED' : 'HUD MINIMIZED [TACTICAL CLEAR]');
+      });
+
+      // Mode Buttons Selector
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.mode-btn').forEach(b => {
+            b.classList.remove('border-cyan-400', 'bg-cyan-950/50', 'text-cyan-200');
+            b.classList.add('border-slate-700', 'bg-slate-900/40', 'text-slate-300');
+          });
+          btn.classList.remove('border-slate-700', 'bg-slate-900/40', 'text-slate-300');
+          btn.classList.add('border-cyan-400', 'bg-cyan-950/50', 'text-cyan-200');
+          
+          state.mode = parseInt(btn.dataset.mode);
+          updateHUDTelemetry();
+          showToast(`ENGAGED: ${modeData[state.mode].label}`);
+        });
+      });
+
+      // Parameter Sliders
+      paramIterations.addEventListener('input', (e) => {
+        state.iterations = parseInt(e.target.value);
+        valIterations.textContent = state.iterations;
+        updateHUDTelemetry();
+      });
+
+      paramHoleScale.addEventListener('input', (e) => {
+        state.holeScale = parseFloat(e.target.value);
+        valHoleScale.textContent = state.holeScale.toFixed(2);
+        updateHUDTelemetry();
+      });
+
+      paramClipPlane.addEventListener('input', (e) => {
+        state.clipPlane = parseFloat(e.target.value);
+        valClipPlane.textContent = state.clipPlane >= 1.95 ? 'OFF' : state.clipPlane.toFixed(2);
+      });
+
+      toggleAutoRotate.addEventListener('change', (e) => {
+        state.autoRotate = e.target.checked;
+      });
+
+      toggleAO.addEventListener('change', (e) => {
+        state.enableAO = e.target.checked;
+      });
+
+      paramGyroSpeed.addEventListener('input', (e) => {
+        state.gyroSpeed = parseFloat(e.target.value);
+        valGyroSpeed.textContent = `${state.gyroSpeed.toFixed(1)}x`;
+      });
+
+      // Palette Selection
+      document.querySelectorAll('.palette-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.palette-btn').forEach(b => {
+            b.classList.remove('border-white/60');
+            b.classList.add('border-transparent', 'opacity-60');
+          });
+          btn.classList.remove('border-transparent', 'opacity-60');
+          btn.classList.add('border-white/60');
+          state.palette = parseInt(btn.dataset.pal);
+          showToast(`COLOR BAND: PALETTE 0${state.palette}`);
+        });
+      });
+
+      // Reset Matrix
+      btnReset.addEventListener('click', () => {
+        state.mode = 1;
+        state.iterations = 3;
+        state.holeScale = 1.0;
+        state.clipPlane = 2.0;
+        state.palette = 0;
+        state.enableAO = true;
+        state.autoRotate = true;
+        state.gyroSpeed = 1.0;
+        state.zoom = 4.3;
+        state.targetYaw = 0.65;
+        state.targetPitch = 0.22;
+
+        paramIterations.value = 3;
+        valIterations.textContent = '3';
+        paramHoleScale.value = 1.0;
+        valHoleScale.textContent = '1.00';
+        paramClipPlane.value = 2.0;
+        valClipPlane.textContent = 'OFF';
+        toggleAutoRotate.checked = true;
+        toggleAO.checked = true;
+        paramGyroSpeed.value = 1.0;
+        valGyroSpeed.textContent = '1.0x';
+
+        document.querySelectorAll('.mode-btn').forEach((b, idx) => {
+          if (idx === 0) {
+            b.classList.add('border-cyan-400', 'bg-cyan-950/50', 'text-cyan-200');
+            b.classList.remove('border-slate-700', 'bg-slate-900/40', 'text-slate-300');
+          } else {
+            b.classList.remove('border-cyan-400', 'bg-cyan-950/50', 'text-cyan-200');
+            b.classList.add('border-slate-700', 'bg-slate-900/40', 'text-slate-300');
+          }
+        });
+
+        updateHUDTelemetry();
+        showToast('SYSTEM MATRIX RESET TO BASELINE');
+      });
+
+      // Screenshot Capture
+      btnCapture.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = `MENGER_SPEC04_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('FRAME CAPTURE EXPORTED');
+      });
+
+      // Viewport Resizing
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Mouse Orbit Navigation
+      window.addEventListener('mousedown', (e) => {
+        // Prevent orbit when clicking HUD inputs
+        if (e.target.closest('.tactical-box') || e.target.closest('header')) return;
+        state.isDragging = true;
+        state.lastMouseX = e.clientX;
+        state.lastMouseY = e.clientY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!state.isDragging) return;
+        const dx = e.clientX - state.lastMouseX;
+        const dy = e.clientY - state.lastMouseY;
+        state.targetYaw += dx * 0.006;
+        state.targetPitch = Math.max(-1.4, Math.min(1.4, state.targetPitch + dy * 0.006));
+        state.lastMouseX = e.clientX;
+        state.lastMouseY = e.clientY;
+      });
+
+      window.addEventListener('mouseup', () => {
+        state.isDragging = false;
+      });
+
+      // Desktop Wheel Zoom
+      window.addEventListener('wheel', (e) => {
+        if (e.target.closest('.panel-body')) return; // Allow scroll in panel
+        e.preventDefault();
+        state.zoom = Math.max(1.8, Math.min(9.0, state.zoom + e.deltaY * 0.0035));
+      }, { passive: false });
+
+      // Touch Orbit & Pinch-to-Zoom
+      function getTouchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      window.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.tactical-box') || e.target.closest('header')) return;
+        if (e.touches.length === 1) {
+          state.isDragging = true;
+          state.lastMouseX = e.touches[0].clientX;
+          state.lastMouseY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          state.isDragging = false;
+          state.initialPinchDist = getTouchDistance(e.touches);
+          state.initialZoom = state.zoom;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && state.isDragging) {
+          const dx = e.touches[0].clientX - state.lastMouseX;
+          const dy = e.touches[0].clientY - state.lastMouseY;
+          state.targetYaw += dx * 0.007;
+          state.targetPitch = Math.max(-1.4, Math.min(1.4, state.targetPitch + dy * 0.007));
+          state.lastMouseX = e.touches[0].clientX;
+          state.lastMouseY = e.touches[0].clientY;
+        } else if (e.touches.length === 2 && state.initialPinchDist > 0) {
+          const currentDist = getTouchDistance(e.touches);
+          const factor = state.initialPinchDist / currentDist;
+          state.zoom = Math.max(1.8, Math.min(9.0, state.initialZoom * factor));
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', () => {
+        state.isDragging = false;
+        state.initialPinchDist = 0;
+      });
+
+      // Double-Click Recenter
+      canvas.addEventListener('dblclick', () => {
+        state.targetYaw = 0.65;
+        state.targetPitch = 0.22;
+        state.zoom = 4.3;
+        showToast('CAMERA RE-CENTERED [TARGET LOCK]');
+      });
+
+      // Initial Telemetry Sync
+      updateHUDTelemetry();
+
+      // Master Render Loop
+      function render(currentTime) {
+        requestAnimationFrame(render);
+
+        // Frame rate calculation
+        state.frameCount++;
+        if (currentTime - state.lastFpsUpdate >= 500) {
+          const currentFps = (state.frameCount * 1000) / (currentTime - state.lastFpsUpdate);
+          fpsVal.textContent = Math.round(currentFps);
+          state.frameCount = 0;
+          state.lastFpsUpdate = currentTime;
+        }
+
+        // Camera damping & smooth inertia
+        const dt = Math.min((currentTime - state.startTime) * 0.001, 0.1);
+        
+        if (state.autoRotate && !state.isDragging) {
+          state.targetYaw += 0.004 * state.gyroSpeed;
+        }
+
+        state.currentYaw += (state.targetYaw - state.currentYaw) * 0.1;
+        state.currentPitch += (state.targetPitch - state.currentPitch) * 0.1;
+
+        // Update Reticle Pitch/Yaw Readout
+        if (state.hudVisible) {
+          const degAz = Math.round(((state.currentYaw * 180 / Math.PI) % 360 + 360) % 360);
+          const degEl = Math.round(state.currentPitch * 180 / Math.PI);
+          coordTelemetry.textContent = `AZ: ${degAz}° | EL: ${degEl > 0 ? '+' : ''}${degEl}° | DIST: ${state.zoom.toFixed(2)}`;
+        }
+
+        // Uniform Dispatch
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        gl.uniform1f(uTime, (currentTime - state.startTime) * 0.001);
+        gl.uniform1f(uZoom, state.zoom);
+        gl.uniform2f(uRot, state.currentYaw, state.currentPitch);
+        gl.uniform1i(uMode, state.mode);
+        gl.uniform1i(uIterations, state.iterations);
+        gl.uniform1f(uHoleScale, state.holeScale);
+        gl.uniform1f(uClipPlane, state.clipPlane);
+        gl.uniform1i(uPalette, state.palette);
+        gl.uniform1i(uEnableAO, state.enableAO ? 1 : 0);
+
+        // Draw Screen Quad
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      requestAnimationFrame(render);
+    });
+  </script>
+</body>
+</html>
